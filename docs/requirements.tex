@@ -1,0 +1,228 @@
+\documentclass[[11pt,a4paper]{article}
+\usepackage{parskip}
+\setlength{\parindent}{0pt} % default 15pt
+\setlength{\parskip}{8pt}
+
+\newcommand\requirement[2]{\subsection{#2}\label{#1}}
+\newcommand\explanation{\noindent\textbf{Explanation: }}
+\newcommand\reason{\noindent\textbf{Reason: }}
+\newcommand\criterion{\noindent\textbf{Fit criterion: }}
+\newcommand\dependencies{\noindent\textbf{Dependencies: }}
+
+\title{LocalBox (server component) }
+
+\author{Volere Requirements Engineering Document}
+
+
+\begin{document}
+
+\titlepage \maketitle
+
+\section{Project drivers}
+
+Het doel van de LocalBox server is het aanbieden van een mechanisme om digitale bestanden op een veilige manier op te slaan en te delen. De LocalBox server wordt gevormd door een software implementatie en daarmee samenhangende use cases (specificatie voor het gebruik) waarin het gebruik van de server component is toegelicht. De use cases (specificaties) geven aan hoe de verschillende client apps zich moeten gedragen.
+
+De LocalBox server wordt ontwikkeld op initiatief van de stichting WijDelenVeilig.org. De realisatie van de LocalBox server is gericht op toepassing binnen het publieke domein.
+
+\section{Project constraints} 
+
+Alle specifiek voor de software implementatie ontwikkelde code wordt vrijgegeven onder EUPL. Bij de implementatie wordt alleen gebruik gemaakt van bibliotheken en componenten van derden indien de gebruikte licentie van deze bibliotheken of componenten niet in strijd is met het gebruik van EUPL in dit project.
+
+In het begrippenkader wordt onderscheid gemaakt tussen identificatie van een gebruiker en de toegang (in het kader van identity and access management). De begrippen bestand, file en document worden door elkaar gebruikt.
+
+\section{Functional requirements}
+
+% Volere template:
+
+%\requirement{title}{Requirement Title}
+
+	%\explanation Description of this requirement
+
+	%\reason Why we need this requirement
+
+	%\criterion Measurement of how can be tested that the requirement is met
+
+	%\dependencies \ref{title}
+
+\requirement{sharing}{Opslaan en delen bestanden}
+
+    \explanation Basisfunctionaliteit van een LocalBox server betreft het opslaan en delen van bestanden. Voor het opslaan van bestanden kan een mappenstructuur worden aangehouden. Bij opgeslagen bestanden worden metagegevens bewaard. Het delen van bestanden wordt gerealiseerd door een gebruiker uit te nodigen voor een map. Delen van mappen kan tenminste op het eerste (hoogste) niveau. De eigenaar van de map verstuurt de uitnodigingen. Deze kunnen geaccepteerd worden en dan is de map gedeeld. Uitnodigingen kunnen ingetrokken worden en dan is de map niet meer gedeeld. Alleen de eigenaar kan uitnodigingen versturen. 
+
+    \reason Veilig opslaan en delen van bestanden is waar LocalBox over gaat.
+
+    \criterion Er zijn use cases waarin het opslaan en delen van bestanden is beschreven.
+
+    \dependencies \ref{ccrypto}, \ref{blindserver}
+
+\requirement{ccrypto}{Client-side encryptie}
+
+    \explanation De LocalBox server opereert onafhankelijk van (transparant t.a.v.) de inhoud van opgeslagen documenten, of deze nu versleuteld zijn of niet. Versleuteling van bestanden is een aspect dat zich volledig afspeelt in de client software. Alleen op het niveau van metagegevens van documenten of gebruikers zijn elementen die het proces van encryptie ondersteunen. 
+
+    In de use cases wordt beschreven hoe de clients met deze gegevens dienen om te gaan om het delen van bestanden mogelijk te maken. De use cases zijn gebaseerd op een combinatie van PGP voor het delen van block cipher keys. De block cipher keys worden gebruikt voor de feitelijke versleuteling van bestanden.
+
+    \reason Serverside cryptografie maakt dat de server in staat moet zijn het bestand te kunnen decoderen. Dit vormt een beveiligingsricico. Er is geen afhankelijkheid met de server van de gebruikte versleutelingsmethode. 
+
+    \criterion De server faciliteert het uitwisselen van sleutels. Er zijn use cases beschreven waarin de manier van versleutelen wordt beschreven.
+
+    \dependencies \ref{blindserver}, \ref{privkey}
+
+
+\requirement{blindserver}{Content onafhankelijk}
+
+    \explanation De LocalBox server slaat bestanden en metagegevens op ongeacht de inhoud. Het is voor het functioneren van de LocalBox Server niet nodig de opgeslagen bestanden qua inhoud te hoeven lezen.
+
+    \reason De onafhankelijkheid van de inhoud maakt dat clients informatie kunnen delen op basis van onderlinge afspraken zonder dat het de werking van de serve be\"{i}nvloedt.
+        
+    \criterion De server API heeft geen afhankelijkheid met encryptievoorzieningen van de clients. Er ligt een use case voor het versleutelen van informatie.
+        
+    \dependencies \ref{ccrypto}, \ref{privkey}
+
+
+\requirement{saml}{Externe identificatie}
+
+    \explanation In plaats van een ingebouwde identificatie (login) zou de LocalBox server op externe (Active Directory, Pleio, LinkedIn, ...) identificatiemechanismen kunnen vertrouwen. De OAuth calls horen dan uit de API gehaald te worden. Eventueel kan de OAuth functionaliteit in een andere subpad (bijv. \texttt{/lox\_auth}) alsnog aanbieden, het wordt een aparte module. De clients/apps dienen per account/sessie twee URL's specifieren: \'{e}\'{e}n voor de opslag (de \texttt{lox\_api} API) en \'{e}\'{e}n voor login resp. identificatie (bijv. een OAuth server, eventueel dezelfde server maar met een ander URI pad). 
+    
+    De gebruikers worden tussen LocalBox server en externe login ge\"identificeerd aan de hand van een vooraf vastgestelde id. Bijvoorbeeld een e-mail adres zou als id gebrukt kunnen worden, zeker met het oog op functionaliteit waar een tweede kanaal nodig is om te communiceren.
+
+    \reason Externe identificatie maakt het mogelijk een LocalBox server op te nemen in een infrastructuur waarin al autorisatievoorzieningen (Active Directory, LDAP, OpenID, OAuth) aanwezig zijn. Scheiding van identificatie en data mogelijk, de data wordt op de LocalBox server geanonimiseerd
+
+    \criterion Er zijn configureerbare authenticatiemogelijkheden in de vorm van plugins. Een userspace op de LocalBox server wordt bij eerste toegang automatsich aangemaakt voor extern ge\"{i}dentificeerde gebruikers. 
+
+    \dependencies \ref{authlimit}, \ref{clientreg}
+
+
+\requirement{authlimit}{Limiet op login pogingen}
+
+    \explanation De LocalBox server limiteert het maximum aantal login pogingen. Zonder limiet op het aantal inlogpogingen kan middels 'brute force' een wachtwoord gekraakt worden.
+
+    (NB: dit is een eis die alleen aan de meegeleverde authenticatiemodule gesteld kan worden. Als er van externe identificaite gebruik gemaakt dient deze eis aan het externe mechanisme gesteld te worden.)
+
+    \reason Beperken kwetsbaarheid 'brute force' aanvallen.
+    
+    \criterion Er is een instelbaar maximum aantal inlogpogingen. Een account wordt geblokkeerd als dit aantal inlogpogingen wordt overschreden. Via een separaat kanaal (e-mail) wordt de gebruiker op de hoogte gesteld van het blokkeren van het account.
+
+    \dependencies \ref{adminuser}, \ref{saml}
+
+
+\requirement{privkey}{Geen private keys op de server}
+
+    \explanation In de huidige opzet worden private keys behorend bij een gebruiker tussen apps uitgewisseld via de LocalBox server. Er moet een use case uitgewerkt worden waarin de private key per device ook echt als private key wordt toegepast en niet meer hoeft te worden gedeeld met de servers om meerdere devices per gebruiker toe te kunnen passen. Dit brengt met zich mee dat onder een gebruiker meerdere public keys kunnen worden gepubliceerd: een primaire of eerste public key en secundaire public keys. Ook moet in de use case vastgesteld worden wie additionele versleuteling van de AES keys voor zijn rekening neemt wanneer er nieuwe secundaire public keys worden toegevoegd.
+
+    \reason De private key kan worden gebruikt om de files te ontsleutelen. De server heeft deze keys ook niet nodig om te functioneren. 
+	
+    \criterion De ondersteuning voor het uitwisselen van een private key vervalt. Er is een use case (specificatie) voor het gebruik van meerdere clients door \'{e}\'{e}n gebruiker.
+
+    \dependencies Geen
+
+\requirement{revoke}{Public key revocation}
+
+    \explanation Public key revocation is nog niet beschreven als use case. Misschien een PGP key server (-achtige) functionaliteit ook afscheiden van de \texttt{lox\_api} als separate module (\texttt{lox\_pgp})? Anders in ieder geval een use case hoe om te gaan met key revocation.
+    
+    \reason In een volwaardige PGP omgeving moet ook key revocation toegepast worden
+    
+    \criterion Er ligt een use case voor key revocation.
+
+    \dependencies \ref{privkey}
+
+    
+\requirement{clientreg}{Registreren client device}
+
+    \explanation Om toegang tot de data vanaf meerdere devices te beperken zal ieder device (resp. vers ge\"{i}nstalleerde app) een eenmalig nieuw gegenereerd UUID mee kunnen geven (in bijv. een \texttt{User-Agent}, \texttt{From} of \texttt{X-*} header field). De server accepteert de toegang niet totdat er via e-mail een validatie URL is aangeklikt. Vanaf dat moment is het device geregistreerd en gekoppeld aan een gebruiker. 
+    
+    \reason Het betreft een lichte variant van twee factor authenticatie. 
+    
+    (NB, hier stond ook: "deze registratie slag maakt dat de server op de hoogte is dat bestanden voor deze nieuwe client moeten worden encrypt", het is echter onwenselijk dat dit op de server gebeurt want dan moet de server ook over een unencrypted versie van het bestand beschikken. In strijd met \ref{blindserver} en \ref{ccrypto}).
+    
+    \criterion Er is een API call voor het valideren van een nieuw te registreren device. Het registreren gebeurt via een separaat kanaal (bijv. via e-mail) en kan slechts binnen een beperkte tijd. Er ligt een use case voor het toepassen van deze validatie door de client software.
+    
+    \dependencies \ref{adminuser}
+
+
+\requirement{adminuser}{Dynamisch gebruikers aanmaken}
+
+    \explanation Om niet van een initi\"{e}le lijst van gebruikers afhankelijk te zijn moet het mogelijk zijn gebruikers aan te maken (en eventueel te verwijderen) terwijl LocalBox draait. Bij externe identificatie van gebruikers moet een userspace automatisch aangemaakt worden en geblokkeerd kunnen worden indien nodig.
+
+    \reason De user base van een LocalBox server is dynamisch.  
+
+    \criterion Er is een manier om gebruikers aan te maken.
+
+    \dependencies \ref{saml}
+
+
+\requirement{versienummer}{Versienummer in API}
+
+    \explanation Er zou een API call toegevoegd worden waarin het versienummer en eventuele andere servergegevens (bijv. 'capabilities' zoals in bepaalde protocollen worden genoemd) kunnen worden opgevraagd. Op die manier kan een client/app anticiperen op verschillende versies (en eigenschappen van) servers. Versienummers kunnen opgehoogd worden (en capabilities uitgebreid).
+
+    \reason Een client/app kan anticiperen op versieverschillen en specifieke eigenschappen van de LocalBox server.
+    
+    \criterion Er is een API call die de versie van de server en eventuele functionele mogelijkheden aangeeft.
+
+    \dependencies Geen
+
+
+\requirement{subpad}{API calls onder \'{e}\'{e}n subpad}
+
+    \explanation De lox\_api calls zijn nu grotendeels ondergebracht onder de URI \texttt{http(s)://<hostname>/lox\_api}. Enkele uitgezonderd: met name \texttt{register\_app} en notifications (of zijn die niet voor een client/app?). In feite zou alle (door clients/apps te gebruiken) API calls onder hetzelfde \texttt{lox\_api} subpad moeten worden ondergebracht. 
+
+    \reason API calls worden als module gegroepeerd aangeboden, de server kan beperkt worden tot alleen de API calls en bijv. de webinterface (als andere module) achterwege laten.
+
+    \criterion De relevante API calls zijn gegroepeerd onder \'{e}\'{e}n subpad
+
+    \dependencies \ref{wegint}
+
+
+\requirement{wegint}{Webinterface scheiden van opslag}
+
+    \explanation De webinterface moet op zichzelf staand als client beschouwd worden die de \texttt{lox\_api} API gebruikt voor bestanden. Zo kan de webinterface zelfs op een andere server (zelfs binnen een geheel ander domein) geïnstalleerd aangeboden worden.
+
+    \reason De webinterface kan op een separate server voor een beperkte gebruikersgroep aangeboden worden. De webinterface wordt zo gepositioneerd als een (centrale) app.
+    
+    \criterion De LocalBox server kan zonder webinterface ge\"{i}nstalleerd worden. De webinterface kan op een andere server ge\"{i}installeerd worden.
+
+    \dependencies \ref{subpad}
+
+
+\requirement{defconf}{Instelbaar beveiligingsniveau}
+
+    \explanation Door de beveiliging te koppelen aan bestandsrubricering wordt het beveiligen van bestanden voor de gbruiker transparanter in gebruik. Niet zozeer de beveiliging wordt 
+
+    \reason Mogelijkheid van security niveau te wisselen op basis van rubricering van bestanden.
+
+    \criterion De rubricering is als eigenschap opgenomen in de metagegevens van een file. Er is een use case waarin beveiliging in clients aan de hand van rubicering is beschreven.
+
+    \dependencies Geen
+
+\section{Nonfunctional requirements}
+
+\requirement{partialtransfer}{Support for partial file transfer}
+
+    \explanation Ter verhoging van de stabiliteit: als er grote bestanden gekopieerd moeten worden (stel een filmpje van een paar Gig) dan is de kans groot dat er iets misgaat (verbinding verbroken doordat de laptop in slaapstand gaat o.i.d.) en het is dan vervelend dat de file transfer telkens opnieuw moet beginnen. Door de \texttt{Range/Content-Range} headers te implementeren (byte serving) kan een afgebroken file transfer gecontinueerd worden. Dit zou als een 'capability' (en daarmee aan en uit te zetten) gespecificeerd kunnen worden
+
+    \reason Ondersteunen uitwisseling grote bestanden.
+
+    \criterion Een onderbroken file transfer (zowel download als upload) kan hervat worden.
+
+    \dependencies \ref{sharing}
+
+\requirement{performance}{Performance}
+
+    \explanation LocalBox kan ten minste $n$ simultane gebruikers aan, waarbij dit aantal nog moet worden vastgesteld. 
+
+    \reason 
+
+    \criterion Performancecriteria nader vast te stellen.
+
+    \dependencies Geen
+
+\section{Project issues}
+
+
+
+
+
+
+
+
+
+
+\end{document}

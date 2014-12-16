@@ -4,26 +4,27 @@ Module that controls synchronization session per account
 
 Usage:
 
-    import lox.config
-    from lox.session import Session
+    import config
+    from session import Session
     
-    for Name in lox.config.sessions()
+    for Name in config.sessions()
         S = Session(Name)
 
 '''
 import os
+import mimetypes
 import time
-from datetime import datetime, timedelta, tzinfo
+from datetime import datetime
 from threading import Thread
 import shelve
 import Queue
 import traceback
 import iso8601
-import lox.api
-import lox.logger
-from lox.error import LoxError
+import api
+import logger
+import config
+from error import LoxError
 
-from pprint import pprint
 
 class FileInfo:
     '''
@@ -45,12 +46,12 @@ class Session(Thread):
         self.name = Name
         cache_name = os.environ['HOME']+'/.lox/.'+Name+'.cache'
         self._cache = shelve.open(cache_name)
-        local_dir = lox.config.session(Name)['local_dir']
+        local_dir = config.session(Name)['local_dir']
         self.root = os.path.expanduser(local_dir)
-        self.logger = lox.logger.Logger(Name)
-        self.api = lox.api.Api(Name)
+        self.logger = logger.Logger(Name)
+        self.api = api.Api(Name)
         self.queue = Queue.Queue()
-        self.interval = float(lox.config.session(Name)['interval'])
+        self.interval = float(config.session(Name)['interval'])
         self.running = True
 
     def run(self):
@@ -81,7 +82,7 @@ class Session(Thread):
                 action(path)
                 # finalize
                 self.queue.task_done()
-            except Exception as e:
+            except Exception:
                 traceback.print_exc()
                 break
                 
@@ -118,6 +119,11 @@ class Session(Thread):
         Original rules are given as comment
         FileInfo is always given so 'FileInfo unknown' is uniformly translated with 'FileInfo.size is None'
         '''
+	#TODO: fix this up so it is actually readable
+        Local = local
+  	Remote = remote
+
+
         #print "    [DEBUG] local:  ",local.isdir,local.modified,local.size
         #print "    [DEBUG] remote: ",remote.isdir,remote.modified,remote.size
         #print "    [DEBUG] cached: ",cached.isdir,cached.modified,cached.size
@@ -233,6 +239,7 @@ class Session(Thread):
         self.reconcile(path)
     
     def update_cache(self,path):
+        # hangt op een of andere mannier
         key = path.encode('utf8')
         file_info = self.file_info_local(path)
         print "UPDATE: ",key,file_info.isdir,file_info.modified,file_info.size

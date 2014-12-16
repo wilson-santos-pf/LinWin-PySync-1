@@ -4,10 +4,10 @@ Main module
 
 Usage:
 
-    import lox.client
+    import client
     
-    lox.client.main()
-    # or lox.client.test() for a test run of the sync
+    client.main()
+    # or client.test() for a test run of the sync
 
 Todo:
 
@@ -17,31 +17,28 @@ Todo:
 
 import os
 import sys
-import lox.config
-import lox.api
-import lox.daemon
-import lox.session
+import config
+import session
 
-from lox.error import LoxError
-from lox.daemon import Daemon
+from daemon import Daemon
 
 __author__ = "imtal@yolt.nl"
 __copyright__ = "(C) 2014, see LICENSE file"
 __version__ = "0.1"
 
-class Supervisor(lox.daemon.Daemon):
+class Supervisor(Daemon):
     def run(self):
-        for Name in lox.config.sessions():
-            t = lox.session.Session(Name)
+        for Name in config.sessions():
+            t = session.Session(Name)
             t.start()
 
 def test():
-    t = lox.session.Session('localhost')
+    t = session.Session('localhost')
     t.sync()
 
 def main():
     Action = sys.argv[1].lower() if len(sys.argv)>1 else 'undefined'
-    pidfile = os.environ['HOME']+'/.lox/lox-client.pid'
+    pidfile = os.environ['HOME']+'/.client.pid'
     daemon = Supervisor(pidfile)
     print ""
     if Action=='start':
@@ -54,13 +51,13 @@ def main():
         daemon.run()
     elif Action=='stop':
         try:
-            daeamon.stop()
+            daemon.stop()
             print "LocalBox client: stopped"
         except Exception as e:
             print "LocalBox client: ", e
     elif Action=='restart':
         try:
-            daeamon.restart()
+            daemon.restart()
             print "LocalBox client: restarted"
         except Exception as e:
             print "LocalBox client: ", e
@@ -82,4 +79,4 @@ def main():
     print ""
         
 if __name__ == '__main__':
-    lox.client.main()
+    main()

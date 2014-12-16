@@ -1,4 +1,4 @@
-from datetime import tzinfo, timedelta, datetime
+from datetime import tzinfo, timedelta
 
 import time as _time
 

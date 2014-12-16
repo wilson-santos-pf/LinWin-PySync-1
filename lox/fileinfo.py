@@ -1,4 +1,6 @@
-
+import os
+from error import LoxApiError
+import datetime
 
 class FileInfo:
 
@@ -35,14 +37,14 @@ class LoxLocal(FileInfo):
         self.__Path = Dir
 
     def isdir():
-        return os.path.isdir(self.__Path)
+        return os.path.isdir(FileInfo.__Path)
 
     def size():
-        files = os.listdir(self.__Path)
+        files = os.listdir(FileInfo.__Path)
         return len(files)
 
     def modified():
-        mtime = os.path.getmtime(self.__Path)
+        mtime = os.path.getmtime(FileInfo.__Path)
         return datetime.fromtimestamp(mtime)
 
     def children(self,Account,Dir):
@@ -59,25 +61,26 @@ class LoxRemote(FileInfo):
     def __init__(self,Session,Dir):
         self.__meta = Session.meta(Dir)
 
-    def isdir():
+    def isdir(self):
         return self.__meta[u'is_dir']
 
-    def size():
+    def size(self):
         return self.__meta[u'is_dir']
 
-    def modified():
+    def modified(self):
         return self.__meta[u'is_dir']
 
-    def children():
+    def children(self):
         files = set()
         if self.__meta[u'is_dir']:
-            for cmeta in meta[u'children']:
+            for cmeta in self.__meta[u'children']:
                 path = cmeta[u'path']
-                remote_files.add(path)
+                files.add(path)
         else:
             raise LoxApiError('Not a directory')
+        return files
 
-    def hash():
+    def hash(self):
         return self.__meta[u'hash']
 
 class LoxCache(FileInfo):

@@ -7,13 +7,13 @@ Usage: create an instance per account
 
 '''
 
-import lox.config
-import lox.auth
-from lox.error import LoxError
+import config
+import auth
+from error import LoxError
 import httplib
 import urllib
 import json
-import time
+#import time
 import urlparse
 
 class Api:
@@ -25,13 +25,13 @@ class Api:
     '''
 
     def __init__(self,Name):
-        authtype = lox.config.session(Name)['auth_type']
+        authtype = config.session(Name)['auth_type']
         if authtype.lower() == 'oauth2':
-            self.auth = lox.auth.OAuth2(Name)
+            self.auth = auth.OAuth2(Name)
         else:
             raise LoxError('not supported')
         self.agent = {"Agent":"lox-client"} # use one time generated UUID in the future?
-        url = lox.config.session(Name)['lox_url']
+        url = config.session(Name)['lox_url']
         o = urlparse.urlparse(url)
         self.uri_path = o.path
         if o.path[-1:]!='/':

@@ -10,7 +10,7 @@ lox-client
 
 Notice
 -----
-Copyright (C) 2014. All Rights Reserved. This software is published under EUPL 1.1, see the LICENSE file in this repository for the license information.
+Copyright (C) 2014. This software is published under EUPL 1.1, see the LICENSE file in this repository for the license information.
 
 Abstract
 -----

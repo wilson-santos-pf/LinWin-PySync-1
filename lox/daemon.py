@@ -4,8 +4,7 @@ import sys
 import os
 import time
 import atexit
-
-from signal import SIGTERM
+import signal
 
 class DaemonError(Exception):
     def __init__(self,reason):
@@ -120,7 +119,6 @@ class Daemon:
         try:
             while 1:
                 os.kill(pid, SIGTERM)
-		#TODO: join threads in a more complete way
                 time.sleep(0.1)
         except OSError as e:
             error = str(e)

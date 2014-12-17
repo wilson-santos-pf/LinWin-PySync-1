@@ -18,8 +18,11 @@ Todo:
 import os
 import sys
 import config
-import session
+from api import LoxApi
+from daemon import Daemon
+from session import LoxSession
 
+from error import LoxError
 from daemon import Daemon
 
 __author__ = "imtal@yolt.nl"
@@ -29,16 +32,16 @@ __version__ = "0.1"
 class Supervisor(Daemon):
     def run(self):
         for Name in config.sessions():
-            t = session.Session(Name)
+            t = LoxSession(Name)
             t.start()
 
 def test():
-    t = session.Session('localhost')
+    t = LoxSession('localhost')
     t.sync()
 
 def main():
     Action = sys.argv[1].lower() if len(sys.argv)>1 else 'undefined'
-    pidfile = os.environ['HOME']+'/.client.pid'
+    pidfile = os.environ['HOME']+'/.lox/lox-client.pid'
     daemon = Supervisor(pidfile)
     print ""
     if Action=='start':
@@ -47,20 +50,26 @@ def main():
             print "LocalBox client: started"
         except Exception as e:
             print "LocalBox client: ", e
-    elif Action=='test':
-        daemon.run()
     elif Action=='stop':
         try:
             daemon.stop()
             print "LocalBox client: stopped"
         except Exception as e:
             print "LocalBox client: ", e
+    elif Action=='test':
+        test()
     elif Action=='restart':
         try:
-            daemon.restart()
+            daeon.restart()
             print "LocalBox client: restarted"
         except Exception as e:
             print "LocalBox client: ", e
+    elif Action=='test':
+        s = daemon.status()
+        if s is None:
+            print "LocalBox client not running ..."
+        else:
+            print "LocalBox client running with pid %s" % s
     elif Action=='help':
         Cmd = os.path.basename(sys.argv[0])
         print "LocalBox desktop sync version {}".format(__version__)
@@ -69,13 +78,13 @@ def main():
         print ""
         print "       start  - starts the client"
         print "       stop   - stops the client"
-        print "       test - run in foreground"
+        print "       test   - run in forground"
         print "       reload - reloads the confguration"
         print "       sync   - force a synchronization"
         print "       status - show the status of the client"
     else:
         Cmd = os.path.basename(sys.argv[0])
-        print "Usage: %s start|stop|reload|sync|status|help|... " % Cmd
+        print "Usage: %s start|stop|test|restart|status|help|... " % Cmd
     print ""
         
 if __name__ == '__main__':

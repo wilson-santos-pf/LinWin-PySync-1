@@ -16,15 +16,14 @@ import mimetypes
 import time
 from datetime import datetime
 from threading import Thread
-import shelve
 import Queue
 import traceback
 import iso8601
-import api
-import logger
+from api import LoxApi
+from logger import LoxLogger
 import config
 from error import LoxError
-
+from cache import LoxCache
 
 class FileInfo:
     '''
@@ -36,7 +35,7 @@ class FileInfo:
 
 
 
-class Session(Thread):
+class LoxSession(Thread):
     '''
     Class that definess the session to synchronize a local folder with a LocalBox store
     '''
@@ -45,11 +44,11 @@ class Session(Thread):
         Thread.__init__(self)
         self.name = Name
         cache_name = os.environ['HOME']+'/.lox/.'+Name+'.cache'
-        self._cache = shelve.open(cache_name)
+        self.__cache = LoxCache(cache_name)
         local_dir = config.session(Name)['local_dir']
         self.root = os.path.expanduser(local_dir)
-        self.logger = logger.Logger(Name)
-        self.api = api.Api(Name)
+        self.logger = LoxLogger(Name)
+        self.api = LoxApi(Name)
         self.queue = Queue.Queue()
         self.interval = float(config.session(Name)['interval'])
         self.running = True
@@ -64,30 +63,27 @@ class Session(Thread):
         Worker = Thread(target=self._sync_worker)
         Worker.daemon = True
         Worker.start()
-        #self.queue.join()
+        self.queue.join()
+        #while not self.queue.empty():
+        #    time.sleep(2)
+        time.sleep(5) # UGLY!!
         
     def _sync_worker(self):
         while True:
+            path = self.queue.get()
             try:
-                # get next item
-                path = self.queue.get()
-                # do work
                 local = self.file_info_local(path)
                 remote = self.file_info_remote(path)
                 cached = self.file_info_cache(path)
                 action = self.resolve(local,remote,cached)
-                #self.logger.info("Resolving '"+path+" leads to "+action.__name__)
-                print("Resolving '"+path+" leads to "+action.__name__)
-                # do action
+                self.logger.info("Resolving '%s' leads to %s" %(path,action.__name__))
                 action(path)
-                # finalize
-                self.queue.task_done()
-            except Exception:
+            except Exception as e:
                 traceback.print_exc()
-                break
+            self.queue.task_done()
                 
     def reconcile(self,path):
-        print "Reconcile: ",path
+        self.logger.debug("Reconcile: %s" % path)
         # fetch local directory
         local_files = set()
         local_dir = self.root+path
@@ -110,84 +106,79 @@ class Session(Thread):
         # reconcile
         files = local_files | remote_files
         for f in files:
-            print "Add to queue: "+f
+            self.logger.debug("Added to queue '%s'" % f)
             self.queue.put(f)
 
-    def resolve(self,local,remote,cached):
+    def resolve(self,Local,Remote,Cached):
         '''
         Resolve what to do
         Original rules are given as comment
         FileInfo is always given so 'FileInfo unknown' is uniformly translated with 'FileInfo.size is None'
         '''
-	#TODO: fix this up so it is actually readable
-        Local = local
-  	Remote = remote
-
-
-        #print "    [DEBUG] local:  ",local.isdir,local.modified,local.size
-        #print "    [DEBUG] remote: ",remote.isdir,remote.modified,remote.size
-        #print "    [DEBUG] cached: ",cached.isdir,cached.modified,cached.size
+        print "    [DEBUG] local:  ",Local.isdir,Local.modified,Local.size
+        print "    [DEBUG] remote: ",Remote.isdir,Remote.modified,Remote.size
+        print "    [DEBUG] cached: ",Cached.isdir,Cached.modified,Cached.size
         #-------------------
         #resolve({file   ,Modified ,Size },{file   ,Modified ,Size },{file   ,Modified ,Size }) -> same;
-        if (local.isdir==remote.isdir==cached.isdir and 
-                local.modified==remote.modified==cached.modified and 
-                local.size==remote.size==cached.size):
+        if (Local.isdir==Remote.isdir==Cached.isdir and 
+                Local.modified==Remote.modified==Cached.modified and 
+                Local.size==Remote.size==Cached.size):
             return self.same
         #resolve({dir    ,_        ,_    },{dir    ,_        ,_    },{dir    ,_        ,_    }) -> walk_dir;
-        if (local.isdir and remote.isdir and cached.isdir):
+        if (Local.isdir and Remote.isdir and Cached.isdir):
             return self.walk
         #resolve({dir    ,_        ,_    },{dir    ,_        ,_    },unknown                  ) -> update_and_walk;
-        if (local.isdir and remote.isdir and cached.size is None):
+        if (Local.isdir and Remote.isdir and Cached.size is None):
             return self.update_and_walk
         #resolve(unknown                  ,{_Type  ,_Modified,_Size},unknown                  ) -> download;
-        if (local.size is None and not (remote.size is None) and cached.size is None):
+        if (Local.size is None and not (Remote.size is None) and Cached.size is None):
             return self.download
         #resolve({_Type  ,_Modified,_Size},unknown                  ,unknown                  ) -> upload;
-        if (not (local.size is None) and remote.size is None and cached.size is None):
+        if (not (Local.size is None) and Remote.size is None and Cached.size is None):
             return self.upload
         #resolve({file   ,Modified ,Size },{file   ,Modified ,Size },unknown                  ) -> update_cache;
-        if (local.isdir==remote.isdir==False and 
-                local.modified==remote.modified and 
-                cached.size is None):
+        if (Local.isdir==Remote.isdir==False and 
+                Local.modified==Remote.modified and 
+                Cached.size is None):
             return self.update_cache
         #resolve({file   ,ModifiedL,SizeL},{file   ,ModifiedR,_    },{file   ,ModifiedL,SizeL}) when ModifiedR > ModifiedL -> download;
-        if (local.isdir==remote.isdir==cached.isdir==False and 
-                local.modified < remote.modified and 
-                local.modified == cached.modified and 
-                local.size == cached.size):
+        if (Local.isdir==Remote.isdir==Cached.isdir==False and 
+                Local.modified < Remote.modified and 
+                Local.modified == Cached.modified and 
+                Local.size == Cached.size):
             return self.download
         #resolve({file   ,ModifiedL,_    },{file   ,ModifiedR,SizeR},{file   ,ModifiedR,SizeR}) when ModifiedL > ModifiedR -> upload;
-        if (local.isdir==remote.isdir==cached.isdir==False and 
-                local.modified > remote.modified and 
-                remote.modified == cached.modified and 
-                remote.size == cached.size):
+        if (Local.isdir==Remote.isdir==Cached.isdir==False and 
+                Local.modified > Remote.modified and 
+                Remote.modified == Cached.modified and 
+                Remote.size == Cached.size):
             return self.download
         #resolve({file   ,Modified ,Size },unknown                  ,{file   ,Modified ,Size }) -> delete_local;
-        if (local.isdir==cached.isdir==False and
-                Remote is None and
-                local.modified == cached.modified and
-                local.size == cached.size):
+        if (Local.isdir==Cached.isdir==False and
+                Remote.size is None and
+                Local.modified == Cached.modified and
+                Local.size == Cached.size):
             return self.delete_local
         #resolve(unknown                  ,{file   ,Modified ,Size },{file   ,Modified ,Size }) -> delete_remote;
-        if (remote.isdir==cached.isdir==False and
-                Local is None and
-                remote.modified == cached.modified and
-                remote.size == cached.size):
+        if (Remote.isdir==Cached.isdir==False and
+                Local.size is None and
+                Remote.modified == Cached.modified and
+                Remote.size == Cached.size):
             return self.delete_remote
         #resolve({dir    ,_        ,_    },unknown                  ,{dir    ,_        ,_    }) -> delete_local;
-        if (local.isdir==cached.isdir==True 
-                and Remote is None):
+        if (Local.isdir==Cached.isdir==True 
+                and Remote.size is None):
             return self.delete_local
         #resolve(unknown                  ,{dir    ,_        ,_    },{dir    ,_        ,_    }) -> delete_remote;
-        if (remote.isdir==cached.isdir==False and
-                Local is None):
+        if (Remote.isdir==Cached.isdir==True and
+                Local.size is None):
             return self.delete_remote
         #resolve({file   ,_        ,_    },{dir    ,_        ,_    },{_      ,_        ,_    }) -> conflict;
         #resolve({dir    ,_        ,_    },{file   ,_        ,_    },{_      ,_        ,_    }) -> conflict;
-        if (local.isdir != remote.isdir):
+        if (Local.isdir != Remote.isdir):
             return self.conflict
         #resolve(unknown                  ,unknown                  ,unknown                  ) -> strange;
-        if (local.size is None and remote.size is None and cached.size is None):
+        if (Local.size is None and Remote.size is None and Cached.size is None):
             return self.strange
         #resolve(_OtherL                  ,_OtherR                  ,_OtherC                  ) -> not_resolved.
         return self.not_resolved
@@ -227,8 +218,7 @@ class Session(Thread):
 
     def file_info_cache(self,path):
         key = path.encode('utf8')
-        file_info = self._cache.get(key,FileInfo())
-        print "READ: ",key,file_info.isdir,file_info.modified,file_info.size
+        file_info = self.__cache.get(key,FileInfo())
         return file_info
 
     # actions
@@ -239,18 +229,16 @@ class Session(Thread):
         self.reconcile(path)
     
     def update_cache(self,path):
-        # hangt op een of andere mannier
-        key = path.encode('utf8')
         file_info = self.file_info_local(path)
-        print "UPDATE: ",key,file_info.isdir,file_info.modified,file_info.size
-        self._cache[key] = file_info
+        self.__cache[path] = file_info
 
     def update_and_walk(self,path):
         file_info = self.file_info_local(path)
-        self._cache['path'] = file_info
+        self.__cache[path] = file_info
         self.reconcile(path)
 
     def download(self,path):
+        self.logger.info("Download %s" % path)
         meta = self.api.meta(path)
         if not (meta is None):
             filename = self.root+path
@@ -262,41 +250,36 @@ class Session(Thread):
                         # put in worker queue?
                         self.download(child_path)
             else:
-                # make safe download
-                # (1) do not load file in memory
-                # (2) using tmp dir and unique file and 
-                # (3) then static link, just like in maildir
                 contents = self.api.download(path)
                 f = open(filename,'wb')
                 f.write(contents)
                 f.close()
-                # file timestamp must be same as on server:
-                # (1) can this be done more efficient?
-                # (2) put in separate _function
                 modified_at = meta[u'modified_at']
                 modified = iso8601.parse_date(modified_at)
                 mtime = self._totimestamp(modified)
                 os.utime(filename,(os.path.getatime(filename),mtime))
                 # update cache
-                key = path.encode('utf8')
                 file_info = FileInfo()
                 file_info.isdir = False
                 file_info.modified = modified
                 file_info.size = os.path.getsize(filename)
-                self._cache[key] = file_info
-    
+                self.__cache[path] = file_info
+            
     def upload(self,path):
+        self.logger.info("Upload %s" % path)
         local_dir = self.root+path
         if os.path.isdir(local_dir):
             self.api.create_folder(path)
             for item in os.listdir(local_dir):
                 filename = os.path.join(path,item)
                 self.upload(filename)
+            file_info = self.file_info_local(path)
+            self.__cache[path] = file_info
         else:
             # (1) file timestamp must be same as on server after upload, can this be done more efficient?
             content_type,encoding = mimetypes.guess_type(path)
             filename = self.root+path
-            f = open(filename,'br')
+            f = open(filename,'rb')
             contents = f.read()
             f.close()
             self.api.upload(path,content_type,contents)
@@ -309,25 +292,40 @@ class Session(Thread):
             mtime = self._totimestamp(modified)
             os.utime(filename,(os.path.getatime(filename),mtime))
             # update cache
-            key = path.encode('utf8')
             file_info = FileInfo()
             file_info.isdir = False
             file_info.modified = modified
             file_info.size = os.path.getsize(filename)
-            self._cache[key] = file_info
+            self.__cache[path] = file_info
 
-    def delete_local(sef,path):
-        # (1) delete recursive locally
-        # (2) delete recursive from cache
-        pass
-    
+    def delete_local(self,path):
+        self.logger.debug("Delete (local) %s" % path)
+        full_path = self.root+path
+        if os.path.isdir(full_path):
+            for item in os.listdir(full_path):
+                filename = os.path.join(path,item)
+                self.delete_local(filename)
+            os.rmdir(full_path)
+            del self.__cache[path]
+        else:
+            os.remove(full_path)
+            del self.__cache[path]
+            
     def delete_remote(self,path):
-        # (1) delete recursive from server
-        #self.api.delete(path) is already recursive, but better depth first recursive delete?
-        # (2) delete recursive from cache
-        pass
-    
+        self.logger.debug("Delete (remote) %s" % path)
+        meta = self.api.meta(path)
+        if not (meta is None):
+            if meta[u'is_dir']:
+                if u'children' in meta:
+                    for child_meta in meta[u'children']:
+                        child_path = child_meta[u'path']
+                        self.delete_remote(child_path)
+            self.api.delete(path)
+            del self.__cache[path]
+
+            
     def conflict(self,path):
+        
         # (1) download remote to tmp/unique file (like maildir) 
         # (2) rename local with .conflict_nnnn extension
         # (3) hard link to tmp with orignal filename
@@ -340,10 +338,14 @@ class Session(Thread):
     def not_resolved(self,path):
         self.logger.error(path+" could not be resolved")
 
-    # internals
+    # INTERNALS
     # move this conversion functio to a library?
     
     def _totimestamp(self,dt, epoch=datetime(1970,1,1,tzinfo=iso8601.UTC)):
         td = dt - epoch
         # return td.total_seconds()
         return (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 1e6 
+
+    # TODO: make real short tempname based on internal timer
+    def _tmpname(self):
+        return "AF3D48"

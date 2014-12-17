@@ -6,9 +6,9 @@ Description:
 
 Usage:
 
-    import lox.config
+    import config
     
-    lox.config.session('localhost')['user']
+    config.session('localhost')['user']
 
 Todo:
 
@@ -16,19 +16,20 @@ Todo:
 
 '''
 
+import sys
 import os
 import ConfigParser
 
 def load():
+    global __config
     conf_dir = os.environ['HOME']+'/.lox'
     try:
         os.mkdir(conf_dir)
     except OSError:
         pass
     path = os.environ['HOME']+'/.lox/lox-client.conf'
-    __configx = ConfigParser.RawConfigParser()
-    __configx.read(path)
-    return __configx
+    __config = ConfigParser.RawConfigParser()
+    __config.read(path)
     
 def sessions():
     global __config
@@ -41,5 +42,5 @@ def session(Session):
         d[key] = value
     return d
 
-__config = load()
+load()
 

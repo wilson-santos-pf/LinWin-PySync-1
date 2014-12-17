@@ -69,7 +69,7 @@ def main():
         print ""
         print "       start  - starts the client"
         print "       stop   - stops the client"
-        print "       config - edit the configuration file"
+        print "       test - run in foreground"
         print "       reload - reloads the confguration"
         print "       sync   - force a synchronization"
         print "       status - show the status of the client"

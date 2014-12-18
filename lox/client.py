@@ -64,27 +64,39 @@ def main():
             print "LocalBox client: restarted"
         except Exception as e:
             print "LocalBox client: ", e
-    elif Action=='test':
+    elif Action=='status':
         s = daemon.status()
         if s is None:
             print "LocalBox client not running ..."
         else:
             print "LocalBox client running with pid %s" % s
+    elif Action=='invitations':
+        for Name in config.sessions():
+            Api = LoxApi(Name)
+            Invitations = Api.invitations()
+            print "%s: " % Name
+            
+            for Invite in Invitations:
+                Share = Invite[u'share']
+                Item = Share[u'item']
+                print "  [%s] %s (%s)" % (Invite[u'id'],Item[u'path'],Invite[u'state'])
     elif Action=='help':
         Cmd = os.path.basename(sys.argv[0])
         print "LocalBox desktop sync version {}".format(__version__)
         print ""
         print "Usage: {} [command]".format(Cmd)
         print ""
-        print "       start  - starts the client"
-        print "       stop   - stops the client"
-        print "       test   - run in forground"
-        print "       reload - reloads the confguration"
-        print "       sync   - force a synchronization"
-        print "       status - show the status of the client"
+        print "       start       - starts the client"
+        print "       stop        - stops the client"
+        print "       test        - run in forground"
+        print "       restart     - reloads the confguration"
+        print "       invitations - show invitations"
+        #print "       sync        - force a synchronization"
+        print "       status      - show the status of the client"
+        print "       help        - show this help"
     else:
         Cmd = os.path.basename(sys.argv[0])
-        print "Usage: %s start|stop|test|restart|status|help|... " % Cmd
+        print "Usage: %s start|stop|test|invitations|restart|status|help|... " % Cmd
     print ""
         
 if __name__ == '__main__':

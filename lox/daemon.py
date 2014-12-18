@@ -17,7 +17,7 @@ class Daemon:
 
     Usage: subclass the Daemon class and override the run() and signal() methods
     """
-    def __init__(self, pidfile, path='/', umask=0, stdin=None, stdout=None, stderr=None):
+    def __init__(self, pidfile, path='/', umask=0, stdin=None, stdout=None, stderr=None, preserve=[]):
         self.pidfile = pidfile
         devnull = os.devnull if (hasattr(os,"devnull")) else "/dev/null"
         stdin = devnull if (stdin is None) else stdin
@@ -25,6 +25,7 @@ class Daemon:
         stderr = devnull if (stderr is None) else stderr
         self.path = path
         self.umask = umask
+        self.preserve = preserve
 
     def __daemonize(self):
         """
@@ -35,7 +36,9 @@ class Daemon:
         pid = os.fork()
         if pid > 0:
             # This is the first parent
-            sys.exit(0)
+            time.sleep(2)
+            return
+            #sys.exit(0)
 
         # Decouple from parent environment
         os.chdir(self.path)
@@ -54,10 +57,11 @@ class Daemon:
         if (maxfd == resource.RLIM_INFINITY):
             maxfd = 1024
         for fd in range(0, maxfd): # Iterate through and close all file descriptors
-            try:
-                os.close(fd)
-            except OSError:	# On error, fd wasn't open to begin with (ignored)
-                pass
+            if not fd in self.preserve:
+                try:
+                    os.close(fd)
+                except OSError:	# On error, fd wasn't open to begin with (ignored)
+                    pass
 
         # Redirect standard I/O file descriptors
         sys.stdout.flush()

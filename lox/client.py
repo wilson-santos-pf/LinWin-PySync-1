@@ -5,14 +5,14 @@ Main module
 Usage:
 
     import client
-    
+
     client.main()
     # or client.test() for a test run of the sync
 
 Todo:
 
     Check if daeon runs as expected
-    
+
 '''
 
 import os
@@ -41,15 +41,21 @@ def test():
 
 def main():
     Action = sys.argv[1].lower() if len(sys.argv)>1 else 'undefined'
+    path = os.environ['HOME']
     pidfile = os.environ['HOME']+'/.lox/lox-client.pid'
-    daemon = Supervisor(pidfile)
+    logfile = open(os.environ['HOME']+'/.lox/lox-client.log','r+')
+    daemon = Supervisor(pidfile, path=os.environ['HOME'], umask=100, stdout=logfile, stderr=logfile, preserve=[logfile])
     print ""
+    if len(config.sessions())==0:
+        print "Localbox client: no sessions configured, edit ~/.lox/lox-client.conf"
+        print ""
+        exit(1)
     if Action=='start':
-        try:
-            daemon.start()
-            print "LocalBox client: started"
-        except Exception as e:
-            print "LocalBox client: ", e
+            try:
+                daemon.start()
+                print "LocalBox client: started"
+            except Exception as e:
+                print "LocalBox client: ", e
     elif Action=='stop':
         try:
             daemon.stop()
@@ -60,7 +66,7 @@ def main():
         test()
     elif Action=='restart':
         try:
-            daeon.restart()
+            daemon.restart()
             print "LocalBox client: restarted"
         except Exception as e:
             print "LocalBox client: ", e
@@ -75,14 +81,13 @@ def main():
             Api = LoxApi(Name)
             Invitations = Api.invitations()
             print "%s: " % Name
-            
             for Invite in Invitations:
                 Share = Invite[u'share']
                 Item = Share[u'item']
                 print "  [%s] %s (%s)" % (Invite[u'id'],Item[u'path'],Invite[u'state'])
     elif Action=='help':
         Cmd = os.path.basename(sys.argv[0])
-        print "LocalBox desktop sync version {}".format(__version__)
+        print "LocalBox client: desktop sync version {}".format(__version__)
         print ""
         print "Usage: {} [command]".format(Cmd)
         print ""
@@ -98,6 +103,6 @@ def main():
         Cmd = os.path.basename(sys.argv[0])
         print "Usage: %s start|stop|test|invitations|restart|status|help|... " % Cmd
     print ""
-        
+
 if __name__ == '__main__':
     main()

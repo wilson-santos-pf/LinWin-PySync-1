@@ -17,6 +17,7 @@ import json
 import time
 import urlparse
 
+
 class LoxApiResponse:
     
     status = None
@@ -129,7 +130,7 @@ class LoxApi:
         url += "lox_api/files/"+urllib.pathname2url(path)
         resp = self.__do_request("GET",url,"",headers)
         if resp.status == 200:
-            return resp.read()
+            return resp.body
         else:
             raise LoxError(resp.reason)
 
@@ -192,7 +193,9 @@ class LoxApi:
         url = self.uri_path
         url += "lox_api/invitations"
         resp = self.__do_request("GET",url,"",headers)
-        if resp.status != 200:
+        if resp.status == 200:
+            return json.loads(resp.body)
+        else:
             raise LoxError(resp.reason)
 
     def invite_accept(self,ref):

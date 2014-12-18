@@ -325,12 +325,14 @@ class LoxSession(Thread):
 
             
     def conflict(self,path):
-        
-        # (1) download remote to tmp/unique file (like maildir) 
-        # (2) rename local with .conflict_nnnn extension
-        # (3) hard link to tmp with orignal filename
-        # (4) delete tmp/unique
-        pass
+        # (1) rename local with .conflict_nnnn extension
+        full_path = self.root+path
+        base,ext = os.path.splitext(path)
+        tmp = self._tmpname()
+        new_name =  self.root+base+"_conflict_"+tmp+ext
+        os.rename(full_path,new_name)
+        # (2) download remote to tmp/unique file (like maildir)
+        self.download(path)
     
     def strange(self,path):
         self.logger.error("Resolving "+path+" led to strange situation")
@@ -348,4 +350,5 @@ class LoxSession(Thread):
 
     # TODO: make real short tempname based on internal timer
     def _tmpname(self):
+        # TODO: implement!!!!
         return "AF3D48"

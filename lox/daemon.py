@@ -20,9 +20,9 @@ class Daemon:
     def __init__(self, pidfile, path='/', umask=0, stdin=None, stdout=None, stderr=None, preserve=[]):
         self.pidfile = pidfile
         devnull = os.devnull if (hasattr(os,"devnull")) else "/dev/null"
-        stdin = devnull if (stdin is None) else stdin
-        stdout = devnull if (stdout is None) else stdout
-        stderr = devnull if (stderr is None) else stderr
+        self.stdin = devnull if (stdin is None) else stdin
+        self.stdout = devnull if (stdout is None) else stdout
+        self.stderr = devnull if (stderr is None) else stderr
         self.path = path
         self.umask = umask
         self.preserve = preserve
@@ -36,10 +36,8 @@ class Daemon:
         pid = os.fork()
         if pid > 0:
             # This is the first parent
-            time.sleep(2)
-            return
-            #sys.exit(0)
-
+            sys.exit(0)
+        print "child (1) = ", os.getpid()
         # Decouple from parent environment
         os.chdir(self.path)
         os.setsid()
@@ -50,19 +48,20 @@ class Daemon:
         if pid > 0:
             # This is the second parent
             sys.exit(0)
-
+        print "child (2) = ", os.getpid()
+        '''
         # Close all open file descriptors
-        import resource		# Resource usage information.
+        import resource # Resource usage information.
         maxfd = resource.getrlimit(resource.RLIMIT_NOFILE)[1]
         if (maxfd == resource.RLIM_INFINITY):
             maxfd = 1024
         for fd in range(0, maxfd): # Iterate through and close all file descriptors
-            if not fd in self.preserve:
+            #if not fd in self.preserve:
                 try:
                     os.close(fd)
-                except OSError:	# On error, fd wasn't open to begin with (ignored)
+                except OSError: # On error, fd wasn't open to begin with (ignored)
                     pass
-
+        '''
         # Redirect standard I/O file descriptors
         sys.stdout.flush()
         sys.stderr.flush()
@@ -120,7 +119,7 @@ class Daemon:
         # Try killing the daemon process
         try:
             while 1:
-                os.kill(pid, SIGTERM)
+                os.kill(pid, signal.SIGTERM)
                 time.sleep(0.1)
         except OSError as e:
             error = str(e)
@@ -146,10 +145,18 @@ class Daemon:
         except IOError:
             return None
 
+    def started(self):
+        """
+        Override this method when you subclass Daemon. 
+        It will be called by the parent process after the process has been
+        daemonized by start() or restart().
+        """
+        pass
+
     def run(self):
         """
         Override this method when you subclass Daemon. 
-        It will be called after the process has been
+        It will be called by the child process after the process has been
         daemonized by start() or restart().
         """
         pass

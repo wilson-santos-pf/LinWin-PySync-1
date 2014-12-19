@@ -41,22 +41,35 @@ class LoxSession(Thread):
     '''
 
     def __init__(self,Name):
-        Thread.__init__(self)
+        Thread.__init__(self,interactive = False)
         self.name = Name
         cache_name = os.environ['HOME']+'/.lox/.'+Name+'.cache'
         self.__cache = LoxCache(cache_name)
         local_dir = config.session(Name)['local_dir']
         self.root = os.path.expanduser(local_dir)
-        self.logger = LoxLogger(Name)
+        self.logger = LoxLogger(Name, interactive)
         self.api = LoxApi(Name)
         self.queue = Queue.Queue()
         self.interval = float(config.session(Name)['interval'])
+        if self.interval<60 and self.interval>0:
+            self.logger.warn("Interval is {0} seconds, this is short".format(self.interval))
         self.running = True
+        self.logger.info("Session started")
+
+    def __del__(self):
+        self.logger.info("Session stopped")
+
 
     def run(self):
         while self.running:
-            self.sync()
-            time.sleep(self.interval)
+            try:
+                self.sync()
+            except Exception as e:
+                traceback.print_exc(file=self.logger.handle)
+            if self.interval>0:
+                time.sleep(self.interval)
+            else:
+                break
 
     def sync(self,Path='/'):
         self.reconcile(Path)
@@ -79,7 +92,7 @@ class LoxSession(Thread):
                 self.logger.info("Resolving '%s' leads to %s" %(path,action.__name__))
                 action(path)
             except Exception as e:
-                traceback.print_exc()
+                traceback.print_exc(file=self.logger.handle)
             self.queue.task_done()
                 
     def reconcile(self,path):
@@ -106,7 +119,7 @@ class LoxSession(Thread):
         # reconcile
         files = local_files | remote_files
         for f in files:
-            self.logger.debug("Added to queue '%s'" % f)
+            #self.logger.debug("Added to queue '%s'" % f)
             self.queue.put(f)
 
     def resolve(self,Local,Remote,Cached):
@@ -115,9 +128,9 @@ class LoxSession(Thread):
         Original rules are given as comment
         FileInfo is always given so 'FileInfo unknown' is uniformly translated with 'FileInfo.size is None'
         '''
-        print "    [DEBUG] local:  ",Local.isdir,Local.modified,Local.size
-        print "    [DEBUG] remote: ",Remote.isdir,Remote.modified,Remote.size
-        print "    [DEBUG] cached: ",Cached.isdir,Cached.modified,Cached.size
+        #print "    [DEBUG] local:  ",Local.isdir,Local.modified,Local.size
+        #print "    [DEBUG] remote: ",Remote.isdir,Remote.modified,Remote.size
+        #print "    [DEBUG] cached: ",Cached.isdir,Cached.modified,Cached.size
         #-------------------
         #resolve({file   ,Modified ,Size },{file   ,Modified ,Size },{file   ,Modified ,Size }) -> same;
         if (Local.isdir==Remote.isdir==Cached.isdir and 

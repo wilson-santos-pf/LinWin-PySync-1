@@ -23,10 +23,13 @@ import ConfigParser
 def load():
     global __config
     conf_dir = os.environ['HOME']+'/.lox'
-    try:
+    if not os.path.isdir(conf_dir):
         os.mkdir(conf_dir)
-    except OSError:
-        pass
+    if not os.path.isfile(conf_dir+"/lox-client.conf"):
+        f = open(conf_dir+"/lox-client.conf",'w+')
+        f.write(";empty config file")
+        f.write(os.linesep)
+        f.close()
     path = os.environ['HOME']+'/.lox/lox-client.conf'
     __config = ConfigParser.RawConfigParser()
     __config.read(path)

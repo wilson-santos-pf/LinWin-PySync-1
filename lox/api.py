@@ -8,7 +8,7 @@ Usage: create an instance per account
 '''
 
 import config
-import auth
+from auth import OAuth2
 from error import LoxError
 from httplib import HTTPConnection,HTTPSConnection,HTTPResponse
 import traceback
@@ -36,7 +36,7 @@ class LoxApi:
     def __init__(self,Name):
         authtype = config.session(Name)['auth_type']
         if authtype.lower() == 'oauth2':
-            self.auth = auth.OAuth2(Name)
+            self.auth = OAuth2(Name)
         else:
             raise LoxError('not supported')
         self.agent = {"Agent":"lox-client"} # use one time generated UUID in the future?
@@ -47,14 +47,7 @@ class LoxApi:
         self.uri_path = o.path
         if o.path[-1:]!='/':
             self.uri_path +='/'
-        if o.scheme == 'https':
-            self.ssl = True
-            #self.connection = HTTPSConnection(o.netloc,o.port)
-        elif o.scheme == 'http' or o.scheme=='':
-            self.ssl = False
-            #self.connection = HTTPConnection(o.netloc,o.port)
-        else:
-            raise LoxError("Invalid server URL")
+        self.ssl = (o.scheme == 'https')
 
 
     def __do_request(self,Method,Url,Body="",Headers={}):
@@ -232,3 +225,18 @@ class LoxApi:
         else:
             raise LoxError(resp.reason)
 
+    def register_app(self):
+        # Not an actual API call? Strange implementation because needs interactive authentication
+        headers = self.auth.header()
+        headers.update(self.agent)
+        url = self.uri_path
+        url += "register_app"
+        #headers.update({"Cookie":"PHPSESSID=8spg15vollt3eqjh7i9kpggog5; REMEMBERME=UmVkbm9zZVxGcmFtZXdvcmtCdW5kbGVcRW50aXR5XFVzZXI6WVdSdGFXND06MTQ0NzE5MTc0ODowOTJlMGQwZDJlMDFlZWYwMzJkMzdmMmUwMmEwMWJlYmQ4N2U3NjI4MDkyOTVjYzRiNGRlYzJmZDI1NzU0OTdh
+        resp = self.__do_request("GET",url,"",headers)
+        if resp.status == 200:
+            return json.loads(resp.body)
+        else:
+            raise LoxError(resp.reason)
+
+    def version():
+        return "1.1.3"

@@ -9,6 +9,7 @@ Usage:
     import config
     
     config.session('localhost')['user']
+    config.get('localhost','user')
 
 Todo:
 
@@ -31,8 +32,20 @@ def load():
         f.write(os.linesep)
         f.close()
     path = os.environ['HOME']+'/.lox/lox-client.conf'
-    __config = ConfigParser.RawConfigParser()
     __config.read(path)
+    
+def save():
+    global __config
+    conf_dir = os.environ['HOME']+'/.lox'
+    if not os.path.isdir(conf_dir):
+        os.mkdir(conf_dir)
+    path = os.environ['HOME']+'/.lox/lox-client.conf'
+    with open(path, 'wb') as f:
+        __config.write(f)
+
+def delete(Session):
+    global __config
+    __config.remove_section(Session)
     
 def sessions():
     global __config
@@ -45,5 +58,15 @@ def session(Session):
         d[key] = value
     return d
 
+def get(Session,Item,Value):
+    global __config
+    __config.get(Session,Item)
+
+def set(Session,Item,Value):
+    global __config
+    __config.set(Session,Item,Value)
+
+
+__config = ConfigParser.RawConfigParser()
 load()
 

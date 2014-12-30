@@ -18,13 +18,14 @@ The OAuth2 class reads the following parameters from the configuration:
 
 '''
 
-import config
-from logger import LoxLogger
-from error import LoxError
 from httplib import HTTPConnection,HTTPSConnection,HTTPResponse
 import json
 import time
 import urlparse
+
+import lox.config
+from lox.logger import LoxLogger
+from lox.error import LoxError
 
 class Auth:
     '''
@@ -62,9 +63,9 @@ class OAuth2(Auth):
 
     def __init__(self,Name):
         self.grant_type = "password"
-        self.username = config.session(Name)['username']
-        self.password = config.session(Name)['password']
-        url = config.session(Name)['auth_url']
+        self.username = lox.config.session(Name)['username']
+        self.password = lox.config.session(Name)['password']
+        url = lox.config.session(Name)['auth_url']
         o = urlparse.urlparse(url)
         self.uri_path = o.path
         if o.path[-1:]!='/':
@@ -113,9 +114,9 @@ class LinkedIn(Auth):
     def __init__(self,Name):
         # API key and secret key to be delivered by server?
         # They are unique for redirect URL
-        self.api_key = config.session(Name)['api_key']
-        self.secret_key = config.session(Name)['secret_key']
-        self.redirect_uri = config.session(Name)['redirect_uri']
+        self.api_key = lox.config.session(Name)['api_key']
+        self.secret_key = lox.config.session(Name)['secret_key']
+        self.redirect_uri = lox.config.session(Name)['redirect_uri']
         url = 'https://api.linkedin.com/uas/oauth2/'
         self.connection = httplib.HTTPSConnection(o.netloc,o.port)
         self.authorization_code = ""

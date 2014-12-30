@@ -4,10 +4,10 @@ Main module
 
 Usage:
     
-    import client
+    import lox.client
     
-    client.main()
-    # or client.test() for a test run of the sync
+    lox.client.main()
+    # or lox.client.test() for a test run of the sync
 
 Todo:
     
@@ -20,11 +20,11 @@ import sys
 import time
 import traceback
 
-import config
-from api import LoxApi
-from daemon import Daemon
-from session import LoxSession
-from error import LoxError
+import lox.config
+from lox.api import LoxApi
+from lox.daemon import Daemon
+from lox.session import LoxSession
+from lox.error import LoxError
 
 __author__ = "imtal@yolt.nl"
 __copyright__ = "(C) 2014, see LICENSE file"
@@ -44,7 +44,7 @@ class Supervisor(Daemon):
             Msg("started")
 
     def run(self, interactive = False):
-        for Name in config.sessions():
+        for Name in lox.config.sessions():
             t = LoxSession(Name, interactive = interactive)
             t.start()
 

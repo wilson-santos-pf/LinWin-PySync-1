@@ -4,11 +4,11 @@ Module that controls synchronization session per account
 
 Usage:
 
-    import config
-    from session import Session
+    import lox.config
+    from lox.session import LoxSession
     
-    for Name in config.sessions()
-        S = Session(Name)
+    for Name in lox.config.sessions()
+        S = LoxSession(Name)
 
 '''
 import os
@@ -21,10 +21,10 @@ import Queue
 import traceback
 import iso8601
 from api import LoxApi
-from logger import LoxLogger
-import config
-from error import LoxError
-from cache import LoxCache
+from lox.logger import LoxLogger
+import lox.config
+from lox.error import LoxError
+from lox.cache import LoxCache
 
 class FileInfo:
     '''
@@ -46,12 +46,12 @@ class LoxSession(Thread):
         self.name = Name
         cache_name = os.environ['HOME']+'/.lox/.'+Name+'.cache'
         self.__cache = LoxCache(cache_name)
-        local_dir = config.session(Name)['local_dir']
+        local_dir = lox.config.session(Name)['local_dir']
         self.root = os.path.expanduser(local_dir)
         self.logger = LoxLogger(Name, interactive)
         self.api = LoxApi(Name)
         self.queue = Queue.Queue()
-        self.interval = float(config.session(Name)['interval'])
+        self.interval = float(lox.config.session(Name)['interval'])
         if self.interval<60 and self.interval>0:
             self.logger.warn("Interval is {0} seconds, this is short".format(self.interval))
         self.running = True

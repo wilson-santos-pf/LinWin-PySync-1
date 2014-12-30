@@ -14,6 +14,7 @@ Usage:
 import os
 import mimetypes
 import time
+import binascii
 from datetime import datetime
 from threading import Thread
 import Queue
@@ -40,8 +41,8 @@ class LoxSession(Thread):
     Class that definess the session to synchronize a local folder with a LocalBox store
     '''
 
-    def __init__(self,Name):
-        Thread.__init__(self,interactive = False)
+    def __init__(self,Name, interactive = False):
+        Thread.__init__(self)
         self.name = Name
         cache_name = os.environ['HOME']+'/.lox/.'+Name+'.cache'
         self.__cache = LoxCache(cache_name)
@@ -54,21 +55,30 @@ class LoxSession(Thread):
         if self.interval<60 and self.interval>0:
             self.logger.warn("Interval is {0} seconds, this is short".format(self.interval))
         self.running = True
+        self.status = "initialized"
         self.logger.info("Session started")
 
     def __del__(self):
         self.logger.info("Session stopped")
 
 
+    def status(self):
+        return self.status
+
     def run(self):
+        self.status = "started"
         while self.running:
             try:
+                self.status = "running sync"
                 self.sync()
             except Exception as e:
+                self.logger.error("sync aborted for reason "+str(e))
                 traceback.print_exc(file=self.logger.handle)
             if self.interval>0:
+                self.status = "waiting"
                 time.sleep(self.interval)
             else:
+                self.status = "stopped"
                 break
 
     def sync(self,Path='/'):
@@ -77,9 +87,6 @@ class LoxSession(Thread):
         Worker.daemon = True
         Worker.start()
         self.queue.join()
-        #while not self.queue.empty():
-        #    time.sleep(2)
-        time.sleep(5) # UGLY!!
         
     def _sync_worker(self):
         while True:
@@ -341,11 +348,13 @@ class LoxSession(Thread):
         # (1) rename local with .conflict_nnnn extension
         full_path = self.root+path
         base,ext = os.path.splitext(path)
-        tmp = self._tmpname()
-        new_name =  self.root+base+"_conflict_"+tmp+ext
+        conflict_path = self._conflict_name(path)
+        new_name =  self.root+conflict_path
+        self.logger.info("Renamed (local) {0} to {1}".format(path,conflict_path))
         os.rename(full_path,new_name)
         # (2) download remote to tmp/unique file (like maildir)
         self.download(path)
+        self.upload(conflict_path)
     
     def strange(self,path):
         self.logger.error("Resolving "+path+" led to strange situation")
@@ -353,15 +362,18 @@ class LoxSession(Thread):
     def not_resolved(self,path):
         self.logger.error(path+" could not be resolved")
 
-    # INTERNALS
-    # move this conversion functio to a library?
+    # Internal functions
+    # TODO: move these functions to a separate library?
     
     def _totimestamp(self,dt, epoch=datetime(1970,1,1,tzinfo=iso8601.UTC)):
         td = dt - epoch
-        # return td.total_seconds()
         return (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 1e6 
 
     # TODO: make real short tempname based on internal timer
-    def _tmpname(self):
-        # TODO: implement!!!!
-        return "AF3D48"
+    def _conflict_name(self,original):
+        base,ext = os.path.splitext(original)
+        x0 = os.urandom(3)
+        x1 = binascii.hexlify(x0)
+        # TODO: check if file exists and loop generating random extension until no conflict
+        new_name =  base+"_conflict_"+x1+ext
+        return new_name

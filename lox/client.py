@@ -11,7 +11,7 @@ Usage:
 
 Todo:
     
-    Check if daeon runs as expected
+    Check if daemon runs as expected
 
 '''
 
@@ -19,13 +19,12 @@ import os
 import sys
 import time
 import traceback
+
 import config
 from api import LoxApi
 from daemon import Daemon
 from session import LoxSession
-
 from error import LoxError
-from daemon import Daemon
 
 __author__ = "imtal@yolt.nl"
 __copyright__ = "(C) 2014, see LICENSE file"
@@ -107,7 +106,7 @@ def main():
             sys.exit(0)
         else:
             Cmd = os.path.basename(sys.argv[0])
-            print "\nUsage: %s start|stop|test|invitations|restart|status|help|... \n" % Cmd
+            print "\nUsage: %s start|stop|run|invitations|restart|status|help|... \n" % Cmd
             sys.exit(1)
         sys.exit(0)
     except Exception as e:

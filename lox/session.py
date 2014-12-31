@@ -14,15 +14,14 @@ Usage:
 import os
 import mimetypes
 import time
-import binascii
-from datetime import datetime
 from threading import Thread
 import Queue
 import traceback
-import iso8601
-from api import LoxApi
-from lox.logger import LoxLogger
+
 import lox.config
+import lox.lib
+from lox.api import LoxApi
+from lox.logger import LoxLogger
 from lox.error import LoxError
 from lox.cache import LoxCache
 
@@ -278,7 +277,7 @@ class LoxSession(Thread):
                 f.close()
                 modified_at = meta[u'modified_at']
                 modified = iso8601.parse_date(modified_at)
-                mtime = self._totimestamp(modified)
+                mtime = lox.lib.to_timestamp(modified)
                 os.utime(filename,(os.path.getatime(filename),mtime))
                 # update cache
                 file_info = FileInfo()
@@ -350,7 +349,7 @@ class LoxSession(Thread):
         # (1) rename local with .conflict_nnnn extension
         full_path = self.root+path
         base,ext = os.path.splitext(path)
-        conflict_path = self._conflict_name(path)
+        conflict_path = lox.lib.get_conflict_name(path)
         new_name =  self.root+conflict_path
         self.logger.info("Renamed (local) {0} to {1}".format(path,conflict_path))
         os.rename(full_path,new_name)
@@ -364,18 +363,3 @@ class LoxSession(Thread):
     def not_resolved(self,path):
         self.logger.error(path+" could not be resolved")
 
-    # Internal functions
-    # TODO: move these functions to a separate library?
-    
-    def _totimestamp(self,dt, epoch=datetime(1970,1,1,tzinfo=iso8601.UTC)):
-        td = dt - epoch
-        return (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 1e6 
-
-    # TODO: make real short tempname based on internal timer
-    def _conflict_name(self,original):
-        base,ext = os.path.splitext(original)
-        x0 = os.urandom(3)
-        x1 = binascii.hexlify(x0)
-        # TODO: check if file exists and loop generating random extension until no conflict
-        new_name =  base+"_conflict_"+x1+ext
-        return new_name

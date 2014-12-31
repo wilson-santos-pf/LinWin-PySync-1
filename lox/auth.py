@@ -18,7 +18,7 @@ The OAuth2 class reads the following parameters from the configuration:
 
 '''
 
-from httplib import HTTPConnection,HTTPSConnection,HTTPResponse
+from httplib import HTTPConnection, HTTPSConnection, HTTPResponse
 import json
 import time
 import urlparse
@@ -27,20 +27,21 @@ import lox.config
 from lox.logger import LoxLogger
 from lox.error import LoxError
 
+
 class Auth:
     '''
     Abstract class to implement authentication plugins
     '''
-    def __init__(self,Name):
+    def __init__(self, name):
         pass
-        
-    def _do_request(self,Method,Url,Body="",Headers={}):
+
+    def _do_request(self, method, url, body="", headers={}):
         try:
             self.connection.connect()
-            self.connection.request(Method,Url,Body,Headers)
+            self.connection.request(method, url, body, headers)
             response = self.connection.getresponse()
         except Exception as e:
-            raise LoxError("Error connecting to authentication server ("+str(e)+")")
+            raise LoxError("Error connecting to authentication server ({0})".format(str(e)))
         else:
             return response
 
@@ -49,60 +50,63 @@ class Auth:
 
     def header(self):
         pass
-        
+
     def query(self):
         pass
+
 
 class OAuth2(Auth):
     '''
     Class (plugin) for OAuth2 authentication
+
+    TODO: client_id and client_secret taken from iOS app, no use?
     '''
+    client_id = "32yqjbq9u38koggk040w408cccss8og4c0ckso4sgoocwgkkoc"
+    client_secret = "4j8jqubjrbi8wwsk0ocowooggkc44wcw0044skgscg4o4o44s4"
 
-    client_id = "32yqjbq9u38koggk040w408cccss8og4c0ckso4sgoocwgkkoc" # taken from iOS app
-    client_secret = "4j8jqubjrbi8wwsk0ocowooggkc44wcw0044skgscg4o4o44s4" # taken from iOS app
-
-    def __init__(self,Name):
+    def __init__(self, name):
         self.grant_type = "password"
-        self.username = lox.config.settings[Name]['username']
-        self.password = lox.config.settings[Name]['password']
-        url = lox.config.settings[Name]['auth_url']
+        self.username = lox.config.settings[name]['username']
+        self.password = lox.config.settings[name]['password']
+        url = lox.config.settings[name]['auth_url']
         o = urlparse.urlparse(url)
         self.uri_path = o.path
-        if o.path[-1:]!='/':
-            self.uri_path +='/'
+        if o.path[-1:] != '/':
+            self.uri_path += '/'
         if o.scheme == 'https':
-            self.connection = HTTPSConnection(o.netloc,o.port)
-        elif o.scheme == 'http' or o.scheme=='':
-            self.connection = HTTPConnection(o.netloc,o.port)
+            self.connection = HTTPSConnection(o.netloc, o.port)
+        elif o.scheme == 'http' or o.scheme == '':
+            self.connection = HTTPConnection(o.netloc, o.port)
         self.access_token = ""
         self.token_expires = 0
 
     def _request(self):
         url = self.uri_path
         url += "token"
-        url += "?grant_type="+self.grant_type
-        url += "&client_id="+self.client_id
-        url += "&client_secret="+self.client_secret
-        url += "&username="+self.username
-        url += "&password="+self.password
-        resp = self._do_request("GET",url)
+        url += "?grant_type=" + self.grant_type
+        url += "&client_id=" + self.client_id
+        url += "&client_secret=" + self.client_secret
+        url += "&username=" + self.username
+        url += "&password=" + self.password
+        resp = self._do_request("GET", url)
         if resp.status == 200:
             data = json.loads(resp.read())
             self.access_token = str(data[u'access_token'])
-            self.token_expires = time.time() + data[u'expires_in'] - 10 # invalidate 10 seconds before
+            # invalidate 10 seconds before
+            self.token_expires = time.time() + data[u'expires_in'] - 10
         else:
-            raise LoxError("Authentication failed, "+resp.reason)
+            raise LoxError("Authentication failed, {0}".format(resp.reason))
 
     def header(self):
         if time.time() > self.token_expires:
             self._request()
         else:
-            t = str(self.token_expires-time.time())
-        return {"Authorization": "Bearer "+self.access_token}
+            t = str(self.token_expires - time.time())
+        return {"Authorization": "Bearer " + self.access_token}
 
     def query(self):
-        "access_token="+self.access_token
-        
+        "access_token=" + self.access_token
+
 
 class LinkedIn(Auth):
     '''
@@ -111,28 +115,28 @@ class LinkedIn(Auth):
     # TODO: find server that supports this and test
     #
 
-    def __init__(self,Name):
+    def __init__(self, name):
         # API key and secret key to be delivered by server?
         # They are unique for redirect URL
-        self.api_key = lox.config.settings[Name]['api_key']
-        self.secret_key = lox.config.settings[Name]['secret_key']
-        self.redirect_uri = lox.config.settings[Name]['redirect_uri']
+        self.api_key = lox.config.settings[name]['api_key']
+        self.secret_key = lox.config.settings[name]['secret_key']
+        self.redirect_uri = lox.config.settings[name]['redirect_uri']
         url = 'https://api.linkedin.com/uas/oauth2/'
-        self.connection = httplib.HTTPSConnection(o.netloc,o.port)
+        self.connection = httplib.HTTPSConnection(o.netloc, o.port)
         self.authorization_code = ""
         self.access_token = ""
         self.token_expires = 0
-        self.state = "1234" # replace with random number
+        self.state = "1234"  # replace with random number
 
     def _request(self):
-        url1 =self.uri_path
-        url1 += "accessToken" # note: not 'token'
+        url1 = self.uri_path
+        url1 += "accessToken"  # note: not 'token'
         url1 += "?response_type=code"
-        url1 += "&redirect_uri="+self.redirect_uri
-        url1 += "&client_id="+self.api_key 
-        url1 += "&state="+self.state 
-        resp = self._do_request("GET",url1)
-        if resp.status == 301: # is it a 301 or other?
+        url1 += "&redirect_uri=" + self.redirect_uri
+        url1 += "&client_id=" + self.api_key
+        url1 += "&state=" + self.state
+        resp = self._do_request("GET", url1)
+        if resp.status == 301:
             loc = resp.header['Location']
             loc_parsed = urlparse.urlparse(loc)
             q = zurlparse.parse_qs(loc_parsed.query)
@@ -140,30 +144,30 @@ class LinkedIn(Auth):
             if (not self.state == q['state']):
                 raise LoxError("Authentication failed, CSRF")
         else:
-            raise LoxError("Authentication failed, "+resp.reason)
-        url2 =self.uri_path
-        url2 += "accessToken" # note: not 'token'
+            raise LoxError("Authentication failed, " + resp.reason)
+        url2 = self.uri_path
+        url2 += "accessToken"  # note: not 'token'
         url2 += "?grant_type=authorization_code"
-        url1 += "&redirect_uri="+self.redirect_uri
-        url2 += "&code="+self.authorization_code
-        url1 += "&client_id="+self.api_key 
-        url1 += "&client_secret="+self.secret_key
-        self._do_request("GET",url2)
+        url1 += "&redirect_uri=" + self.redirect_uri
+        url2 += "&code=" + self.authorization_code
+        url1 += "&client_id=" + self.api_key
+        url1 += "&client_secret=" + self.secret_key
+        self._do_request("GET", url2)
         if resp.status == 200:
             data = json.loads(resp.read())
             self.access_token = str(data[u'access_token'])
-            self.token_expires = time.time() + data[u'expires_in'] - 10 # invalidate 10 seconds before
+            self.token_expires = time.time() + data[u'expires_in'] - 10  # invalidate 10 seconds before
         else:
-            raise LoxError("Authentication failed, "+resp.reason)
+            raise LoxError("Authentication failed, " + resp.reason)
 
     def header(self):
         if time.time() > self.token_expires:
             #print("refresh token")
             self._request()
         else:
-            t = str(self.token_expires-time.time())
+            t = str(self.token_expires - time.time())
             #print("token expires after "+t+" seconds")
-        return {"Authorization": "Bearer "+self.access_token}
+        return {"Authorization": "Bearer " + self.access_token}
 
     def query(self):
-        "oauth2_access_token="+self.access_token
+        "oauth2_access_token=" + self.access_token

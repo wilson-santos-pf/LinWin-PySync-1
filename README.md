@@ -1,10 +1,3 @@
-Woord vooraf
-====
-Dit is een eerste samenraapsel van Python code van de afgelopen twee weken, afgeleid is van een eerdere in Erlang geschreven client. Reden voor overstap naar Python is betere GPG ondersteuning en ruimere beschikbaarheid van GUI libraries. Dit is met nadruk een 'work in progress'. De code is nog incompleet en werkt niet. Er zijn issues met de cache (shelve) en nog niet alle acties zijn overgenomen. Encryptie is nog niet geimplementeerd. De GUI delen zijn nog niet overgenomen. Hieronder de tekst van de README zoals bij de oorspronkelijke lox-client was opgenomen (met zoek en vervang Erlang = Python).
-
-
-
-
 lox-client
 =====
 
@@ -24,7 +17,7 @@ Installation
 -----
 The lox-client desktop sync client has some dependencies to be resolved before being able to build and install the client. On a Debian based system (like Ubuntu and Mint) the following packages are needed.
 
-	$ sudo apt-get install \
+    $ sudo apt-get install \
         python-gnupg \
         python-httplib2
 
@@ -32,25 +25,25 @@ For installation of Python on MacOS follow the instructions on [python.org](http
 
 Download the software and extract it in a separate directory. Then build and install it.
 
-	$ wget http://github.com/imtal/lox-client.zip
-	$ unzip lox-client.zip
-	$ mv lox-client-master lox-client
-	$ cd lox-client
-	lox-client $ make
-	lox-client $ sudo make install
+    $ wget http://github.com/imtal/lox-client.zip
+    $ unzip lox-client.zip
+    $ mv lox-client-master lox-client
+    $ cd lox-client
+    lox-client $ make
+    lox-client $ sudo make install
 
 Remove the software again by issueing the following command.
 
-	lox-client $ sudo make uninstall
+    lox-client $ sudo make uninstall
 
 
 Usage
 -----
 The client can be used from the command line with the following options.
 
-	$ lox-client
+    $ lox-client
 
-	Usage: lox-client start|stop|reload|sync|status|help|...
+    Usage: lox-client start|stop|reload|sync|status|help|...
 
            start  - starts the client (default when not started)
            stop   - stops the client
@@ -67,23 +60,23 @@ Configuration
 -----
 The configuration is stored in the `~/.lox` directory under the filename `lox-client.conf`. This file uses the well known INI format. The general options are placed on top and for each registered host a separate heading can be used. The name of the heading is is used as the session id and  therefore needs to be unique. Headings and keys can repeated but when declarations are repeated only the last one is used. The configuration file is protected with a 'chmod 700' because the file stores user identity information. Every time the client is started the file is protected that way.
 
-	[WijDelenVeilig]
-	lox_url=https://localbox.wijdelenveilig.org/lox_api
+    [WijDelenVeilig]
+    lox_url=https://localbox.wijdelenveilig.org/lox_api
     oauth_url=https://linkedin.com/token
-	dir=~/wijdelenveilig
-	username=sample_user@some.org
-	password=hertzlichwilkommen
-	log_level=warning
-	interval=300 ; interval in seconds
+    local_dir=~/wijdelenveilig
+    username=sample_user@some.org
+    password=hertzlichwilkommen
+    log_level=warning
+    interval=300 ; interval in seconds
 
-	[localhost]
-	lox_url=http://localhost/lox_api ; no trailing semicolon please
+    [localhost]
+    lox_url=http://localhost/lox_api ; no trailing semicolon please
     oauth_url=https://localhost/lox_api/oauth2/token
-	dir=~/test ; a leading tilde is replaced with $HOME
-	username=admin
-	password=adminpasswd
-	log_level=debug ; error|warning|info|debug|traffic
-	interval=180 ; interval in seconds, 0 means no automatic sync
+    local_dir=~/test ; a leading tilde is replaced with $HOME
+    username=admin
+    password=adminpasswd
+    log_level=debug ; error|warning|info|debug|traffic
+    interval=180 ; interval in seconds, 0 means no automatic sync
 
 
 
@@ -104,7 +97,7 @@ Reconciliation is done per directory, both file sets are joined in one list and 
 
 Special cases are when a file is changed locally as well as remote, or an even more seldom case that a file is replaced by a directory with the same name. These cases are called conflicts and they are resolved by changing the name of the local file. In conflict situations it is always the local file that is renamed, the server state is considered leading.
 
-You can recognize a conflict by a filename that ends with a `_conflict_23DE2A` like extension to the filename before the extension. When a conflict occurs, you can just delete or rename the files to get the right version in place.
+You can recognize a conflict by a filename that ends with a `_conflict_23DE2A` like suffix to the filename before the extension. When a conflict occurs, you can just delete or rename the files to get the right version in place.
 
 Shared folders are (should be) handled in a special way. Deleting a complete folder that is a share is implemented as a revoke of that folder (check if server blocks a delete of an not owned directory). This is not yet implemented (see wihlist below) and the server allows you to delete a shered folder completely. So, please be aware of this situsaion.
 

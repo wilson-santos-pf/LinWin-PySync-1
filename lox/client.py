@@ -20,7 +20,7 @@ import sys
 import time
 import traceback
 
-import lox.config
+import lox.config as config
 from lox.api import LoxApi
 from lox.daemon import Daemon
 from lox.session import LoxSession
@@ -44,7 +44,7 @@ class Supervisor(Daemon):
             Msg("started")
 
     def run(self, interactive = False):
-        for Name in lox.config.settings.iterkeys():
+        for Name in config.settings.iterkeys():
             t = LoxSession(Name, interactive = interactive)
             t.start()
 

@@ -44,12 +44,12 @@ class Supervisor(Daemon):
             Msg("started")
 
     def run(self, interactive = False):
-        for Name in lox.config.sessions():
+        for Name in lox.config.settings.iterkeys():
             t = LoxSession(Name, interactive = interactive)
             t.start()
 
 def need_sessions():
-    if len(config.sessions())==0:
+    if len(config.settings)==0:
         Msg("no sessions configured, edit ~/.lox/lox-client.conf")
         sys.exit(1)
 
@@ -81,7 +81,7 @@ def main():
         elif Action=='invitations':
             need_sessions()
             Msg("list invitations")
-            for Name in config.sessions():
+            for Name in config.settings.iterkeys():
                 Api = LoxApi(Name)
                 Invitations = Api.invitations()
                 print "%s: " % Name

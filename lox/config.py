@@ -1,15 +1,21 @@
 '''
 Description:
 
-    Module for lox-client configuration. Not a class so not needed to instantiate
-    throughout the application. Globally loads clinet configuration.
+    Module for lox-client configuration. Not a class so not needed to 
+    instantiate throughout the application. Globally loads or saves the client 
+    configuration with the load() and save() functions. The configuration 
+    can be accessed as a dict of session settings through the variable named 
+    settings. Each session entry in the dict is again a dict of name/value
+    pairs. At both levels all dict oprations apply.
 
 Usage:
 
     import config
     
-    config.session('localhost')['user']
-    config.get('localhost','user')
+    config.load()
+    user = config.settings['localhost']['username']
+    config.settings['localhost']['username'] = 'newuser'
+    config.save()
 
 Todo:
 
@@ -22,7 +28,7 @@ import os
 import ConfigParser
 
 def load():
-    global __config
+    global settings
     conf_dir = os.environ['HOME']+'/.lox'
     if not os.path.isdir(conf_dir):
         os.mkdir(conf_dir)
@@ -32,41 +38,28 @@ def load():
         f.write(os.linesep)
         f.close()
     path = os.environ['HOME']+'/.lox/lox-client.conf'
-    __config.read(path)
+    config = ConfigParser.RawConfigParser()
+    config.read(path)
+    for session in config.sections():
+        settings[session] = dict()
+        for key,value in config.items(session):
+            settings[session][key] = value
     
 def save():
-    global __config
+    global settings
     conf_dir = os.environ['HOME']+'/.lox'
     if not os.path.isdir(conf_dir):
         os.mkdir(conf_dir)
     path = os.environ['HOME']+'/.lox/lox-client.conf'
-    with open(path, 'wb') as f:
-        __config.write(f)
+    config = ConfigParser.RawConfigParser()
+    for session,d in settings.iteritems():
+        config.add_section(session)
+        for item,value in d.iteritems():
+            config.set(session,item,value)
+    f = open(path, 'wb')
+    config.write(f)
+    f.close()
 
-def delete(Session):
-    global __config
-    __config.remove_section(Session)
-    
-def sessions():
-    global __config
-    return __config.sections()
-
-def session(Session):
-    global __config
-    d = dict()
-    for key,value in __config.items(Session):
-        d[key] = value
-    return d
-
-def get(Session,Item,Value):
-    global __config
-    __config.get(Session,Item)
-
-def set(Session,Item,Value):
-    global __config
-    __config.set(Session,Item,Value)
-
-
-__config = ConfigParser.RawConfigParser()
+settings = dict()
 load()
 

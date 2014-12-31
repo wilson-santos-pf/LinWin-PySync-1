@@ -7,7 +7,7 @@ Usage:
     import lox.config
     from lox.session import LoxSession
     
-    for Name in lox.config.sessions()
+    for Name in lox.config.settings.iterkeys()
         S = LoxSession(Name)
 
 '''
@@ -46,12 +46,14 @@ class LoxSession(Thread):
         self.name = Name
         cache_name = os.environ['HOME']+'/.lox/.'+Name+'.cache'
         self.__cache = LoxCache(cache_name)
-        local_dir = lox.config.session(Name)['local_dir']
+        local_dir = lox.config.settings[Name]['local_dir']
         self.root = os.path.expanduser(local_dir)
+        if not os.path.isdir(self.root):
+            os.mkdir(self.root)
         self.logger = LoxLogger(Name, interactive)
         self.api = LoxApi(Name)
         self.queue = Queue.Queue()
-        self.interval = float(lox.config.session(Name)['interval'])
+        self.interval = float(lox.config.settings[Name]['interval'])
         if self.interval<60 and self.interval>0:
             self.logger.warn("Interval is {0} seconds, this is short".format(self.interval))
         self.running = True

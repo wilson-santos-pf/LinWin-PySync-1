@@ -35,13 +35,13 @@ class LoxApi:
     '''
 
     def __init__(self,Name):
-        authtype = lox.config.session(Name)['auth_type']
+        authtype = lox.config.settings[Name]['auth_type']
         if authtype.lower() == 'oauth2':
             self.auth = OAuth2(Name)
         else:
             raise LoxError('not supported')
         self.agent = {"Agent":"lox-client"} # use one time generated UUID in the future?
-        url = lox.config.session(Name)['lox_url']
+        url = lox.config.settings[Name]['lox_url']
         o = urlparse.urlparse(url)
         self.server = o.netloc
         self.port = o.port

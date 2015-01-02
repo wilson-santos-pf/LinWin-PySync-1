@@ -22,14 +22,13 @@ class LoxLogger:
         self.handle.close()
 
     def __log(self,Level,Msg):
+        dt = datetime.now()
+        self.handle.write('{:%Y-%m-%d %H:%M:%S}'.format(dt))
+        self.handle.write(' - [{0}] '.format(Level))
+        self.handle.write(Msg)
+        self.handle.write(os.linesep)
         if self.__interactive:
             print(Msg)
-        else:
-            dt = datetime.now()
-            self.handle.write('{:%Y-%m-%d %H:%M:%S}'.format(dt))
-            self.handle.write(' - [{0}] '.format(Level))
-            self.handle.write(Msg)
-            self.handle.write(os.linesep)
 
     def set_level(self,level):
         self.__log_level = level

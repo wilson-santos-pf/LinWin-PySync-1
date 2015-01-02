@@ -106,7 +106,7 @@ def main():
             sys.exit(0)
         else:
             Cmd = os.path.basename(sys.argv[0])
-            print "\nUsage: %s start|stop|run|invitations|restart|status|help|... \n" % Cmd
+            print "\nUsage: {} start|stop|run|invitations|restart|status|help|... \n".format(Cmd)
             sys.exit(1)
         sys.exit(0)
     except Exception as e:

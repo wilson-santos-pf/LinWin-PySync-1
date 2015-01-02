@@ -15,7 +15,7 @@ import time
 import urlparse
 
 import lox.config
-from lox.auth import OAuth2
+from lox.auth import Localbox
 from lox.error import LoxError
 
 
@@ -36,8 +36,8 @@ class LoxApi:
 
     def __init__(self,Name):
         authtype = lox.config.settings[Name]['auth_type']
-        if authtype.lower() == 'oauth2':
-            self.auth = OAuth2(Name)
+        if authtype.lower() == 'localbox':
+            self.auth = Localbox(Name)
         else:
             raise LoxError('not supported')
         self.agent = {"Agent":"lox-client"} # use one time generated UUID in the future?
@@ -105,7 +105,7 @@ class LoxApi:
         elif resp.status == 404:
             return None
         else:
-            raise LoxError(resp.reason)
+            raise LoxError('lox_api/meta/ got {0}'.format(resp.status))
 
     def upload(self,path,content_type,body):
         headers = self.auth.header()

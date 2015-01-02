@@ -37,7 +37,7 @@ class Daemon:
         if pid > 0:
             # This is the first parent
             sys.exit(0)
-        print "child (1) = ", os.getpid()
+        #print "child (1) = ", os.getpid()
         # Decouple from parent environment
         os.chdir(self.path)
         os.setsid()
@@ -48,7 +48,7 @@ class Daemon:
         if pid > 0:
             # This is the second parent
             sys.exit(0)
-        print "child (2) = ", os.getpid()
+        #print "child (2) = ", os.getpid()
         '''
         # Close all open file descriptors
         import resource # Resource usage information.

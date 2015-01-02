@@ -60,6 +60,11 @@ def save():
     config.write(f)
     f.close()
 
+def check():
+    global settings
+    for name in settings.keyitems():
+        if not ('interval' in settings[name]): raise LoxError('config not complete')
+    
 settings = dict()
 load()
 

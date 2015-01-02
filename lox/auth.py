@@ -55,7 +55,7 @@ class Auth:
         pass
 
 
-class OAuth2(Auth):
+class Localbox(Auth):
     '''
     Class (plugin) for OAuth2 authentication
 
@@ -68,7 +68,7 @@ class OAuth2(Auth):
         self.grant_type = "password"
         self.username = lox.config.settings[name]['username']
         self.password = lox.config.settings[name]['password']
-        url = lox.config.settings[name]['auth_url']
+        url = lox.config.settings[name]['lox_url']
         o = urlparse.urlparse(url)
         self.uri_path = o.path
         if o.path[-1:] != '/':
@@ -82,7 +82,7 @@ class OAuth2(Auth):
 
     def _request(self):
         url = self.uri_path
-        url += "token"
+        url += "lox_api/oauth2/token"
         url += "?grant_type=" + self.grant_type
         url += "&client_id=" + self.client_id
         url += "&client_secret=" + self.client_secret

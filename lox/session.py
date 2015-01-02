@@ -17,6 +17,8 @@ import time
 from threading import Thread
 import Queue
 import traceback
+from datetime import datetime
+import iso8601
 
 import lox.config
 import lox.lib
@@ -52,7 +54,10 @@ class LoxSession(Thread):
         self.logger = LoxLogger(Name, interactive)
         self.api = LoxApi(Name)
         self.queue = Queue.Queue()
-        self.interval = float(lox.config.settings[Name]['interval'])
+        if not interactive:
+            self.interval = float(lox.config.settings[Name]['interval'])
+        else:
+            self.interval = 0
         if self.interval<60 and self.interval>0:
             self.logger.warn("Interval is {0} seconds, this is short".format(self.interval))
         self.running = True
@@ -73,7 +78,7 @@ class LoxSession(Thread):
                 self.status = "running sync"
                 self.sync()
             except Exception as e:
-                self.logger.error("sync aborted for reason "+str(e))
+                self.logger.error("Sync aborted for reason: "+str(e))
                 traceback.print_exc(file=self.logger.handle)
             if self.interval>0:
                 self.status = "waiting"
@@ -104,7 +109,7 @@ class LoxSession(Thread):
             self.queue.task_done()
                 
     def reconcile(self,path):
-        self.logger.debug("Reconcile: %s" % path)
+        self.logger.debug("Reconcile '{0}'".format(path))
         # fetch local directory
         local_files = set()
         local_dir = self.root+path
@@ -358,8 +363,8 @@ class LoxSession(Thread):
         self.upload(conflict_path)
     
     def strange(self,path):
-        self.logger.error("Resolving "+path+" led to strange situation")
+        self.logger.error("Resolving '{0}' led to strange situation".format(path))
 
     def not_resolved(self,path):
-        self.logger.error(path+" could not be resolved")
+        self.logger.error("Path '{0}' could not be resolved".format(path))
 

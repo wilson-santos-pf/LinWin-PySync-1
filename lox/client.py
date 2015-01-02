@@ -7,7 +7,6 @@ Usage:
     import lox.client
     
     lox.client.main()
-    # or lox.client.test() for a test run of the sync
 
 Todo:
     
@@ -25,12 +24,15 @@ from lox.api import LoxApi
 from lox.daemon import Daemon
 from lox.session import LoxSession
 from lox.error import LoxError
+#import lox.gui as gui
+
 
 __author__ = "imtal@yolt.nl"
 __copyright__ = "(C) 2014, see LICENSE file"
 __version__ = "0.1"
 
-def Msg(msg):
+
+def console_msg(msg):
     print "\nLocalBox client: %s\n" % msg
 
 restart = False
@@ -41,75 +43,93 @@ class Supervisor(Daemon):
         global restart
         if restart:
             restart = False
-            Msg("started")
+            console_msg("started")
 
     def run(self, interactive = False):
         for Name in config.settings.iterkeys():
             t = LoxSession(Name, interactive = interactive)
             t.start()
+        #gui.main()
 
 def need_sessions():
     if len(config.settings)==0:
-        Msg("no sessions configured, edit ~/.lox/lox-client.conf")
+        console_msg("no sessions configured, edit ~/.lox/lox-client.conf")
         sys.exit(1)
 
+def cmd_start(daemon):
+    need_sessions()
+    console_msg("started")
+    daemon.start()
+    
+def cmd_stop(daemon):
+    daemon.stop()
+    console_msg("stopped")
+
+def cmd_run(daemon):
+    console_msg("run in foreground")
+    daemon.run(interactive = True)
+
+def cmd_restart(daemon):
+    console_msg("restart")
+    daemon.restart()
+
+def cmd_status(daemon):
+    s = daemon.status()
+    if s is None:
+        console_msg("not running ...")
+    else:
+        console_msg("running with pid %s" % s)
+
+def cmd_help(daemon):
+    cmd = os.path.basename(sys.argv[0])
+    console_msg("desktop sync version {}".format(__version__))
+    print "  Usage: {} [command]".format(cmd)
+    print ""
+    for c in commands.iterkeys():
+        (f,description) = commands[c]
+        print "       {0:12} - {1}".format(c,description)
+    print ""
+    sys.exit(0)
+
+def cmd_invitations(daemon):
+    need_sessions()
+    console_msg("list invitations")
+    for name in config.settings.iterkeys():
+        api = LoxApi(name)
+        invitations = api.invitations()
+        print "%s: " % name
+        for invite in invitations:
+            share = invite[u'share']
+            item = share[u'item']
+            print "  [%s] %s (%s)" % (invite[u'id'],item[u'path'],invite[u'state'])
+        print ""
+    sys.exit(0)
+
+def cmd_usage(daemon):
+    cmd = os.path.basename(sys.argv[0])
+    print "\nUsage: {0} start|stop|run|status|help|... \n".format(cmd)
+    sys.exit(1)
+
+commands = {
+                "start": (cmd_start,"starts the client"),
+                "stop": (cmd_stop,"stops the client"),
+                "run": (cmd_run, "run in foreground (interactive)"),
+                "restart": (cmd_restart, "reloads the confguration"),
+                "status": (cmd_status,"show the status of the client"),
+                "invitations": (cmd_invitations,"show invitations"),
+                "help": (cmd_help,"show this help")
+           }
+
 def main():
-    Action = sys.argv[1].lower() if len(sys.argv)>1 else 'undefined'
+    action = sys.argv[1].lower() if len(sys.argv)>1 else cmd_usage()
     path = os.environ['HOME']
     pidfile = os.environ['HOME']+'/.lox/lox-client.pid'
     logfile = open(os.environ['HOME']+'/.lox/lox-client.log','w+')
     daemon = Supervisor(pidfile, path=os.environ['HOME'], umask=100) #, stdout=logfile, stderr=logfile, preserve=[logfile])
     try:
-        if Action=='start':
-            need_sessions()
-            Msg("started")
-            daemon.start()
-        elif Action=='stop':
-            daemon.stop()
-            Msg("stopped")
-        elif Action=='run':
-            Msg("run in foreground")
-            daemon.run(interactive = True)
-        elif Action=='restart':
-            daemon.restart()
-        elif Action=='status':
-            s = daemon.status()
-            if s is None:
-                Msg("not running ...")
-            else:
-                Msg("running with pid %s" % s)
-        elif Action=='invitations':
-            need_sessions()
-            Msg("list invitations")
-            for Name in config.settings.iterkeys():
-                Api = LoxApi(Name)
-                Invitations = Api.invitations()
-                print "%s: " % Name
-                for Invite in Invitations:
-                    Share = Invite[u'share']
-                    Item = Share[u'item']
-                    print "  [%s] %s (%s)" % (Invite[u'id'],Item[u'path'],Invite[u'state'])
-                print ""
-        elif Action=='help':
-            Cmd = os.path.basename(sys.argv[0])
-            Msg("desktop sync version {}".format(__version__))
-            print "  Usage: {} [command]".format(Cmd)
-            print ""
-            print "       start       - starts the client"
-            print "       stop        - stops the client"
-            print "       run         - run in forground (interactive)"
-            print "       restart     - reloads the confguration"
-            print "       invitations - show invitations"
-            #print "       sync        - force a synchronization" # must be done with a signal handler
-            print "       status      - show the status of the client"
-            print "       help        - show this help"
-            sys.exit(0)
-        else:
-            Cmd = os.path.basename(sys.argv[0])
-            print "\nUsage: {} start|stop|run|invitations|restart|status|help|... \n".format(Cmd)
-            sys.exit(1)
-        sys.exit(0)
+        (f,description) = commands[action]
+        f(daemon)
     except Exception as e:
-        Msg(e)
+        console_msg(e)
         traceback.print_exc()
         sys.exit(1)

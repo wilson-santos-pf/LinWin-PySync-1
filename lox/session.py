@@ -72,16 +72,16 @@ class LoxSession(Thread):
         return self.status
 
     def run(self):
-        self.status = "started"
+        self.status = "session started"
         while self.running:
             try:
-                self.status = "running sync"
+                self.logger.info("Sync started")
+                self.status = 'sync running since {:%Y-%m-%d %H:%M:%S}'.format(datetime.now())
                 self.sync()
             except Exception as e:
-                self.logger.error("Sync aborted for reason: "+str(e))
-                traceback.print_exc(file=self.logger.handle)
+                self.logger.critical("Exception in session\n{}".format(traceback.format_exc()))
             if self.interval>0:
-                self.status = "waiting"
+                self.status = 'waiting  since {:%Y-%m-%d %H:%M:%S}'.format(datetime.now())
                 time.sleep(self.interval)
             else:
                 self.status = "stopped"
@@ -102,10 +102,10 @@ class LoxSession(Thread):
                 remote = self.file_info_remote(path)
                 cached = self.file_info_cache(path)
                 action = self.resolve(local,remote,cached)
-                self.logger.info("Resolving '%s' leads to %s" %(path,action.__name__))
+                self.logger.debug("Resolving '%s' leads to %s" %(path,action.__name__))
                 action(path)
             except Exception as e:
-                traceback.print_exc(file=self.logger.handle)
+                self.logger.critical("Exception in sync\n{}".format(traceback.format_exc()))
             self.queue.task_done()
                 
     def reconcile(self,path):
@@ -167,6 +167,11 @@ class LoxSession(Thread):
                 Local.modified==Remote.modified and 
                 Cached.size is None):
             return self.update_cache
+        #resolve({file   ,ModifiedL,SizeL},{file   ,ModifiedR,SizeR},unknown                  ) when ModifiedL /= ModifiedR -> conflict;
+        if (Local.isdir==Remote.isdir==False and 
+                Local.modified!=Remote.modified and 
+                Cached.size is None):
+            return self.conflict
         #resolve({file   ,ModifiedL,SizeL},{file   ,ModifiedR,_    },{file   ,ModifiedL,SizeL}) when ModifiedR > ModifiedL -> download;
         if (Local.isdir==Remote.isdir==Cached.isdir==False and 
                 Local.modified < Remote.modified and 
@@ -315,7 +320,7 @@ class LoxSession(Thread):
             meta = self.api.meta(path)
             modified_at = meta[u'modified_at']
             modified = iso8601.parse_date(modified_at)
-            mtime = self._totimestamp(modified)
+            mtime = lox.lib.to_timestamp(modified)
             os.utime(filename,(os.path.getatime(filename),mtime))
             # update cache
             file_info = FileInfo()

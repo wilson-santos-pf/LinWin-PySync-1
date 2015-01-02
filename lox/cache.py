@@ -4,7 +4,7 @@ Module levert een eenvoudige cahce gebaseerd op shelve
 Usage:
     s = LoxCache("filename")
     s["key"] = "valus" # automatically does sync()
-    del s["key"] # okay even ik key does not exist
+    del s["key"] # okay even if key does not exist
 
 '''
 

@@ -14,25 +14,22 @@ class LoxLogger:
 
     def __init__(self,Name, Interactive):
         self.__log_file = os.environ['HOME']+'/.lox/.'+Name+'.log'
-        self.__log_handle = open(self.__log_file,'a')
+        self.handle = open(self.__log_file,'a')
         self.__log_level = self.DEBUG # WARN?
         self.__interactive = Interactive
 
     def __del__(self):
-        self.__log_handle.close()
+        self.handle.close()
 
     def __log(self,Level,Msg):
         if self.__interactive:
             print(Msg)
         else:
             dt = datetime.now()
-            self.__log_handle.write('{:%Y-%m-%d %H:%M:%S}'.format(dt))
-            self.__log_handle.write(' - [{0}] '.format(Level))
-            self.__log_handle.write(Msg)
-            self.__log_handle.write(os.linesep)
-        
-    def get_fd():
-        return self.__log_handle
+            self.handle.write('{:%Y-%m-%d %H:%M:%S}'.format(dt))
+            self.handle.write(' - [{0}] '.format(Level))
+            self.handle.write(Msg)
+            self.handle.write(os.linesep)
 
     def set_level(self,level):
         self.__log_level = level

@@ -1,3 +1,19 @@
+'''
+Module that implements a daemon class where
+the Python program runs as a Unix daemon
+
+Usage:
+
+    from daemon import Daemon
+
+    class MyDaemon(Daemon):
+
+        def run():
+            # do my daemon stuff here
+            pass
+
+'''
+
 import sys
 import os
 import time
@@ -8,7 +24,7 @@ class DaemonError(Exception):
     def __init__(self,reason):
         self.value = reason
     def __str__(self):
-        return repr(self.value)
+        return self.value
 
 
 class Daemon:
@@ -17,15 +33,17 @@ class Daemon:
 
     Usage: subclass the Daemon class and override the run() and signal() methods
     """
-    def __init__(self, pidfile, path='/', umask=0, stdin=None, stdout=None, stderr=None, preserve=[]):
+    def __init__(self, pidfile, path=None, umask=0, stdin=None, stdout=None, stderr=None, preserve=[]):
         self.pidfile = pidfile
         devnull = os.devnull if (hasattr(os,"devnull")) else "/dev/null"
         self.stdin = devnull if (stdin is None) else stdin
         self.stdout = devnull if (stdout is None) else stdout
         self.stderr = devnull if (stderr is None) else stderr
+        self.path = os.environ['HOME'] if (path is None) else path
         self.path = path
         self.umask = umask
         self.preserve = preserve
+        self._restart = False
 
     def __daemonize(self):
         """
@@ -37,7 +55,6 @@ class Daemon:
         if pid > 0:
             # This is the first parent
             sys.exit(0)
-        #print "child (1) = ", os.getpid()
         # Decouple from parent environment
         os.chdir(self.path)
         os.setsid()
@@ -48,7 +65,10 @@ class Daemon:
         if pid > 0:
             # This is the second parent
             sys.exit(0)
-        #print "child (2) = ", os.getpid()
+
+        # run started before redirecting I/O
+        self.started(restart = self._restart)
+        self._restart = False
         '''
         # Close all open file descriptors
         import resource # Resource usage information.
@@ -65,22 +85,20 @@ class Daemon:
         # Redirect standard I/O file descriptors
         sys.stdout.flush()
         sys.stderr.flush()
-        si = file(self.stdin, 'r')
-        so = file(self.stdout, 'a+')
-        se = file(self.stderr, 'a+', 0)
-        os.dup2(si.fileno(), sys.stdin.fileno())
-        os.dup2(so.fileno(), sys.stdout.fileno())
-        os.dup2(se.fileno(), sys.stderr.fileno())
-
+        sys.stdin = open(self.stdin, 'r')
+        sys.stdout = open(self.stdout, 'a+')
+        sys.stderr = open(self.stderr, 'a+', 0)
         # Create the pidfile
         pid = str(os.getpid())
-        file(self.pidfile,'w+').write("%s\n" % pid)
+        with open(self.pidfile,'w+') as f:
+            f.write("{0}\n".format(pid))
 
         # Register handler at exit
         atexit.register(self.__cleanup)
 
     def __cleanup(self):
         os.remove(self.pidfile)
+        self.terminate()
 
     def start(self):
         """
@@ -88,18 +106,22 @@ class Daemon:
         """
         # Check for a pidfile to see if the daemon already runs
         try:
-            pf = file(self.pidfile,'r')
+            pf = open(self.pidfile,'r')
             pid = int(pf.read().strip())
             pf.close()
         except IOError:
             pid = None
+        except Exception as e:
+            raise(e)
 
         if pid:
-            raise DaemonError('Already running')
+            raise DaemonError('already running')
 
         # Start the daemon
         self.__daemonize()
+        self._restart = False
         self.run()
+        self.__cleanup()
 
     def stop(self):
         """
@@ -114,7 +136,7 @@ class Daemon:
             pid = None
 
         if not pid:
-            raise DaemonError('Not running')
+            raise DaemonError('not running')
 
         # Try killing the daemon process
         try:
@@ -134,6 +156,7 @@ class Daemon:
         Restart the daemon
         """
         self.stop()
+        self._restart = True
         self.start()
 
     def status(self):
@@ -147,7 +170,7 @@ class Daemon:
 
     def started(self):
         """
-        Override this method when you subclass Daemon. 
+        Override this method when you subclass Daemon.
         It will be called by the parent process after the process has been
         daemonized by start() or restart().
         """
@@ -155,7 +178,7 @@ class Daemon:
 
     def run(self):
         """
-        Override this method when you subclass Daemon. 
+        Override this method when you subclass Daemon.
         It will be called by the child process after the process has been
         daemonized by start() or restart().
         """

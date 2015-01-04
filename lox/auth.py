@@ -36,14 +36,10 @@ class Auth:
         pass
 
     def _do_request(self, method, url, body="", headers={}):
-        try:
-            self.connection.connect()
-            self.connection.request(method, url, body, headers)
-            response = self.connection.getresponse()
-        except Exception as e:
-            raise LoxError("Error connecting to authentication server ({0})".format(str(e)))
-        else:
-            return response
+        self.connection.connect()
+        self.connection.request(method, url, body, headers)
+        response = self.connection.getresponse()
+        return response
 
     def _request(self):
         pass

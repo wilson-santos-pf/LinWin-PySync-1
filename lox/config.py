@@ -1,17 +1,17 @@
 '''
 Description:
 
-    Module for lox-client configuration. Not a class so not needed to 
-    instantiate throughout the application. Globally loads or saves the client 
-    configuration with the load() and save() functions. The configuration 
-    can be accessed as a dict of session settings through the variable named 
+    Module for lox-client configuration. Not a class so not needed to
+    instantiate throughout the application. Globally loads or saves the client
+    configuration with the load() and save() functions. The configuration
+    can be accessed as a dict of session settings through the variable named
     settings. Each session entry in the dict is again a dict of name/value
     pairs. At both levels all dict oprations apply.
 
 Usage:
 
     import config
-    
+
     config.load()
     user = config.settings['localhost']['username']
     config.settings['localhost']['username'] = 'newuser'
@@ -19,7 +19,7 @@ Usage:
 
 Todo:
 
-    Add change of configuration and save() function    
+    Add change of configuration and save() function
 
 '''
 
@@ -27,7 +27,13 @@ import sys
 import os
 import ConfigParser
 
+from lox.error import LoxError
+
+
 def load():
+    '''
+    Load the config file as the current settings
+    '''
     global settings
     conf_dir = os.environ['HOME']+'/.lox'
     if not os.path.isdir(conf_dir):
@@ -44,8 +50,11 @@ def load():
         settings[session] = dict()
         for key,value in config.items(session):
             settings[session][key] = value
-    
+
 def save():
+    '''
+    Load the current settings to the config file
+    '''
     global settings
     conf_dir = os.environ['HOME']+'/.lox'
     if not os.path.isdir(conf_dir):
@@ -60,11 +69,17 @@ def save():
     config.write(f)
     f.close()
 
-def check():
+def check(name, items=[]):
+    '''
+    Check is the list of proprties is defined for the section given by name
+    '''
     global settings
-    for name in settings.keyitems():
-        if not ('interval' in settings[name]): raise LoxError('config not complete')
-    
+    for prop in items:
+        if not (prop in settings[name]):
+            return False
+    return True
+
+
 settings = dict()
 load()
 

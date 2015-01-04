@@ -3,14 +3,10 @@
 Main module
 
 Usage:
-    
-    import lox.client
-    
-    lox.client.main()
 
-Todo:
-    
-    Check if daemon runs as expected
+    import lox.client
+
+    lox.client.main()
 
 '''
 
@@ -21,10 +17,10 @@ import traceback
 
 import lox.config as config
 from lox.api import LoxApi
-from lox.daemon import Daemon
+from lox.daemon import Daemon, DaemonError
 from lox.session import LoxSession
 from lox.error import LoxError
-#import lox.gui as gui
+import lox.gui as gui
 
 
 __author__ = "imtal@yolt.nl"
@@ -33,47 +29,87 @@ __version__ = "0.1"
 
 
 def console_msg(msg):
-    print "\nLocalBox client: %s\n" % msg
+    sys.stderr.write("\nLocalBox client: {0}\n\n".format(msg))
+    sys.stderr.flush()
 
-restart = False
 
 class Supervisor(Daemon):
+    '''
+    The daemon: start the sessions as threads and start the GUI
+    '''
+    sessions = dict()
 
-    def started(self):
-        global restart
+    #def __init__(self,**kwargs):
+    #    Daemon.__init__(self,kwargs)
+    #    self.sessions = dict()
+
+    def started(self, restart=False):
         if restart:
-            restart = False
+            console_msg("restarted")
+        else:
             console_msg("started")
 
     def run(self, interactive = False):
-        for Name in config.settings.iterkeys():
-            t = LoxSession(Name, interactive = interactive)
-            t.start()
-        #gui.main()
+        for name in config.settings.iterkeys():
+            self.add(name, interactive)
+        if not interactive:
+            gui.mainloop()
+            self.stop()
+
+    def add(self, name, interactive):
+        self.sessions[name] = LoxSession(name, interactive)
+        self.sessions[name].start()
+
+    def remove(self, name):
+        self.sessions[name].stop()
+        del self.sessions[name]
+
+    def restart(self,name):
+        self.sessions[name].stop()
+        while self.sessions[name].is_alive():
+            pass
+        self.sessions[name].start()
+
 
 def need_sessions():
+    '''
+    Check if there are any sessions specified in config file
+    '''
     if len(config.settings)==0:
         console_msg("no sessions configured, edit ~/.lox/lox-client.conf")
         sys.exit(1)
 
 def cmd_start(daemon):
+    '''
+    Start the damon
+    '''
     need_sessions()
-    console_msg("started")
     daemon.start()
-    
+
 def cmd_stop(daemon):
+    '''
+    Stop the daemon
+    '''
     daemon.stop()
     console_msg("stopped")
 
 def cmd_run(daemon):
+    '''
+    Run the deamon interactive in the foreground
+    '''
     console_msg("run in foreground")
     daemon.run(interactive = True)
 
 def cmd_restart(daemon):
-    console_msg("restart")
+    '''
+    Restart daemon
+    '''
     daemon.restart()
 
 def cmd_status(daemon):
+    '''
+    Show status of daemon
+    '''
     s = daemon.status()
     if s is None:
         console_msg("not running ...")
@@ -81,6 +117,9 @@ def cmd_status(daemon):
         console_msg("running with pid %s" % s)
 
 def cmd_help(daemon):
+    '''
+    Show help
+    '''
     cmd = os.path.basename(sys.argv[0])
     console_msg("desktop sync version {}".format(__version__))
     print "  Usage: {} [command]".format(cmd)
@@ -92,6 +131,9 @@ def cmd_help(daemon):
     sys.exit(0)
 
 def cmd_invitations(daemon):
+    '''
+    Show invirtations for each session
+    '''
     need_sessions()
     console_msg("list invitations")
     for name in config.settings.iterkeys():
@@ -121,15 +163,22 @@ commands = {
            }
 
 def main():
-    action = sys.argv[1].lower() if len(sys.argv)>1 else cmd_usage()
-    path = os.environ['HOME']
+    '''
+    Main routine: call routine from command
+    '''
+    cmd = sys.argv[1].lower() if len(sys.argv)>1 else cmd_usage()
     pidfile = os.environ['HOME']+'/.lox/lox-client.pid'
-    logfile = open(os.environ['HOME']+'/.lox/lox-client.log','w+')
-    daemon = Supervisor(pidfile, path=os.environ['HOME'], umask=100) #, stdout=logfile, stderr=logfile, preserve=[logfile])
+    logfile = os.environ['HOME']+'/.lox/lox-client.log'
+    daemon = Supervisor(pidfile, path=os.environ['HOME'], umask=100, stdout=logfile, stderr=logfile)
     try:
-        (f,description) = commands[action]
-        f(daemon)
-    except Exception as e:
+        (func,description) = commands[cmd]
+        func(daemon)
+    except DaemonError as e:
         console_msg(e)
+        sys.exit(1)
+    except LoxError as e:
+        console_msg(str(e))
+        sys.exit(1)
+    except Exception as e:
         traceback.print_exc()
         sys.exit(1)

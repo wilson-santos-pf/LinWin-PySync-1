@@ -7,7 +7,7 @@ Usage: create an instance per account
 
 '''
 
-from httplib import HTTPConnection,HTTPSConnection,HTTPResponse
+from httplib import HTTPConnection, HTTPSConnection, HTTPResponse
 import traceback
 import urllib
 import json
@@ -20,12 +20,12 @@ from lox.error import LoxError
 
 
 class LoxApiResponse:
-    
+
     status = None
     headers = None
     reason = None
     body = None
-    
+
 class LoxApi:
     '''
     Class that forms the API to a LocalBox store.
@@ -51,26 +51,21 @@ class LoxApi:
         self.ssl = (o.scheme == 'https')
 
 
-    def __do_request(self,Method,Url,Body="",Headers={}):
-        try:
-            response = LoxApiResponse()
-            if self.ssl:
-                connection = HTTPSConnection(self.server,self.port)
-            else:
-                connection = HTTPConnection(self.server,self.port)
-            connection.connect()
-            connection.request(Method,Url,Body,Headers)
-            r = connection.getresponse()
-            response.status = r.status
-            response.reason = r.reason
-            response.body = r.read()
-            response.headers = r.getheaders()
-            connection.close()
-        except Exception as e:
-            traceback.print_exc()
-            raise LoxError("Error connecting to LocalBox server %s" % e)
+    def __do_request(self,method,url,body="",headers={}):
+        response = LoxApiResponse()
+        if self.ssl:
+            connection = HTTPSConnection(self.server,self.port)
         else:
-            return response
+            connection = HTTPConnection(self.server,self.port)
+        connection.connect()
+        connection.request(method,url,body,headers)
+        r = connection.getresponse()
+        response.status = r.status
+        response.reason = r.reason
+        response.body = r.read()
+        response.headers = r.getheaders()
+        connection.close()
+        return response
 
     def identities(self,Begin):
         headers = self.auth.header()

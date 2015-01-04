@@ -1,0 +1,21 @@
+#!/usr/bin/env xdg-open
+
+[Desktop Entry]
+# The format of this file is specified at
+# http://freedesktop.org/Standards/desktop-entry-spec
+# The entries are in the order they are listed in version 1.0
+Type=Application
+Version=1.0
+Name=LocalBox
+GenericName=Synchronization Client
+GenericName[en]=Synchronization Client
+Comment=Synchronization Client
+Comment[en]=
+Icon=/home/tjeerd/Develop/Linux-Sync/icons/localbox.png
+TryExec=lox-client
+Exec=lox-client start
+Terminal=false
+# Categorie entry according to version 1.0 of
+# http://www.freedesktop.org/wiki/Specifications/menu-spec
+Categories=GNOME;Network;
+Encoding=UTF-8

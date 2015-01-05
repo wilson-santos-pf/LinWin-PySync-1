@@ -46,15 +46,22 @@ The client can be used from the command line with the following options.
 
     Usage: lox-client start|stop|reload|sync|status|help|...
 
-           start  - starts the client (default when not started)
-           stop   - stops the client
-           config - edit the configuration file (default when alredey started)
-           reload - reloads the confguration
-           sync   - force a synchronization
-           status - show the status of the client
-           help   - this help
+    $ lox-client help
 
-Without an option a usage message is shown.
+    LocalBox client: desktop sync version 0.1
+
+       Usage: lox-client [command]
+
+           status       - show the status of the client
+           run          - run in foreground (interactive)
+           help         - show this help
+           stop         - stops the client
+           invitations  - show invitations
+           start        - starts the client
+           restart      - reloads the confguration
+
+
+Without an option a usage message is shown. Use the 'run' command to test your configuration from the console.
 
 
 Configuration
@@ -62,18 +69,18 @@ Configuration
 The configuration is stored in the `~/.lox` directory under the filename `lox-client.conf`. This file uses the well known INI format. The general options are placed on top and for each registered host a separate heading can be used. The name of the heading is is used as the session id and  therefore needs to be unique. Headings and keys can repeated but when declarations are repeated only the last one is used. The configuration file is protected with a 'chmod 700' because the file stores user identity information. Every time the client is started the file is protected that way.
 
     [WijDelenVeilig]
-    lox_url=https://localbox.wijdelenveilig.org/lox_api
-    oauth_url=https://linkedin.com/token
+    lox_url=https://localbox.wijdelenveilig.org
     local_dir=~/wijdelenveilig
+    auth_type=localbox
     username=sample_user@some.org
     password=hertzlichwilkommen
     log_level=warning
     interval=300 ; interval in seconds
 
     [localhost]
-    lox_url=http://localhost/lox_api ; no trailing semicolon please
-    oauth_url=https://localhost/lox_api/oauth2/token
+    lox_url=http://localhost ; no trailing slash
     local_dir=~/test ; a leading tilde is replaced with $HOME
+    auth_type=localbox
     username=admin
     password=adminpasswd
     log_level=debug ; error|warning|info|debug|traffic
@@ -83,7 +90,7 @@ The configuration is stored in the `~/.lox` directory under the filename `lox-cl
 
 Data
 -----
-The LocalBox client stores its data also in the `~/.lox` directory. In this directory a cache, data directory and log file is kept for every connection. The session id used in the configuration file is used as the name of the cache, data and logfile. The actual folders that are synced are usually static links to data folders within the config directory. Therefore changing a destination directory only results in the rename of that link so the data and synchronization state are not lost.
+The LocalBox client stores its data also in the `~/.lox` directory. In this directory a cache and log file is kept for every connection. The session id used in the configuration file is used as the name of the cache, data and logfile. The actual folders that are synced are usually static links to data folders within the config directory. Therefore changing a destination directory only results in the rename of that link so the data and synchronization state are not lost.
 
 
 Concepts
@@ -91,8 +98,6 @@ Concepts
 The lox-client allows multiple sessions to synchronize folder contents with LocalBox servers. Each session is uniquely identified by a a session name, by changing this name all previous session information is deleted and a new session is created.
 
 The desktop sync client implements two-way synchronization. A file is considered to be changed when the modified time of the file is different or the size is different. The client keeps track of the files when they are synced. When changed it can determine if a file needs to be uploaded, downloaded or deleted. Conflicts are handled automatically. When there is a conflict the actual state of the server is considered leading and the files or folders on the client are renamed and then all files or folders are merged.
-
-The synchronization is based on a two-way sync mechanism where each session keeps track of metadata of files when they are synchronized. With this metadata it can be determined on each consecutive run whether the file is changed locally or remote. Walking through the file tree is called reconciliation, determination of the action to be taken is called resolution with a special case for conflict handling.
 
 Reconciliation is done per directory, both file sets are joined in one list and walked through. Resolution is done by comparing the file metadata from the local stored file, from the remote stored file and from the cache containing the metadata from the last synchronization run. Comparison of metadata is currecntly done by comparing both modification date and size. A future feature can be a check on MD5 checksum locally which is bound to the version number remote.
 

@@ -27,12 +27,11 @@ LOGLEVELS = ["none","error","warn","info","debug","traffic"]
 INFO = gtk.MESSAGE_INFO
 ERROR = gtk.MESSAGE_ERROR
 
-def icon(ref='Briefcase-icon',size=32):
+def icon(ref='briefcase',size=32):
     this = os.path.realpath(__file__)
     path = os.path.dirname(this)
-    size_dir = '{0}x{0}'.format(size)
-    filename = '{0}.png'.format(ref)
-    full_path = os.path.join(path,'icons',size_dir,filename)
+    filename = '{0}_{1}.png'.format(ref,size)
+    full_path = os.path.join(path,filename)
     return full_path
 
 class ConfigWindow(gtk.Window):
@@ -327,9 +326,12 @@ class GtkIndicator():
     def __init__(self):
         self.tray = gtk.StatusIcon()
         self.tray.set_title('lox-client')
-        self.tray.set_from_file(icon(size=24))
+        self.tray.set_from_file(icon(size=32))
         self.tray.connect('popup-menu', self._on_right_click)
         self.tray.set_tooltip(('LocalBox sync client'))
+
+    def destroy(self):
+        self.tray.set_visible(False)
 
     def _on_right_click(self, icon, event_button, event_time):
         self._make_menu(event_button, event_time)
@@ -352,6 +354,9 @@ class UnityIndicator():
         menu = IndicatorMenu()
         self.ind.set_menu(menu)
 
+    def destroy(self):
+        # don't know how ...
+        pass
 
 class IndicatorMenu(gtk.Menu):
 
@@ -435,3 +440,4 @@ def mainloop():
     settings_window = SettingsWindow()
     notify("LocalBox","Sync is running")
     gtk.main()
+    indicator.destroy()

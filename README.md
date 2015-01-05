@@ -21,21 +21,22 @@ The lox-client desktop sync client has some dependencies to be resolved before b
         python-gnupg \
         python-httplib2
 
+The GUI has some additional dependencies:
+
+    $ sudo apt-get install \
+        python-appindicator \
+        python-notify
+
 For installation of Python on MacOS follow the instructions on [python.org](https://www.python.org/downloads/mac-osx/). Keep with a 2.6 or 2.7 version of Python for this moment.
 
-Download the software and extract it in a separate directory. Then build and install it.
+Download the software and extract it in a separate directory. There is n
 
-    $ wget http://github.com/imtal/lox-client.zip
-    $ unzip lox-client.zip
-    $ mv lox-client-master lox-client
-    $ cd lox-client
-    lox-client $ make
-    lox-client $ sudo make install
-
-Remove the software again by issueing the following command.
-
-    lox-client $ sudo make uninstall
-
+    $ wget https://github.com/2EK/Linux-Sync/archive/master.zip
+    $ unzip Linux-Sync-master.zip
+    $ mv Linux-Sync-master Linux-Sync
+    $ cd Linux-Sync
+    Linux-Sync $ make
+    Linux-Sync $ sudo make install
 
 Usage
 -----

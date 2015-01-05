@@ -56,6 +56,10 @@ class Supervisor(Daemon):
             gui.mainloop()
             self.stop()
 
+    def terminate(self):
+        for name in self.sessions.iterkeys():
+            self.remove(name)
+
     def add(self, name, interactive):
         self.sessions[name] = LoxSession(name, interactive)
         self.sessions[name].start()
@@ -147,7 +151,7 @@ def cmd_invitations(daemon):
         print ""
     sys.exit(0)
 
-def cmd_usage(daemon):
+def cmd_usage():
     cmd = os.path.basename(sys.argv[0])
     print "\nUsage: {0} start|stop|run|status|help|... \n".format(cmd)
     sys.exit(1)

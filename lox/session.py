@@ -14,7 +14,7 @@ Usage:
 import os
 import mimetypes
 import time
-from threading import Thread
+import threading
 import Queue
 import traceback
 from datetime import datetime
@@ -37,7 +37,7 @@ class FileInfo:
 
 
 
-class LoxSession(Thread):
+class LoxSession(threading.Thread):
     '''
     Class that definess the session to synchronize a local folder with a LocalBox store
     '''
@@ -46,7 +46,8 @@ class LoxSession(Thread):
         '''
         Initialize the session
         '''
-        Thread.__init__(self)
+        super(LoxSession,self).__init__()
+        self.daemon = True
         self.name = Name
         cache_name = os.environ['HOME']+'/.lox/.'+Name+'.cache'
         self._cache = LoxCache(cache_name)
@@ -63,10 +64,10 @@ class LoxSession(Thread):
             self.interval = 0
         if self.interval<60 and self.interval>0:
             self._logger.warn("Interval is {0} seconds, this is short".format(self.interval))
-        self.running = True
+        self._stop_request = threading.Event()
         self.last_error = "none"
         self.status = "initialized"
-        self._logger.info("Session started")
+        self._logger.info("Session loaded")
 
     def __del__(self):
         self._logger.info("Session stopped")
@@ -75,18 +76,19 @@ class LoxSession(Thread):
         '''
         Stop a session, for now it completes a sync first
         '''
-        self.running = False
+        self._stop_request.set()
 
     def run(self):
         '''
         Running the session as a thread
         '''
         self.status = "session started"
-        time.sleep(5) # workaround: get GUI started first
-        while self.running:
+        self._logger.info("Session started")
+        self._stop_request.wait(1) # needed to get GUI started first?
+        while not self._stop_request.is_set():
             try:
-                self._logger.info("Sync started")
                 self.status = 'sync running since {:%Y-%m-%d %H:%M:%S}'.format(datetime.now())
+                self._logger.info("Sync started")
                 self.sync()
             except IOError as e:
                 self.last_error = str(e)
@@ -96,10 +98,11 @@ class LoxSession(Thread):
                 self._logger.critical(str(e))
             if self.interval>0:
                 self.status = 'waiting  since {:%Y-%m-%d %H:%M:%S}'.format(datetime.now())
-                time.sleep(self.interval)
+                self._stop_request.wait(self.interval)
             else:
-                self.status = "stopped"
                 break
+        self.status = "stopped"
+        self._logger.info("Sync stopped")
 
     def sync(self,Path='/'):
         '''
@@ -107,17 +110,21 @@ class LoxSession(Thread):
         and fills queue with renconciliation of directories
         '''
         self._reconcile(Path)
-        Worker = Thread(target=self._sync_worker)
-        Worker.daemon = True
-        Worker.start()
-        self._queue.join()
+        worker = threading.Thread(target=self._sync_worker)
+        worker.daemon = True
+        worker.start()
+        #self._queue.join() blocks everything
+        while not self._stop_request.is_set():
+            self._stop_request.wait(2)
+            if self._queue.empty: break
+
 
     def _sync_worker(self):
         '''
         Worker threa that takes item from queue, gets its file info local,
         remote and from cache and resolves what to do with it.
         '''
-        while self.running:
+        while not self._stop_request.is_set():
             path = self._queue.get()
             try:
                 local = self._file_info_local(path)
@@ -337,10 +344,11 @@ class LoxSession(Thread):
             filename = self._root+path
             if meta[u'is_dir']:
                 os.mkdir(filename)
+                # NOTE: use self._reconcile(path)
+                #       instead of iteration here?
                 if u'children' in meta:
                     for child_meta in meta[u'children']:
                         child_path = child_meta[u'path']
-                        # put in worker queue?
                         self._download(child_path)
             else:
                 contents = self._api.download(path)
@@ -372,6 +380,8 @@ class LoxSession(Thread):
         local_dir = self._root+path
         if os.path.isdir(local_dir):
             self._api.create_folder(path)
+            # NOTE: use self._reconcile(path)
+            #       instead of iteration here?
             for item in os.listdir(local_dir):
                 filename = os.path.join(path,item)
                 self._upload(filename)
@@ -440,7 +450,6 @@ class LoxSession(Thread):
         '''
         # (1) rename local with .conflict_nnnn extension
         full_path = self._root+path
-        #base,ext = os.path.splitext(path)
         conflict_path = lox.lib.get_conflict_name(path)
         new_name =  self._root+conflict_path
         self._logger.info("Renamed (local) {0} to {1}".format(path,conflict_path))

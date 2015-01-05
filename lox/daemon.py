@@ -93,12 +93,13 @@ class Daemon:
         with open(self.pidfile,'w+') as f:
             f.write("{0}\n".format(pid))
 
-        # Register handler at exit
+        # Register handler at SIGTERM and exit
+        #signal.signal(signal.SIGTERM,self.__cleanup)
         atexit.register(self.__cleanup)
 
     def __cleanup(self):
-        os.remove(self.pidfile)
         self.terminate()
+        os.remove(self.pidfile)
 
     def start(self):
         """
@@ -139,17 +140,21 @@ class Daemon:
             raise DaemonError('not running')
 
         # Try killing the daemon process
-        try:
-            while 1:
-                os.kill(pid, signal.SIGTERM)
-                time.sleep(0.1)
-        except OSError as e:
-            error = str(e)
-            if error.find("No such process") > 0:
-                if os.path.exists(self.pidfile):
-                    os.remove(self.pidfile)
-            else:
-                raise DaemonError(error)
+        if pid==os.getpid():
+            os.remove(self.pidfile)
+            sys.exit(0)
+        else:
+            try:
+                while 1:
+                    os.kill(pid, signal.SIGTERM)
+                    time.sleep(0.1)
+            except OSError as e:
+                error = str(e)
+                if error.find("No such process") > 0:
+                    if os.path.exists(self.pidfile):
+                        os.remove(self.pidfile)
+                else:
+                    raise DaemonError(error)
 
     def restart(self):
         """

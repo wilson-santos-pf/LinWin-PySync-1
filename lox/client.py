@@ -52,9 +52,16 @@ class Supervisor(Daemon):
     def run(self, interactive = False):
         for name in config.settings.iterkeys():
             self.add(name, interactive)
-        if not interactive:
+        if interactive:
+            # console mainloop
+            try:
+                while True: time.sleep(2)
+            except KeyboardInterrupt:
+                pass
+        else:
             gui.mainloop()
             self.stop()
+
 
     def terminate(self):
         for name in self.sessions.iterkeys():

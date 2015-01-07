@@ -16,23 +16,79 @@ Usage:
     user = config.settings['localhost']['username']
     config.settings['localhost']['username'] = 'newuser'
     config.save()
-
-Todo:
-
-    Add change of configuration and save() function
+    if 'local_dir'in config.settings['localhost'].changed():
+        # do something because changeing the directory
+        # without flushing the cache is like 'rm -r *'
 
 '''
 
 import sys
 import os
 import ConfigParser
+import collections
 
 from lox.error import LoxError
 
 
+DEFAULT = {
+            "local_dir" : "",
+            "lox_url" : "",
+            "auth_type" : "localbox",
+            "username" : "",
+            "password" : "",
+            "interval" : "300",
+            "log_level" : "error"
+          }
+
+class SectionSettings(collections.MutableMapping):
+    '''
+    A dictionary that keeps track of changes
+    Deletion of keys is not supported
+    '''
+    def __init__(self):
+        '''
+        Initialize with default settings
+        '''
+        self._store = dict()
+        self._changed = set()
+        self.update(dict(DEFAULT))  # use the free update to set keys
+        self.confirm()
+
+    def __getitem__(self, key):
+        return self._store[key]
+
+    def __setitem__(self, key, value):
+        '''
+        Keep track of changed settings
+        '''
+        self._store[key] = value
+        self._changed.add(key)
+
+    def __delitem__(self, key):
+        pass
+
+    def __iter__(self):
+        return iter(self._store)
+
+    def __len__(self):
+        return len(self._store)
+
+    def changed(self):
+        '''
+        Return changed settings
+        '''
+        return self._changed
+
+    def confirm(self):
+        '''
+        Accept changed settings
+        '''
+        self._changed = set()
+
 def load():
     '''
-    Load the config file as the current settings
+    Load the config file as the current settings,
+    all previous settings are flushed
     '''
     global settings
     settings = dict()
@@ -48,7 +104,7 @@ def load():
     config = ConfigParser.RawConfigParser()
     config.read(path)
     for session in config.sections():
-        settings[session] = dict()
+        settings[session] = SectionSettings()
         for key,value in config.items(session):
             settings[session][key] = value
 
@@ -69,17 +125,6 @@ def save():
     f = open(path, 'wb')
     config.write(f)
     f.close()
-
-def check(name, items=[]):
-    '''
-    Check is the list of proprties is defined for the section given by name
-    '''
-    global settings
-    for prop in items:
-        if not (prop in settings[name]):
-            return False
-    return True
-
 
 settings = dict()
 load()

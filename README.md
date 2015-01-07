@@ -124,14 +124,11 @@ Wishlist
 As this is an alpha version the wishlist is quite long. The following functionality will be implemented in a later stage.
 * proper handling of shared folders (revoke invitiation when deleted at top level)
 * sync of encrypted folders
-* use alternative for httplib for better asynchronous handling of large files (now done through memory)
+* use pycurl for better asynchronous handling of large files
 * allow for partial downloads/uploads (if the server supports it)
-* desktop notification (via DBus)
 * group system messages in logger in order to send notifications with compressed information (i.e. "There are 3 updated files")
-* systray icon (both freedesktop.org and Unity specs if possible)
-* GUI (dialogs) for configuration and invitation handling
 * use of the system keyring for storing passwords and keys
-* change icons and emblems via gvs
+* change icons and emblems via gvfs
 * add file comparison based on MD5 checksum local bound to the version number remote
 * allow a directory to be published using the context menu
 

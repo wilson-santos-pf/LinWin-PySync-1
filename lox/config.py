@@ -35,6 +35,7 @@ def load():
     Load the config file as the current settings
     '''
     global settings
+    settings = dict()
     conf_dir = os.environ['HOME']+'/.lox'
     if not os.path.isdir(conf_dir):
         os.mkdir(conf_dir)

@@ -87,6 +87,7 @@ class LoxSession(threading.Thread):
         self._stop_request.wait(1) # needed to get GUI started first?
         while not self._stop_request.is_set():
             try:
+                # TODO: check for changes in config first
                 self.status = 'sync running since {:%Y-%m-%d %H:%M:%S}'.format(datetime.now())
                 self._logger.info("Sync started")
                 self.sync()

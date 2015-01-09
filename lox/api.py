@@ -39,7 +39,7 @@ class LoxApi:
         if authtype.lower() == 'localbox':
             self.auth = Localbox(Name)
         else:
-            raise LoxError('not supported')
+            raise LoxError('authentication type {0} not supported'.format(authtype))
         self.agent = {"Agent":"lox-client"} # use one time generated UUID in the future?
         url = lox.config.settings[Name]['lox_url']
         o = urlparse.urlparse(url)

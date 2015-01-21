@@ -49,13 +49,12 @@ class LoxSession(threading.Thread):
         super(LoxSession,self).__init__()
         self.daemon = True
         self.name = Name
-        cache_name = os.environ['HOME']+'/.lox/.'+Name+'.cache'
-        self._cache = LoxCache(cache_name)
         local_dir = lox.config.settings[Name]['local_dir']
         self._root = os.path.expanduser(local_dir)
         if not os.path.isdir(self._root):
             os.mkdir(self._root)
         self._logger = LoxLogger(Name, interactive)
+        self._cache = LoxCache(Name, self._logger)
         self._api = LoxApi(Name)
         self._queue = Queue.Queue()
         if not interactive:

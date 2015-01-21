@@ -20,7 +20,7 @@ class LoxCache(DbfilenameShelf):
 
     # default to newer pickle protocol and writeback=True
     def __init__(self, name, logger):
-        filename = os.environ['HOME'] + '/.lox/' + name + '.cache'
+        filename = os.environ['HOME'] + '/.lox/.' + name + '.cache'
         DbfilenameShelf.__init__(self, filename, protocol=2, writeback=True)
         api = LoxApi(name)
         api_version = api.version()
@@ -36,8 +36,8 @@ class LoxCache(DbfilenameShelf):
             self['local_dir'] = config_dir
             self['version'] = api_version
 
-    def __del__(self):
-        self.close()
+    #def __del__(self):
+    #    self.close()
 
     def __setitem__(self, name, value):
         key = name.encode('utf8')

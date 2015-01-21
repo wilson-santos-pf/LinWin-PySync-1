@@ -234,5 +234,5 @@ class LoxApi:
         else:
             raise LoxError(resp.reason)
 
-    def version():
+    def version(self):
         return "1.1.3"

@@ -40,11 +40,11 @@ class LoxLogger:
             self.__log_level = ERROR
         self.__interactive = interactive
 
-    def __del__(self):
-        '''
-        Destructor: close logfile
-        '''
-        self.__handle.close()
+    #def __del__(self):
+    #    '''
+    #    Destructor: close logfile
+    #    '''
+    #    self.__handle.close()
 
     def __log(self, level, msg, console_msg = True):
         '''

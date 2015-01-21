@@ -15,10 +15,10 @@ import os
 import mimetypes
 import time
 import threading
-import Queue
 import traceback
 from datetime import datetime
 import iso8601
+from collections import deque
 
 import lox.config
 import lox.lib
@@ -56,7 +56,7 @@ class LoxSession(threading.Thread):
         self._logger = LoxLogger(Name, interactive)
         self._cache = LoxCache(Name, self._logger)
         self._api = LoxApi(Name)
-        self._queue = Queue.Queue()
+        self._queue = deque()
         if not interactive:
             self.interval = float(lox.config.settings[Name]['interval'])
         else:
@@ -67,9 +67,6 @@ class LoxSession(threading.Thread):
         self.last_error = "none"
         self.status = "initialized"
         self._logger.info("Session loaded")
-
-    def __del__(self):
-        self._logger.info("Session stopped")
 
     def stop(self):
         '''
@@ -85,59 +82,47 @@ class LoxSession(threading.Thread):
         self._logger.info("Session started")
         self._stop_request.wait(1) # needed to get GUI started first?
         while not self._stop_request.is_set():
-            try:
-                # TODO: check for changes in config first
-                self.status = 'sync running since {:%Y-%m-%d %H:%M:%S}'.format(datetime.now())
-                self._logger.info("Sync started")
-                self.sync()
-            except IOError as e:
-                self.last_error = str(e)
-                self._logger.error(str(e))
-            except Exception as e:
-                self.last_error = str(e)
-                self._logger.critical(str(e))
+            self.status = 'sync running since {:%Y-%m-%d %H:%M:%S}'.format(datetime.now())
+            self._logger.info("Sync started")
+            self.sync()
             if self.interval>0:
                 self.status = 'waiting  since {:%Y-%m-%d %H:%M:%S}'.format(datetime.now())
+                self._logger.info("Session waiting for next sync")
                 self._stop_request.wait(self.interval)
             else:
                 break
         self.status = "stopped"
-        self._logger.info("Sync stopped")
+        del self._cache
+        del self._api
+        del self._queue
+        self._logger.info("Session stopped")
+        del self._logger
 
-    def sync(self,Path='/'):
+    def sync(self, path='/'):
         '''
         Synchronize given path start worker thread to handle queue
         and fills queue with renconciliation of directories
         '''
-        self._reconcile(Path)
-        worker = threading.Thread(target=self._sync_worker)
-        worker.daemon = True
-        worker.start()
-        #self._queue.join() blocks everything
+        self._reconcile(path)
         while not self._stop_request.is_set():
-            self._stop_request.wait(2)
-            if self._queue.empty: break
-
-
-    def _sync_worker(self):
-        '''
-        Worker threa that takes item from queue, gets its file info local,
-        remote and from cache and resolves what to do with it.
-        '''
-        while not self._stop_request.is_set():
-            path = self._queue.get()
             try:
-                local = self._file_info_local(path)
-                remote = self._file_info_remote(path)
-                cached = self._file_info_cache(path)
+                filename = self._queue.popleft()
+                local = self._file_info_local(filename)
+                remote = self._file_info_remote(filename)
+                cached = self._file_info_cache(filename)
                 action = self._resolve(local,remote,cached)
-                self._logger.debug("Resolving '{0}' leads to {1}".format(path,action.__name__[1:]))
-                action(path)
+                self._logger.debug("Resolving '{0}' leads to {1}".format(filename,action.__name__[1:]))
+                action(filename)
+            except IndexError:
+                self._logger.info("Sync completed")
+                self._stop_request.set()
+                break
             except IOError as e:
                 self._logger.error(str(e))
+                break
             except Exception as e:
                 self._logger.critical("Exception in sync\n{0}".format(traceback.format_exc()))
-            self._queue.task_done()
+                break
 
     def _reconcile(self,path):
         '''
@@ -168,7 +153,7 @@ class LoxSession(threading.Thread):
         files = local_files | remote_files
         for f in files:
             #self._logger.debug("Added to queue '%s'" % f)
-            self._queue.put(f)
+            self._queue.append(f)
 
     def _resolve(self,Local,Remote,Cached):
         '''
@@ -344,12 +329,7 @@ class LoxSession(threading.Thread):
             filename = self._root+path
             if meta[u'is_dir']:
                 os.mkdir(filename)
-                # NOTE: use self._reconcile(path)
-                #       instead of iteration here?
-                if u'children' in meta:
-                    for child_meta in meta[u'children']:
-                        child_path = child_meta[u'path']
-                        self._download(child_path)
+                self._reconcile(path)
             else:
                 contents = self._api.download(path)
                 # use temp file in case large downloads get interrupted
@@ -380,13 +360,9 @@ class LoxSession(threading.Thread):
         local_dir = self._root+path
         if os.path.isdir(local_dir):
             self._api.create_folder(path)
-            # NOTE: use self._reconcile(path)
-            #       instead of iteration here?
-            for item in os.listdir(local_dir):
-                filename = os.path.join(path,item)
-                self._upload(filename)
             file_info = self._file_info_local(path)
             self._cache[path] = file_info
+            self._reconcile(path)
         else:
             # (1) file timestamp must be same as on server after upload, can this be done more efficient?
             content_type,encoding = mimetypes.guess_type(path)

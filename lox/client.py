@@ -57,7 +57,10 @@ class Supervisor(Daemon):
             try:
                 while True: time.sleep(2)
             except KeyboardInterrupt:
-                pass
+                for name in self.sessions.iterkeys():
+                    self.sessions[name].stop()
+                for name in self.sessions.iterkeys():
+                    self.sessions[name].join()
         else:
             gui.mainloop()
             self.stop()
@@ -73,12 +76,14 @@ class Supervisor(Daemon):
 
     def remove(self, name):
         self.sessions[name].stop()
+        while self.sessions[name].is_alive():
+            time.sleep(1)
         del self.sessions[name]
 
     def restart(self,name):
         self.sessions[name].stop()
         while self.sessions[name].is_alive():
-            pass
+            time.sleep(1)
         self.sessions[name].start()
 
 
@@ -185,11 +190,12 @@ def main():
         (func,description) = commands[cmd]
         func(daemon)
     except DaemonError as e:
-        console_msg(e)
+        console_msg(    str(e))
         sys.exit(1)
     except LoxError as e:
         console_msg(str(e))
         sys.exit(1)
     except Exception as e:
+        console_msg(str(e))
         traceback.print_exc()
         sys.exit(1)

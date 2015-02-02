@@ -19,6 +19,8 @@ import gobject
 import pynotify
 import subprocess
 import lox.config
+if os.getenv('DESKTOP_SESSION').lower() == 'ubuntu':
+    import appindicator
 
 
 AUTHTYPES = ["localbox"]
@@ -431,8 +433,7 @@ def mainloop():
     global config_window
     global settings_window
     gobject.threads_init()
-    if os.getenv('DESKTOP_SESSION') == 'Ubuntu':
-        import appindicator
+    if os.getenv('DESKTOP_SESSION').lower() == 'ubuntu':
         indicator = UnityIndicator()
     else:
         indicator = GtkIndicator()

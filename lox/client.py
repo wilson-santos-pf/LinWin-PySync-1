@@ -14,6 +14,7 @@ import os
 import sys
 import time
 import traceback
+import crypto
 from getpass import getpass
 
 import lox.config as config
@@ -96,8 +97,12 @@ def cmd_start(daemon):
     Start the deamon
     '''
     need_sessions()
-    passcode = getpass("Passcode: ")
-    daemon.start()
+    if daemon.status() is None:
+        p = getpass("Passcode: ")
+        crypto.set_passphrase(p)
+        daemon.start()
+    else:
+        print "Error: already running\n"
 
 def cmd_stop(daemon):
     '''

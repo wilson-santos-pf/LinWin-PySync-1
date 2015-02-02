@@ -14,6 +14,7 @@ Please note:
 
 '''
 
+import os
 import base64
 import md5
 from Crypto.Cipher import AES

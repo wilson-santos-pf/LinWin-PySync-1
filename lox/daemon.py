@@ -139,6 +139,9 @@ class Daemon:
         if not pid:
             raise DaemonError('not running')
 
+        if os.path.exists(self.pidfile):
+            os.remove(self.pidfile)
+
         # Try killing the daemon process
         if pid==os.getpid():
             os.remove(self.pidfile)
@@ -150,10 +153,7 @@ class Daemon:
                     time.sleep(0.1)
             except OSError as e:
                 error = str(e)
-                if error.find("No such process") > 0:
-                    if os.path.exists(self.pidfile):
-                        os.remove(self.pidfile)
-                else:
+                if error.find("No such process") == 0:
                     raise DaemonError(error)
 
     def restart(self):
@@ -173,7 +173,7 @@ class Daemon:
         except IOError:
             return None
 
-    def started(self):
+    def started(self, restart):
         """
         Override this method when you subclass Daemon.
         It will be called by the parent process after the process has been

@@ -30,15 +30,15 @@ import collections
 from lox.error import LoxError
 
 
-DEFAULT = {
-            "local_dir" : "",
-            "lox_url" : "",
-            "auth_type" : "localbox",
-            "username" : "",
-            "password" : "",
-            "interval" : "300",
-            "log_level" : "error"
-          }
+SETTINGS = [
+            ("local_dir", "Local directory to synchronize", ""),
+            ("lox_url", "URL of the Localbox server", ""),
+            ("auth_type", "Authentication type", "localbox"),
+            ("username", "Account username", ""),
+            ("password","Account password", ""),
+            ("interval", "Time (s) between synchronizations", "300"),
+            ("log_level", "Log level", "error")
+          ]
 
 class SectionSettings(collections.MutableMapping):
     '''
@@ -51,7 +51,9 @@ class SectionSettings(collections.MutableMapping):
         '''
         self._store = dict()
         self._changed = set()
-        self.update(dict(DEFAULT))  # use the free update to set keys
+        for (key,caption,default) in SETTINGS:
+            self._store[key] = default
+        #self.update(dict(DEFAULT))
         self.confirm()
 
     def __getitem__(self, key):
@@ -85,13 +87,47 @@ class SectionSettings(collections.MutableMapping):
         '''
         self._changed = set()
 
+class Sections(collections.MutableMapping):
+    '''
+    A dictionary that never gives a KeyError
+    Deletion of keys is not supported
+    '''
+    def __init__(self):
+        self._store = dict()
+
+    def __getitem__(self, key):
+        if not self._store.has_key(key):
+            self._store[key] = SectionSettings()
+        return self._store[key]
+
+    def __setitem__(self, key, value):
+        self._store[key] = value
+
+    def __delitem__(self, key):
+        pass
+
+    def __iter__(self):
+        return iter(self._store)
+
+    def __len__(self):
+        return len(self._store)
+
+    def has_key(self, key):
+        return self._store.has_key(key)
+
+    def iterkeys(self):
+        return self._store.iterkeys()
+
+    def pop(self, key):
+        return self._store.pop(key, None)
+
 def load():
     '''
     Load the config file as the current settings,
     all previous settings are flushed
     '''
     global settings
-    settings = dict()
+    settings = Sections()
     conf_dir = os.environ['HOME']+'/.lox'
     if not os.path.isdir(conf_dir):
         os.mkdir(conf_dir)
@@ -101,10 +137,11 @@ def load():
         f.write(os.linesep)
         f.close()
     path = os.environ['HOME']+'/.lox/lox-client.conf'
+    # replace with encrypted pickle load of dict()
     config = ConfigParser.RawConfigParser()
     config.read(path)
     for session in config.sections():
-        settings[session] = SectionSettings()
+        #settings[session] = SectionSettings()
         for key,value in config.items(session):
             settings[session][key] = value
 
@@ -118,6 +155,7 @@ def save():
         os.mkdir(conf_dir)
     path = os.environ['HOME']+'/.lox/lox-client.conf'
     config = ConfigParser.RawConfigParser()
+    # replace with encrypted pickle save of dict()
     for session,d in settings.iteritems():
         config.add_section(session)
         for item,value in d.iteritems():
@@ -126,6 +164,6 @@ def save():
     config.write(f)
     f.close()
 
-settings = dict()
+settings = Sections()
 load()
 

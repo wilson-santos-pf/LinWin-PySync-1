@@ -14,6 +14,7 @@ import os
 import sys
 import time
 import traceback
+from getpass import getpass
 
 import lox.config as config
 from lox.api import LoxApi
@@ -25,12 +26,7 @@ import lox.gui as gui
 
 __author__ = "imtal@yolt.nl"
 __copyright__ = "(C) 2014, see LICENSE file"
-__version__ = "0.1"
-
-
-def console_msg(msg):
-    sys.stderr.write("\nLocalBox client: {0}\n\n".format(msg))
-    sys.stderr.flush()
+__version__ = "0.2"
 
 
 class Supervisor(Daemon):
@@ -39,15 +35,11 @@ class Supervisor(Daemon):
     '''
     sessions = dict()
 
-    #def __init__(self,**kwargs):
-    #    Daemon.__init__(self,kwargs)
-    #    self.sessions = dict()
-
     def started(self, restart=False):
         if restart:
-            console_msg("restarted")
+            print "\nLocalbox daemon restarted\n"
         else:
-            console_msg("started")
+            print "\nLocalbox daemon started\n"
 
     def run(self, interactive = False):
         for name in config.settings.iterkeys():
@@ -70,7 +62,10 @@ class Supervisor(Daemon):
         for name in self.sessions.iterkeys():
             self.remove(name)
 
-    def add(self, name, interactive):
+    '''
+    Use the following functoins only from within the daemon
+    '''
+    def add(self, name, interactive=False):
         self.sessions[name] = LoxSession(name, interactive)
         self.sessions[name].start()
 
@@ -92,22 +87,27 @@ def need_sessions():
     Check if there are any sessions specified in config file
     '''
     if len(config.settings)==0:
-        console_msg("no sessions configured, edit ~/.lox/lox-client.conf")
+        print "\nNo sessions configured, use command 'add'\n"
         sys.exit(1)
+
 
 def cmd_start(daemon):
     '''
-    Start the damon
+    Start the deamon
     '''
     need_sessions()
+    passcode = getpass("Passcode: ")
     daemon.start()
 
 def cmd_stop(daemon):
     '''
     Stop the daemon
     '''
-    daemon.stop()
-    console_msg("stopped")
+    if not daemon.status() is None:
+        daemon.stop()
+        print "\nLocalbox daemon stopped\n"
+    else:
+        print "\nLocalbox daemon not running\n"
 
 def cmd_run(daemon):
     '''
@@ -128,21 +128,93 @@ def cmd_status(daemon):
     '''
     s = daemon.status()
     if s is None:
-        console_msg("not running ...")
+        print "\nLocalbox daemon not running ...\n"
     else:
-        console_msg("running with pid %s" % s)
+        print "\nLocalbox daemon running with pid {}\n".format(s)
+
+def cmd_add(daemon):
+    '''
+    Add account
+    '''
+    if len(sys.argv)>2:
+        name = sys.argv[2]
+        if config.settings.has_key(name):
+            print "Error: a session with name '{}' already exists".format(name)
+        else:
+            print "\nAdd Localbox session '{}'".format(name)
+            for (setting,caption,default) in config.SETTINGS:
+                value = raw_input("  {0} [{1}]: ".format(caption,default))
+                config.settings[name][setting] = default if value=="" else value
+            config.save()
+            if not daemon.status() is None:
+                y = raw_input("Start session [yes]: ")
+                if y=="" or y=="yes":
+                    daemon.restart()
+        print ""
+    else:
+        cmd = os.path.basename(sys.argv[0])
+        print "\nUsage: {0} add <name>\n".format(cmd,sys.argv[1])
+
+def cmd_delete(daemon):
+    '''
+    Delete account
+    '''
+    if len(sys.argv)>2:
+        name = sys.argv[2]
+        if not config.settings.has_key(name):
+            print "\nError: a session with name '{}' is not configured\n".format(name)
+        else:
+            config.settings.pop(name)
+            config.save()
+            if not daemon.status() is None:
+                daemon.restart()
+    else:
+        cmd = os.path.basename(sys.argv[0])
+        print "\nUsage: {0} delete <name>\n".format(cmd,sys.argv[1])
+
+def cmd_edit(daemon):
+    '''
+    Edit configuration walking through accounts one by one
+    '''
+    if len(sys.argv)>2:
+        name = sys.argv[2]
+        if config.settings.has_key(name):
+            print "Error: a session with name '{}' already exists".format(name)
+        else:
+            print "\nAdd a Localbox session with name '{}'".format(name)
+            for (setting,caption,default) in config.SETTINGS:
+                value = raw_input("  {0} [{1}]: ".format(caption,default))
+                config.settings[name][setting] = default if value=="" else value
+            config.save()
+            if not daemon.status() is None:
+                y = raw_input("Start this session [yes]: ")
+                if y=="" or y=="yes":
+                    daemon.restart()
+        print ""
+    else:
+        cmd = os.path.basename(sys.argv[0])
+        print "\nUsage: {0} edit <name>\n".format(cmd,sys.argv[1])
+
+def cmd_list(daemon):
+    '''
+    List the configured sessions
+    '''
+    print "\nLocalbox sessions configured:\n"
+    for name in config.settings.iterkeys():
+        print "  {0:12} ({1})".format(name,config.settings[name]["lox_url"])
+    print ""
 
 def cmd_help(daemon):
     '''
     Show help
     '''
     cmd = os.path.basename(sys.argv[0])
-    console_msg("desktop sync version {}".format(__version__))
-    print "  Usage: {} [command]".format(cmd)
+    print "\nLocalbox desktop sync version {}\n".format(__version__)
+    print "Usage: {} [command]".format(cmd)
     print ""
     for c in commands.iterkeys():
         (f,description) = commands[c]
-        print "       {0:12} - {1}".format(c,description)
+        print "  {0:12} - {1}".format(c,description)
     print ""
     sys.exit(0)
 
@@ -151,17 +223,27 @@ def cmd_invitations(daemon):
     Show invirtations for each session
     '''
     need_sessions()
-    console_msg("list invitations")
+    print "\nLocalbox invitations:\n"
     for name in config.settings.iterkeys():
-        api = LoxApi(name)
-        invitations = api.invitations()
-        print "%s: " % name
-        for invite in invitations:
-            share = invite[u'share']
-            item = share[u'item']
-            print "  [%s] %s (%s)" % (invite[u'id'],item[u'path'],invite[u'state'])
-        print ""
+        print "Session '{}': ".format(name)
+        try:
+            api = LoxApi(name)
+            invitations = api.invitations()
+            for invite in invitations:
+                share = invite[u'share']
+                item = share[u'item']
+                print "  [%s] %s (%s)" % (invite[u'id'],item[u'path'],invite[u'state'])
+        except IOError as e:
+            print "\nError: {}\n".format(str(e))
+        else:
+            print ""
     sys.exit(0)
+
+def cmd_accept(daemon):
+    pass
+
+def cmd_revoke(daemon):
+    pass
 
 def cmd_usage():
     cmd = os.path.basename(sys.argv[0])
@@ -173,8 +255,14 @@ commands = {
                 "stop": (cmd_stop,"stops the client"),
                 "run": (cmd_run, "run in foreground (interactive)"),
                 "restart": (cmd_restart, "reloads the confguration"),
+                "add": (cmd_add, "add an account"),
+                "list": (cmd_list, "list configured sessions"),
+                "edit": (cmd_edit, "edit configuration"),
+                "delete": (cmd_delete, "delete session from configuration"),
                 "status": (cmd_status,"show the status of the client"),
                 "invitations": (cmd_invitations,"show invitations"),
+                "accept": (cmd_accept,"accept invitation"),
+                "revoke": (cmd_revoke,"revoke invitation"),
                 "help": (cmd_help,"show this help")
            }
 
@@ -189,13 +277,17 @@ def main():
     try:
         (func,description) = commands[cmd]
         func(daemon)
-    except DaemonError as e:
-        console_msg(    str(e))
+    except KeyError as e:
+        print "\nError: invalid command\n"
+        cmd_usage()
         sys.exit(1)
-    except LoxError as e:
-        console_msg(str(e))
+    except (DaemonError, LoxError) as e:
+        print "\nError: {}\n".format(str(e))
+        sys.exit(1)
+    except KeyboardInterrupt as e:
+        print "Error: interrupted"
         sys.exit(1)
     except Exception as e:
-        console_msg(str(e))
+        print "Error: {}".format(str(e))
         traceback.print_exc()
         sys.exit(1)

@@ -42,32 +42,24 @@ class Supervisor(Daemon):
         else:
             print "\nLocalbox daemon started\n"
 
-    def run(self, interactive = False):
+    def run(self):
         for name in config.settings.iterkeys():
-            self.add(name, interactive)
-        if interactive:
-            # console mainloop
-            try:
-                while True: time.sleep(2)
-            except KeyboardInterrupt:
-                for name in self.sessions.iterkeys():
-                    self.sessions[name].stop()
-                for name in self.sessions.iterkeys():
-                    self.sessions[name].join()
-        else:
-            gui.mainloop()
-            self.stop()
+            self.sessions[name] = LoxSession(name)
+            self.sessions[name].start()
+        gui.mainloop()
+        for name in self.sessions.iterkeys():
+            self.sessions[name].stop()
 
 
     def terminate(self):
-        for name in self.sessions.iterkeys():
+        for name in config.settings.iterkeys():
             self.remove(name)
 
     '''
-    Use the following functoins only from within the daemon
+    Use the following functions only from within the daemon
     '''
-    def add(self, name, interactive=False):
-        self.sessions[name] = LoxSession(name, interactive)
+    def add(self, name):
+        self.sessions[name] = LoxSession(name)
         self.sessions[name].start()
 
     def remove(self, name):
@@ -98,8 +90,8 @@ def cmd_start(daemon):
     '''
     need_sessions()
     if daemon.status() is None:
-        p = getpass("Passcode: ")
-        crypto.set_passphrase(p)
+        password = gui.get_password()
+        #crypto.set_passphrase(password)
         daemon.start()
     else:
         print "Error: already running\n"
@@ -116,10 +108,10 @@ def cmd_stop(daemon):
 
 def cmd_run(daemon):
     '''
-    Run the deamon interactive in the foreground
+    Run the deamon in the foreground
     '''
-    console_msg("run in foreground")
-    daemon.run(interactive = True)
+    print "\nLocalbox running in foreground\n"
+    daemon.run()
 
 def cmd_restart(daemon):
     '''
@@ -146,9 +138,9 @@ def cmd_add(daemon):
         if config.settings.has_key(name):
             print "Error: a session with name '{}' already exists".format(name)
         else:
-            print "\nAdd Localbox session '{}'".format(name)
+            print "\nAdd Localbox session '{}':".format(name)
             for (setting,caption,default) in config.SETTINGS:
-                value = raw_input("  {0} [{1}]: ".format(caption,default))
+                value = raw_input("- {0} [{1}]: ".format(caption,default))
                 config.settings[name][setting] = default if value=="" else value
             config.save()
             if not daemon.status() is None:
@@ -183,13 +175,13 @@ def cmd_edit(daemon):
     '''
     if len(sys.argv)>2:
         name = sys.argv[2]
-        if config.settings.has_key(name):
-            print "Error: a session with name '{}' already exists".format(name)
+        if not config.settings.has_key(name):
+            print "Error: a session with name '{}' does not exist".format(name)
         else:
-            print "\nAdd a Localbox session with name '{}'".format(name)
+            print "\nEdit Localbox session with name '{}':".format(name)
             for (setting,caption,default) in config.SETTINGS:
-                value = raw_input("  {0} [{1}]: ".format(caption,default))
-                config.settings[name][setting] = default if value=="" else value
+                value = raw_input("- {0} [{1}]: ".format(caption,config.settings[name][setting]))
+                config.settings[name][setting] = config.settings[name][setting] if value=="" else value
             config.save()
             if not daemon.status() is None:
                 y = raw_input("Start this session [yes]: ")
@@ -228,16 +220,16 @@ def cmd_invitations(daemon):
     Show invirtations for each session
     '''
     need_sessions()
-    print "\nLocalbox invitations:\n"
+    #print "\nLocalbox invitations"
     for name in config.settings.iterkeys():
-        print "Session '{}': ".format(name)
+        print "\nSession '{}': ".format(name)
         try:
             api = LoxApi(name)
             invitations = api.invitations()
             for invite in invitations:
                 share = invite[u'share']
                 item = share[u'item']
-                print "  [%s] %s (%s)" % (invite[u'id'],item[u'path'],invite[u'state'])
+                print "id=%s: '%s' (%s)" % (invite[u'id'],item[u'path'],invite[u'state'])
         except IOError as e:
             print "\nError: {}\n".format(str(e))
         else:

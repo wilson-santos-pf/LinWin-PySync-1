@@ -1,6 +1,7 @@
 '''
 
-Module that controls synchronization session per account
+Module that defines a class for a
+synchronization session per account
 
 Usage:
 
@@ -24,7 +25,7 @@ import lox.config
 import lox.lib
 from lox.api import LoxApi
 from lox.logger import LoxLogger
-from lox.error import LoxError
+from lox.error import LoxError, LoxFatal
 from lox.cache import LoxCache
 
 class FileInfo:
@@ -34,7 +35,8 @@ class FileInfo:
     isdir = None
     modified = None
     size = None
-
+    hash = None
+    encrypted = None
 
 
 class LoxSession(threading.Thread):
@@ -42,7 +44,7 @@ class LoxSession(threading.Thread):
     Class that definess the session to synchronize a local folder with a LocalBox store
     '''
 
-    def __init__(self,Name, interactive = False):
+    def __init__(self,Name):
         '''
         Initialize the session
         '''
@@ -53,14 +55,11 @@ class LoxSession(threading.Thread):
         self._root = os.path.expanduser(local_dir)
         if not os.path.isdir(self._root):
             os.mkdir(self._root)
-        self._logger = LoxLogger(Name, interactive)
+        self._logger = LoxLogger(Name)
         self._cache = LoxCache(Name, self._logger)
         self._api = LoxApi(Name)
         self._queue = deque()
-        if not interactive:
-            self.interval = float(lox.config.settings[Name]['interval'])
-        else:
-            self.interval = 0
+        self.interval = float(lox.config.settings[Name]['interval'])
         if self.interval<60 and self.interval>0:
             self._logger.warn("Interval is {0} seconds, this is short".format(self.interval))
         self._stop_request = threading.Event()
@@ -72,7 +71,9 @@ class LoxSession(threading.Thread):
         '''
         Stop a session, for now it completes a sync first
         '''
-        self._stop_request.set()
+        if self.is_alive():
+            self._stop_request.set()
+            self.join()
 
     def run(self):
         '''
@@ -82,20 +83,28 @@ class LoxSession(threading.Thread):
         self._logger.info("Session started")
         self._stop_request.wait(1) # needed to get GUI started first?
         while not self._stop_request.is_set():
-            self.status = 'sync running since {:%Y-%m-%d %H:%M:%S}'.format(datetime.now())
-            self._logger.info("Sync started")
-            self.sync()
+            try:
+                self.sync()
+            except (IOError, LoxError) as e:
+                # IOError means not online, report and continue
+                self._logger.error(str(e))
+            except (LoxFatal) as e:
+                # LoxFatal means a fatal error, report this and abort session
+                self._logger.error(str(e))
+                break
+            except Exception as e:
+                self._logger.critical("Exception in sync\n{0}".format(traceback.format_exc()))
             if self.interval>0:
                 self.status = 'waiting  since {:%Y-%m-%d %H:%M:%S}'.format(datetime.now())
                 self._logger.info("Session waiting for next sync")
                 self._stop_request.wait(self.interval)
             else:
                 break
-        self.status = "stopped"
+        self._logger.info("Session stopped")
+        # cleanup everything nicely
         del self._cache
         del self._api
         del self._queue
-        self._logger.info("Session stopped")
         del self._logger
 
     def sync(self, path='/'):
@@ -103,6 +112,8 @@ class LoxSession(threading.Thread):
         Synchronize given path start worker thread to handle queue
         and fills queue with renconciliation of directories
         '''
+        self.status = 'sync running since {:%Y-%m-%d %H:%M:%S}'.format(datetime.now())
+        self._logger.info("Sync started")
         self._reconcile(path)
         while not self._stop_request.is_set():
             try:
@@ -115,13 +126,6 @@ class LoxSession(threading.Thread):
                 action(filename)
             except IndexError:
                 self._logger.info("Sync completed")
-                self._stop_request.set()
-                break
-            except IOError as e:
-                self._logger.error(str(e))
-                break
-            except Exception as e:
-                self._logger.critical("Exception in sync\n{0}".format(traceback.format_exc()))
                 break
 
     def _reconcile(self,path):

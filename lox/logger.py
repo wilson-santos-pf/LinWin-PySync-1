@@ -27,7 +27,7 @@ LOGLEVELS = ["info","critical","error","warn","debug"]
 
 class LoxLogger:
 
-    def __init__(self, name, interactive):
+    def __init__(self, name):
         '''
         Constructor: open logfile and initialize
         '''
@@ -38,7 +38,6 @@ class LoxLogger:
             self.__log_level = LOGLEVELS.index(config.settings[name]['log_level'])
         except KeyError:
             self.__log_level = ERROR
-        self.__interactive = interactive
 
     #def __del__(self):
     #    '''
@@ -56,7 +55,7 @@ class LoxLogger:
         self.__handle.write(msg)
         self.__handle.write(os.linesep)
         self.__handle.flush()
-        if self.__interactive and console_msg:
+        if console_msg:
             print("({0}) {1}".format(self.__name,msg))
 
     def set_level(self, level):
@@ -66,7 +65,7 @@ class LoxLogger:
         '''
         Send message to logfile only regardless of loglevel
         '''
-        self.__log("INFO", msg, console_msg = False)
+        self.__log("INFO", msg, console_msg = True)
 
     def critical(self, msg):
         '''

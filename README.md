@@ -18,8 +18,9 @@ Installation
 The lox-client desktop sync client has some dependencies to be resolved before being able to build and install the client. On a Debian based system (like Ubuntu and Mint) the following packages are needed.
 
     $ sudo apt-get install \
+        python-httplib2 \
         python-gnupg \
-        python-httplib2
+        haveged
 
 The GUI has some additional dependencies:
 

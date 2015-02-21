@@ -25,7 +25,7 @@ import urlparse
 
 import lox.config
 from lox.logger import LoxLogger
-from lox.error import LoxError
+from lox.error import LoxError, LoxFatal
 
 
 class Auth:
@@ -78,7 +78,7 @@ class Localbox(Auth):
 
     def _request(self):
         url = self.uri_path
-        url += "lox_api/oauth2/token"
+        url += "oauth/v2/token" # "lox_api/oauth2/token' in 1.1.3
         url += "?grant_type=" + self.grant_type
         url += "&client_id=" + self.client_id
         url += "&client_secret=" + self.client_secret
@@ -91,7 +91,7 @@ class Localbox(Auth):
             # invalidate 10 seconds before
             self.token_expires = time.time() + data[u'expires_in'] - 10
         else:
-            raise LoxError("Authentication failed, {0}".format(resp.reason))
+            raise LoxFatal("Authentication failed, {0}".format(resp.reason))
 
     def header(self):
         if time.time() > self.token_expires:

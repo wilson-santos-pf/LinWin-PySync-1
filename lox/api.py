@@ -8,6 +8,7 @@ Usage: create an instance per account
 '''
 
 from httplib import HTTPConnection, HTTPSConnection, HTTPResponse
+import ssl
 import traceback
 import urllib
 import json
@@ -31,7 +32,7 @@ class LoxApi:
     Class that forms the API to a LocalBox store.
     Each instance containts its own HTTP(S)Connection, can be used to
     manage multiple connections.
-    API calls are based on version 1.1.3
+    API calls are based on version 1.1.5, version can not be checked at the moment
     '''
 
     def __init__(self,Name):
@@ -39,7 +40,7 @@ class LoxApi:
         if authtype.lower() == 'localbox':
             self.auth = Localbox(Name)
         else:
-            raise LoxError('authentication type {0} not supported'.format(authtype))
+            raise LoxFatal('authentication type {0} not supported'.format(authtype))
         self.agent = {"Agent":"lox-client"} # use one time generated UUID in the future?
         url = lox.config.settings[Name]['lox_url']
         o = urlparse.urlparse(url)
@@ -50,13 +51,14 @@ class LoxApi:
             self.uri_path +='/'
         self.ssl = (o.scheme == 'https')
 
-
     def __do_request(self,method,url,body="",headers={}):
         response = LoxApiResponse()
         if self.ssl:
-            connection = HTTPSConnection(self.server,self.port)
+            ssl_context = ssl.SSLContext()
+            ssl_context.verify_mode = ssl.CERT_NONE # make configurable!
+            connection = HTTPSConnection(self.server, self.port, context = ssl_context)
         else:
-            connection = HTTPConnection(self.server,self.port)
+            connection = HTTPConnection(self.server, self.port)
         connection.connect()
         connection.request(method,url,body,headers)
         r = connection.getresponse()
@@ -78,11 +80,13 @@ class LoxApi:
         else:
             raise LoxError(resp.reason)
 
-    def user_info(self):
+    def user_info(self, name=None):
         headers = self.auth.header()
         headers.update(self.agent)
         url = self.uri_path
         url += "lox_api/user"
+        if not name is None:
+            url += "/"+name
         resp = self.__do_request("GET",url,"",headers)
         if resp.status == 200:
             return json.loads(resp.body)
@@ -153,6 +157,8 @@ class LoxApi:
         resp = self.__do_request("GET",url,"",headers)
         if resp.status == 200:
             return json.loads(resp.body)
+        else:
+            raise LoxError(resp.reason)
 
     def set_key(self,path,user,key,iv):
         headers = self.auth.header()
@@ -222,7 +228,7 @@ class LoxApi:
             raise LoxError(resp.reason)
 
     def register_app(self):
-        # Not an actual API call? Strange implementation because needs interactive authentication
+        # Not an actual API call? Strange implementation because needs other authentication
         headers = self.auth.header()
         headers.update(self.agent)
         url = self.uri_path
@@ -235,4 +241,4 @@ class LoxApi:
             raise LoxError(resp.reason)
 
     def version(self):
-        return "1.1.3"
+        return "1.1.5"

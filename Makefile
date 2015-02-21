@@ -3,6 +3,9 @@
 all:
 	python setup.py build
 
+clean:
+	find . -name "*.pyc" -type f -delete
+
 install:
 	python setup.py install
 	cp lox-client.desktop /usr/share/applications/.

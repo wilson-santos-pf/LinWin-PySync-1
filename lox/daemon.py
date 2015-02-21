@@ -125,7 +125,7 @@ class Daemon:
         self.__cleanup()
 
     def stop(self):
-        """
+        """DaemonError('
         Stop the daemon
         """
         # Get the pid from the pidfile

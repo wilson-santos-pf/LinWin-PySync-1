@@ -31,6 +31,7 @@ class LoxCache(DbfilenameShelf):
             my_version = self.get('version',None)
             assert api_version == my_version
         except AssertionError:
+            # Cache is considered not safe, so re-initialized
             logger.warn("Initializing cache")
             self.clear()
             self['local_dir'] = config_dir

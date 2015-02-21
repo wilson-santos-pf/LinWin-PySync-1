@@ -40,6 +40,10 @@ SETTINGS = [
             ("log_level", "Log level", "error")
           ]
 
+AUTHTYPES = ["localbox"]
+LOGLEVELS = ["none","error","warn","info","debug","traffic"]
+
+
 class SectionSettings(collections.MutableMapping):
     '''
     A dictionary that keeps track of changes

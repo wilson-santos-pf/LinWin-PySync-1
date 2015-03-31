@@ -1,6 +1,9 @@
 import pynotify
 from lox.gui.gnome.icon import icon
 
+import gettext
+_ = gettext.gettext
+
 
 def notify(title,message):
     pynotify.init("LocalBox")
@@ -8,6 +11,6 @@ def notify(title,message):
     #n.set_icon_from_pixbuf()
     #n.set_timeout(2000)
     if not n.show():
-        print "failed to send notification"
+        print _("failed to send notification")
 
 

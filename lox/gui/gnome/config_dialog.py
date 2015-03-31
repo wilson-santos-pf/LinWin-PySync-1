@@ -9,11 +9,14 @@ from lox.config import settings, save
 from lox.gui.gnome.icon import icon
 from lox.gui.gnome.settings_dialog import SettingsDialog
 
+import gettext
+_ = gettext.gettext
+
 
 class ConfigDialog(gtk.Dialog):
 
     def __init__(self):
-        super(ConfigDialog,self).__init__("Localbox password", None,
+        super(ConfigDialog,self).__init__(_("Localbox password"), None,
                     gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
                    (gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
         self.connect("response", self.response)
@@ -40,21 +43,21 @@ class ConfigDialog(gtk.Dialog):
         self._selection.set_mode(gtk.SELECTION_SINGLE)
         self._selection.connect("changed", self._select)
         cell = gtk.CellRendererText()
-        column = gtk.TreeViewColumn('Session name', cell)
+        column = gtk.TreeViewColumn(_('Session name'), cell)
         column.set_cell_data_func(cell, self._update_cell) # function to update the cell
         self._treeview.append_column(column)
         layout.attach(self._treeview, 0, 1, 1, 2, gtk.FILL | gtk.EXPAND,
             gtk.FILL | gtk.EXPAND, 1, 1)
 
         # buttons right
-        self._add = gtk.Button("Add")
+        self._add = gtk.Button(_("Add"))
         self._add.connect('clicked', self.on_add, None)
 
-        self._edit = gtk.Button("Edit")
+        self._edit = gtk.Button(_("Edit"))
         self._edit.set_sensitive(False)
         self._edit.connect('clicked', self.on_edit, None)
 
-        self._delete = gtk.Button("Remove")
+        self._delete = gtk.Button(_("Remove"))
         self._delete.set_sensitive(False)
         self._delete.connect('clicked', self.on_delete, None)
 

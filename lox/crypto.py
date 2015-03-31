@@ -4,8 +4,8 @@ Module containing helper class for encryption of files
 Please note:
 (1) The files are AES encrypted
 (2) For that reason, the file is aligned (padded) to a block size of 16
-(3) The original length is never stored, so decryption leaves a padded file
-(4) The initialization vector is stored with the key and not in the file
+(3) The original file length is not stored, so decryption leaves a padded file (!)
+(4) The initialization vector is stored with the key (!) and not in the file
 (5) The key and initialization vector are PGP encrypted
 (6) PGP public and private (!) key are stored on the server
 (7) PGP keys are not signed
@@ -25,7 +25,7 @@ import lox.config as config
 class LoxCrypto:
     '''
     A different private key is generated for each session
-    in order to not
+    in order to not mix up session security
     '''
 
     def __init__(self,name):

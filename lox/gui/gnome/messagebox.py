@@ -1,5 +1,7 @@
 import gtk
 
+import gettext
+_ = gettext.gettext
 
 INFO = gtk.MESSAGE_INFO
 ERROR = gtk.MESSAGE_ERROR

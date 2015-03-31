@@ -81,12 +81,12 @@ class LoxSession(threading.Thread):
         '''
         self.status = "session started"
         self._logger.info("Session started")
-        self._stop_request.wait(1) # needed to get GUI started first?
+        self._stop_request.wait(1) # small pause to get GUI started first
         while not self._stop_request.is_set():
             try:
                 self.sync()
             except (IOError, LoxError) as e:
-                # IOError means not online, report and continue
+                # IOError means not online, LoxError is a protocol exception, report and continue
                 self._logger.error(str(e))
             except (LoxFatal) as e:
                 # LoxFatal means a fatal error, report this and abort session
@@ -101,7 +101,7 @@ class LoxSession(threading.Thread):
             else:
                 break
         self._logger.info("Session stopped")
-        # cleanup everything nicely
+        # cleanup everything nicely, to avoid errors when quitting
         del self._cache
         del self._api
         del self._queue

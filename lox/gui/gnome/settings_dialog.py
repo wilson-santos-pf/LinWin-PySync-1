@@ -6,15 +6,17 @@ import gtk
 from lox.config import settings, load, save, AUTHTYPES, LOGLEVELS
 from lox.gui.gnome.icon import icon
 
+import gettext
+_ = gettext.gettext
 
 class SettingsDialog(gtk.Dialog):
 
     def __init__(self):
-        super(SettingsDialog,self).__init__("Localbox password", None,
+        super(SettingsDialog,self).__init__(_("Localbox settings"), None,
                     gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
                    (gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
         self.connect("response", self.response)
-        self.set_title("Session settings")
+        self.set_title(_("Session settings"))
         self.set_icon_from_file(icon(size=64))
         self.set_border_width(10)
         self.set_size_request(640,380)
@@ -27,25 +29,25 @@ class SettingsDialog(gtk.Dialog):
         self.vbox.pack_start(layout)
 
         # settings
-        label_session = gtk.Label("Session name:")
+        label_session = gtk.Label(_("Session name:"))
         label_session.set_alignment(0, 0.5)
         self._session = gtk.Entry()
         layout.attach(label_session,0,1,0,1)
         layout.attach(self._session,1,2,0,1)
 
-        label_dir = gtk.Label("Local folder to synchronize:")
+        label_dir = gtk.Label(_("Local folder to synchronize:"))
         label_dir.set_alignment(0, 0.5)
         self._dir = gtk.Entry()
         layout.attach(label_dir,0,1,1,2)
         layout.attach(self._dir,1,2,1,2)
 
-        label_url = gtk.Label("Localbox URL:")
+        label_url = gtk.Label(_("Localbox URL:"))
         label_url.set_alignment(0, 0.5)
         self._url = gtk.Entry()
         layout.attach(label_url,0,1,2,3)
         layout.attach(self._url,1,2,2,3)
 
-        label_auth = gtk.Label("Authentication:")
+        label_auth = gtk.Label(_("Authentication:"))
         label_auth.set_alignment(0, 0.5)
         self._auth = gtk.combo_box_new_text()
         for i in AUTHTYPES:
@@ -53,25 +55,25 @@ class SettingsDialog(gtk.Dialog):
         layout.attach(label_auth,0,1,3,4)
         layout.attach(self._auth,1,2,3,4)
 
-        label_username = gtk.Label("Username:")
+        label_username = gtk.Label(_("Username:"))
         label_username.set_alignment(0, 0.5)
         self._username = gtk.Entry()
         layout.attach(label_username,0,1,4,5)
         layout.attach(self._username,1,2,4,5)
 
-        label_password = gtk.Label("Password:")
+        label_password = gtk.Label(_("Password:"))
         label_password.set_alignment(0, 0.5)
         self._password = gtk.Entry()
         layout.attach(label_password,0,1,5,6)
         layout.attach(self._password,1,2,5,6)
 
-        label_interval = gtk.Label("Refresh interval (seconds)")
+        label_interval = gtk.Label(_("Refresh interval (seconds)"))
         label_interval.set_alignment(0, 0.5)
         self._interval = gtk.Entry()
         layout.attach(label_interval,0,1,6,7)
         layout.attach(self._interval,1,2,6,7)
 
-        label_loglevel = gtk.Label("Log level")
+        label_loglevel = gtk.Label(_("Log level"))
         label_loglevel.set_alignment(0, 0.5)
         self._loglevel = gtk.combo_box_new_text()
         for i in LOGLEVELS:
@@ -135,7 +137,7 @@ class SettingsDialog(gtk.Dialog):
                 settings[name] = d
                 save()
             except Exception as e:
-                lox.gui.gnome.messagebox(ERROR,"Cannot save settings: {0}".format(str(e)))
+                lox.gui.gnome.messagebox(ERROR,_("Cannot save settings: {0}").format(str(e)))
                 return True
         self.destroy()
 

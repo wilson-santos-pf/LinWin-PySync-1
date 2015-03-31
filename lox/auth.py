@@ -22,10 +22,11 @@ from httplib import HTTPConnection, HTTPSConnection, HTTPResponse
 import json
 import time
 import urlparse
-
 import lox.config
 from lox.logger import LoxLogger
 from lox.error import LoxError, LoxFatal
+import gettext
+_ = gettext.gettext
 
 
 class Auth:
@@ -91,7 +92,7 @@ class Localbox(Auth):
             # invalidate 10 seconds before
             self.token_expires = time.time() + data[u'expires_in'] - 10
         else:
-            raise LoxFatal("Authentication failed, {0}".format(resp.reason))
+            raise LoxFatal(_("Authentication failed, {0}").format(resp.reason))
 
     def header(self):
         if time.time() > self.token_expires:
@@ -154,7 +155,7 @@ class LinkedIn(Auth):
             self.access_token = str(data[u'access_token'])
             self.token_expires = time.time() + data[u'expires_in'] - 10  # invalidate 10 seconds before
         else:
-            raise LoxError("Authentication failed, " + resp.reason)
+            raise LoxError(_("Authentication failed, {0}").format(resp.reason))
 
     def header(self):
         if time.time() > self.token_expires:

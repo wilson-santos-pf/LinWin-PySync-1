@@ -1,0 +1,311 @@
+# Western Frisian translations for PACKAGE package.
+# Copyright (C) 2015 THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# Automatically generated, 2015.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2015-03-31 22:08+0200\n"
+"PO-Revision-Date: 2015-03-31 22:08+0200\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
+"Language: fy\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=ASCII\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: lox/gui/gnome/config_dialog.py:19
+msgid "Localbox password"
+msgstr ""
+
+#: lox/gui/gnome/config_dialog.py:46
+msgid "Session name"
+msgstr ""
+
+#: lox/gui/gnome/config_dialog.py:53
+msgid "Add"
+msgstr ""
+
+#: lox/gui/gnome/config_dialog.py:56
+msgid "Edit"
+msgstr ""
+
+#: lox/gui/gnome/config_dialog.py:60
+msgid "Remove"
+msgstr ""
+
+#: lox/gui/gnome/notify.py:14
+msgid "failed to send notification"
+msgstr ""
+
+#: lox/gui/gnome/settings_dialog.py:15
+msgid "Localbox settings"
+msgstr ""
+
+#: lox/gui/gnome/settings_dialog.py:19
+msgid "Session settings"
+msgstr ""
+
+#: lox/gui/gnome/settings_dialog.py:32
+msgid "Session name:"
+msgstr ""
+
+#: lox/gui/gnome/settings_dialog.py:38
+msgid "Local folder to synchronize:"
+msgstr ""
+
+#: lox/gui/gnome/settings_dialog.py:44
+msgid "Localbox URL:"
+msgstr ""
+
+#: lox/gui/gnome/settings_dialog.py:50
+msgid "Authentication:"
+msgstr ""
+
+#: lox/gui/gnome/settings_dialog.py:58
+msgid "Username:"
+msgstr ""
+
+#: lox/gui/gnome/settings_dialog.py:64
+msgid "Password:"
+msgstr ""
+
+#: lox/gui/gnome/settings_dialog.py:70
+msgid "Refresh interval (seconds)"
+msgstr ""
+
+#: lox/gui/gnome/settings_dialog.py:76
+msgid "Log level"
+msgstr ""
+
+#: lox/gui/gnome/settings_dialog.py:140
+#, python-brace-format
+msgid "Cannot save settings: {0}"
+msgstr ""
+
+#: lox/gui/gnome/indicator.py:30
+msgid "LocalBox sync client"
+msgstr ""
+
+#: lox/gui/gnome/indicator.py:66
+#, python-brace-format
+msgid "Open folder '{0}'"
+msgstr ""
+
+#: lox/gui/gnome/indicator.py:73
+msgid "Invitations"
+msgstr ""
+
+#: lox/gui/gnome/indicator.py:77
+msgid "Configuration"
+msgstr ""
+
+#: lox/gui/gnome/indicator.py:81
+msgid "Help"
+msgstr ""
+
+#: lox/gui/gnome/indicator.py:88
+msgid "Exit"
+msgstr ""
+
+#: lox/gui/gnome/indicator.py:99
+#, python-brace-format
+msgid "Cannot open folder: {0}"
+msgstr ""
+
+#: lox/gui/gnome/indicator.py:102
+msgid ""
+"Handling invitations is not yet implemented. Use the web interface instead."
+msgstr ""
+
+#: lox/gui/gnome/indicator.py:105
+msgid "Help not yet implemented. Will be added later."
+msgstr ""
+
+#: lox/client.py:43
+msgid "Localbox daemon restarted"
+msgstr ""
+
+#: lox/client.py:45
+msgid "Localbox daemon started"
+msgstr ""
+
+#: lox/client.py:87
+msgid "No sessions configured, use command 'add'"
+msgstr ""
+
+#: lox/client.py:102
+msgid "Error: already running"
+msgstr ""
+
+#: lox/client.py:112
+msgid "Localbox daemon stopped"
+msgstr ""
+
+#: lox/client.py:114
+msgid "Localbox daemon not running"
+msgstr ""
+
+#: lox/client.py:139
+msgid "Localbox daemon not running ..."
+msgstr ""
+
+#: lox/client.py:141
+msgid "Localbox daemon running with pid {}"
+msgstr ""
+
+#: lox/client.py:151
+msgid "Error: a session with name '{}' already exists"
+msgstr ""
+
+#: lox/client.py:154
+msgid "Add Localbox session '{}':"
+msgstr ""
+
+#: lox/client.py:160
+msgid "Start session [yes]: "
+msgstr ""
+
+#: lox/client.py:161 lox/client.py:209
+msgid "yes"
+msgstr ""
+
+#: lox/client.py:167
+#, python-brace-format
+msgid "Usage: {0} add <name>"
+msgstr ""
+
+#: lox/client.py:178
+msgid "Error: a session with name '{}' is not configured"
+msgstr ""
+
+#: lox/client.py:188
+#, python-brace-format
+msgid "Usage: {0} delete <name>"
+msgstr ""
+
+#: lox/client.py:199
+msgid "Error: a session with name '{}' does not exist"
+msgstr ""
+
+#: lox/client.py:202
+msgid "Edit Localbox session with name '{}':"
+msgstr ""
+
+#: lox/client.py:208
+msgid "Start this session [yes]: "
+msgstr ""
+
+#: lox/client.py:215
+#, python-brace-format
+msgid "Usage: {0} edit <name>"
+msgstr ""
+
+#: lox/client.py:223
+msgid "Localbox sessions configured:"
+msgstr ""
+
+#: lox/client.py:234
+msgid "Localbox desktop sync version {}"
+msgstr ""
+
+#: lox/client.py:236
+msgid "Usage: {} [command]"
+msgstr ""
+
+#: lox/client.py:250
+msgid "Localbox invitations"
+msgstr ""
+
+#: lox/client.py:253
+msgid "Session '{}': "
+msgstr ""
+
+#: lox/client.py:263 lox/client.py:318 lox/client.py:328
+#: build/lib.linux-x86_64-2.7/lox/client.py:291
+msgid "Error: {}"
+msgstr ""
+
+#: lox/client.py:278
+#, python-brace-format
+msgid "Usage: {0} start|stop|run|status|help|... "
+msgstr ""
+
+#: lox/client.py:283
+msgid "starts the client"
+msgstr ""
+
+#: lox/client.py:284
+msgid "stops the client"
+msgstr ""
+
+#: lox/client.py:285
+msgid "run in foreground (interactive)"
+msgstr ""
+
+#: lox/client.py:286
+msgid "reloads the confguration"
+msgstr ""
+
+#: lox/client.py:287
+msgid "add an account"
+msgstr ""
+
+#: lox/client.py:288
+msgid "list configured sessions"
+msgstr ""
+
+#: lox/client.py:289
+msgid "edit configuration"
+msgstr ""
+
+#: lox/client.py:290
+msgid "delete session from configuration"
+msgstr ""
+
+#: lox/client.py:291
+msgid "show the status of the client"
+msgstr ""
+
+#: lox/client.py:292
+msgid "show invitations"
+msgstr ""
+
+#: lox/client.py:293
+msgid "accept invitation"
+msgstr ""
+
+#: lox/client.py:294
+msgid "revoke invitation"
+msgstr ""
+
+#: lox/client.py:295
+msgid "show this help"
+msgstr ""
+
+#: lox/client.py:313
+msgid "Error: invalid command"
+msgstr ""
+
+#: lox/client.py:323 build/lib.linux-x86_64-2.7/lox/client.py:288
+msgid "Error: interrupted"
+msgstr ""
+
+#: lox/auth.py:95 lox/auth.py:158
+#, python-brace-format
+msgid "Authentication failed, {0}"
+msgstr ""
+
+#: build/lib.linux-x86_64-2.7/lox/client.py:281
+msgid ""
+"\n"
+"Error: invalid command\n"
+msgstr ""
+
+#: build/lib.linux-x86_64-2.7/lox/client.py:285
+msgid ""
+"\n"
+"Error: {}\n"
+msgstr ""

@@ -30,6 +30,7 @@ endif
 
 build/locale/%/LC_MESSAGES/$(DOMAIN).mo: po/%.po
 	@mkdir -p $(dir $@)
+	@echo creating $@
 	@msgfmt --statistics $< -o $@
 
 install:

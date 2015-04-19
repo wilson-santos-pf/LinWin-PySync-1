@@ -3,11 +3,8 @@
 
 Actual script that forms the shell command
 
-Todo:
-(1) Correct module path
-(2) ...
-
 '''
+
 import lox.client
 
 

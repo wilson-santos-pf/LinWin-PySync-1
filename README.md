@@ -129,7 +129,6 @@ As this is an alpha version the wishlist is quite long. The following functional
 * use pycurl for better asynchronous handling of large files
 * allow for partial downloads/uploads (if the server supports it)
 * group system messages in logger in order to send notifications with compressed information (i.e. "There are 3 updated files")
-* use of the system keyring for storing passwords and keys
 * change icons and emblems via gvfs
 * add file comparison based on MD5 checksum local bound to the version number remote
 * allow a directory to be published using the context menu

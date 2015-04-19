@@ -20,13 +20,16 @@ import traceback
 from datetime import datetime
 import iso8601
 from collections import deque
-
 import lox.config
 import lox.lib
 from lox.api import LoxApi
 from lox.logger import LoxLogger
 from lox.error import LoxError, LoxFatal
 from lox.cache import LoxCache
+from lox.crypto import LoxKey
+import gettext
+_ = gettext.gettext
+
 
 class FileInfo:
     '''
@@ -37,6 +40,13 @@ class FileInfo:
     size = None
     hash = None
     encrypted = None
+
+
+class Path:
+
+    def __init__(self, name, key=LoxKey()):
+        self.name = name
+        self.key = key
 
 
 class LoxSession(threading.Thread):
@@ -61,11 +71,11 @@ class LoxSession(threading.Thread):
         self._queue = deque()
         self.interval = float(lox.config.settings[Name]['interval'])
         if self.interval<60 and self.interval>0:
-            self._logger.warn("Interval is {0} seconds, this is short".format(self.interval))
+            self._logger.warn(_("Interval is {0} seconds, this is short").format(self.interval))
         self._stop_request = threading.Event()
-        self.last_error = "none"
-        self.status = "initialized"
-        self._logger.info("Session loaded")
+        self.last_error = _("none")
+        self.status = _("initialized")
+        self._logger.info(_("Session loaded"))
 
     def stop(self):
         '''
@@ -79,8 +89,8 @@ class LoxSession(threading.Thread):
         '''
         Running the session as a thread
         '''
-        self.status = "session started"
-        self._logger.info("Session started")
+        self.status = _("session started")
+        self._logger.info(_("Session started"))
         self._stop_request.wait(1) # small pause to get GUI started first
         while not self._stop_request.is_set():
             try:
@@ -93,39 +103,40 @@ class LoxSession(threading.Thread):
                 self._logger.error(str(e))
                 break
             except Exception as e:
-                self._logger.critical("Exception in sync\n{0}".format(traceback.format_exc()))
+                self._logger.critical(_("Exception in sync\n{0}").format(traceback.format_exc()))
             if self.interval>0:
-                self.status = 'waiting  since {:%Y-%m-%d %H:%M:%S}'.format(datetime.now())
-                self._logger.info("Session waiting for next sync")
+                self.status = _('waiting  since {:%Y-%m-%d %H:%M:%S}').format(datetime.now())
+                self._logger.info(_("Session waiting for next sync"))
                 self._stop_request.wait(self.interval)
             else:
                 break
-        self._logger.info("Session stopped")
+        self._logger.info(_("Session stopped"))
         # cleanup everything nicely, to avoid errors when quitting
         del self._cache
         del self._api
         del self._queue
         del self._logger
 
-    def sync(self, path='/'):
+    def sync(self, path=Path('/')):
         '''
         Synchronize given path start worker thread to handle queue
         and fills queue with renconciliation of directories
         '''
-        self.status = 'sync running since {:%Y-%m-%d %H:%M:%S}'.format(datetime.now())
-        self._logger.info("Sync started")
+        self.status = _('sync running since {:%Y-%m-%d %H:%M:%S}').format(datetime.now())
+        self._logger.info(_("Sync started"))
         self._reconcile(path)
         while not self._stop_request.is_set():
             try:
                 filename = self._queue.popleft()
+                next_path = Path(filename, path.key)
                 local = self._file_info_local(filename)
                 remote = self._file_info_remote(filename)
                 cached = self._file_info_cache(filename)
                 action = self._resolve(local,remote,cached)
-                self._logger.debug("Resolving '{0}' leads to {1}".format(filename,action.__name__[1:]))
-                action(filename)
+                self._logger.debug(_("Resolving '{0}' leads to {1}").format(filename,action.__name__[1:]))
+                action(next_path)
             except IndexError:
-                self._logger.info("Sync completed")
+                self._logger.info(_("Sync completed"))
                 break
 
     def _reconcile(self,path):
@@ -133,26 +144,26 @@ class LoxSession(threading.Thread):
         Gets directory contents both local and remote, reconciles these sets
         and puts the items in the worker queue
         '''
-        self._logger.debug("Reconcile '{0}'".format(path))
+        self._logger.debug(_("Reconcile '{0}'").format(path.name))
         # fetch local directory
         local_files = set()
-        local_dir = self._root+path
+        local_dir = self._root+path.name
         if os.path.isdir(local_dir):
             for item in os.listdir(local_dir):
-                filename = os.path.join(path,item)
+                filename = os.path.join(path.name,item)
                 local_files.add(filename)
         else:
-            raise LoxError('Not a directory (local)')
+            raise LoxError(_('Not a directory (local)'))
         # fetch remote directory
         remote_files = set()
-        meta = self._api.meta(path)
+        meta = self._api.meta(path.name)
         if meta[u'is_dir']:
             if u'children' in meta:
                 for child_meta in meta[u'children']:
                     child_path = child_meta[u'path']
                     remote_files.add(child_path)
         else:
-            raise LoxError('Not a directory (remote)')
+            raise LoxError(_('Not a directory (remote)'))
         # reconcile
         files = local_files | remote_files
         for f in files:
@@ -239,14 +250,14 @@ class LoxSession(threading.Thread):
         #resolve(_OtherL                  ,_OtherR                  ,_OtherC                  ) -> not_resolved.
         return self._not_resolved
 
-    def _file_info_local(self,path):
+    def _file_info_local(self,filename):
         '''
         Get meta data from local file:
         (1) isdir
         (2) mtime (as DateTime object)
         (3) size (in case of directory the number of files)
         '''
-        fullpath = self._root+path
+        fullpath = self._root+filename
         f = FileInfo()
         if os.path.exists(fullpath):
             f.isdir = os.path.isdir(fullpath)
@@ -261,7 +272,7 @@ class LoxSession(threading.Thread):
                 f.size = os.path.getsize(fullpath)
         return f
 
-    def _file_info_remote(self,path):
+    def _file_info_remote(self,filename):
         '''
         Get meta data from remote file:
         (1) isdir
@@ -269,7 +280,7 @@ class LoxSession(threading.Thread):
         (3) size (in case of directory the number of files)
         '''
         f = FileInfo()
-        meta = self._api.meta(path)
+        meta = self._api.meta(filename)
         if not (meta is None):
             f.isdir = meta[u'is_dir']
             modified_at = meta[u'modified_at']
@@ -284,12 +295,11 @@ class LoxSession(threading.Thread):
                 f.size = meta[u'size']
         return f
 
-    def _file_info_cache(self,path):
+    def _file_info_cache(self,filename):
         '''
         Get meta data from cache
         '''
-        key = path.encode('utf8')
-        file_info = self._cache.get(key,FileInfo())
+        file_info = self._cache.get(filename,FileInfo())
         return file_info
 
     # actions
@@ -309,15 +319,15 @@ class LoxSession(threading.Thread):
         '''
         Update the cache
         '''
-        file_info = self._file_info_local(path)
-        self._cache[path] = file_info
+        file_info = self._file_info_local(path.name)
+        self._cache[path.name] = file_info
 
     def _update_and_walk(self,path):
         '''
         Update the cache and recursively walk directory
         '''
-        file_info = self._file_info_local(path)
-        self._cache[path] = file_info
+        file_info = self._file_info_local(path.name)
+        self._cache[path.name] = file_info
         self._reconcile(path)
 
     def _download(self,path):
@@ -327,15 +337,15 @@ class LoxSession(threading.Thread):
         (2) Get the meta data from server
         (3) Override local meta data and update cache
         '''
-        self._logger.info("Download %s" % path)
-        meta = self._api.meta(path)
+        self._logger.info(_("Download {0}").format(path.name))
+        meta = self._api.meta(path.name)
         if not (meta is None):
-            filename = self._root+path
+            filename = self._root+path.name
             if meta[u'is_dir']:
                 os.mkdir(filename)
                 self._reconcile(path)
             else:
-                contents = self._api.download(path)
+                contents = self._api.download(path.name)
                 # use temp file in case large downloads get interrupted
                 dl_name = lox.lib.get_dl_name(filename)
                 f = open(dl_name,'wb')
@@ -360,25 +370,25 @@ class LoxSession(threading.Thread):
         (2) Retrieve what meta data the server gave to the file
         (3) Use this meta data to update local file info and cache
         '''
-        self._logger.info("Upload %s" % path)
-        local_dir = self._root+path
+        self._logger.info(_("Upload {0}").format(path.name))
+        local_dir = self._root+path.name
         if os.path.isdir(local_dir):
             self._api.create_folder(path)
-            file_info = self._file_info_local(path)
+            file_info = self._file_info_local(path.name)
             self._cache[path] = file_info
             self._reconcile(path)
         else:
             # (1) file timestamp must be same as on server after upload, can this be done more efficient?
-            content_type,encoding = mimetypes.guess_type(path)
-            filename = self._root+path
+            content_type,encoding = mimetypes.guess_type(path.name)
+            filename = self._root+path.name
             f = open(filename,'rb')
             contents = f.read()
             f.close()
-            self._api.upload(path,content_type,contents)
+            self._api.upload(path.name,content_type,contents)
             # file timestamp must be same as on server:
             # (1) can this be done more efficient?
             # (2) put in separate function _touch()?
-            meta = self._api.meta(path)
+            meta = self._api.meta(path.name)
             modified_at = meta[u'modified_at']
             modified = iso8601.parse_date(modified_at)
             mtime = lox.lib.to_timestamp(modified)
@@ -388,38 +398,38 @@ class LoxSession(threading.Thread):
             file_info.isdir = False
             file_info.modified = modified
             file_info.size = os.path.getsize(filename)
-            self._cache[path] = file_info
+            self._cache[path.name] = file_info
 
     def _delete_local(self,path):
         '''
         Delete the local file or directory (recursively)
         '''
-        self._logger.debug("Delete (local) %s" % path)
-        full_path = self._root+path
+        self._logger.debug(_("Delete (local) {0}").format(path.name))
+        full_path = self._root+path.name
         if os.path.isdir(full_path):
             for item in os.listdir(full_path):
-                filename = os.path.join(path,item)
+                filename = os.path.join(path.name,item)
                 self._delete_local(filename)
             os.rmdir(full_path)
-            del self._cache[path]
+            del self._cache[path.name]
         else:
             os.remove(full_path)
-            del self._cache[path]
+            del self._cache[path.name]
 
     def _delete_remote(self,path):
         '''
         Delete the remote file or directory (recursively)
         '''
-        self._logger.debug("Delete (remote) %s" % path)
-        meta = self._api.meta(path)
+        self._logger.debug(_("Delete (remote) {0}").format(path.name))
+        meta = self._api.meta(path.name)
         if not (meta is None):
             if meta[u'is_dir']:
                 if u'children' in meta:
                     for child_meta in meta[u'children']:
                         child_path = child_meta[u'path']
                         self._delete_remote(child_path)
-            self._api.delete(path)
-            del self._cache[path]
+            self._api.delete(path.name)
+            del self._cache[path.name]
 
 
     def _conflict(self,path):
@@ -429,10 +439,10 @@ class LoxSession(threading.Thread):
         (2) Remote file is downloaded
         '''
         # (1) rename local with .conflict_nnnn extension
-        full_path = self._root+path
-        conflict_path = lox.lib.get_conflict_name(path)
+        full_path = self._root+path.name
+        conflict_path = lox.lib.get_conflict_name(path.name)
         new_name =  self._root+conflict_path
-        self._logger.info("Renamed (local) {0} to {1}".format(path,conflict_path))
+        self._logger.info(_("Renamed (local) {0} to {1}").format(path,conflict_path))
         os.rename(full_path,new_name)
         # (2) download remote to tmp/unique file (like maildir)
         self._download(path)
@@ -442,11 +452,11 @@ class LoxSession(threading.Thread):
         '''
         This situation should not occur
         '''
-        self._logger.error("Resolving '{0}' led to strange situation".format(path))
+        self._logger.error(_("Resolving '{0}' led to strange situation").format(path.name))
 
     def _not_resolved(self,path):
         '''
         Somehow this situation is not yet handled
         '''
-        self._logger.error("Path '{0}' could not be resolved".format(path))
+        self._logger.error(_("Path '{0}' could not be resolved").format(path.name))
 

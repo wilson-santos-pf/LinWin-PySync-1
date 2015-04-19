@@ -22,6 +22,11 @@ from Crypto import Random
 import gnupg
 import lox.config as config
 
+class LoxKey:
+    key = None
+    iv = None
+
+
 class LoxCrypto:
     '''
     A different private key is generated for each session

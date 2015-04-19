@@ -241,5 +241,5 @@ class LoxApi:
             raise LoxError(resp.reason)
 
     def version(self):
-        # Version can up to 1.1.5 not be obtained from API
-        return "1.1.5"
+        # Version can up to 1.1.17b not be obtained from API
+        return "1.1.17b"

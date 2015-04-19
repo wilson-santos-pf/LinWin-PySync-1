@@ -20,6 +20,7 @@ The lox-client desktop sync client has some dependencies to be resolved before b
     $ sudo apt-get install \
         python-httplib2 \
         python-gnupg \
+        gettext \
         haveged
 
 The GUI has some additional dependencies:
@@ -30,7 +31,7 @@ The GUI has some additional dependencies:
 
 For installation of Python on MacOS follow the instructions on [python.org](https://www.python.org/downloads/mac-osx/). Keep with a 2.6 or 2.7 version of Python for this moment.
 
-Download the software and extract it in a separate directory. There is n
+Download the software and extract it in a separate directory. The software installs with Python setuptools and after intallation is can be used from the command line or from the desktop menu.
 
     $ wget https://github.com/2EK/Linux-Sync/archive/master.zip
     $ unzip Linux-Sync-master.zip

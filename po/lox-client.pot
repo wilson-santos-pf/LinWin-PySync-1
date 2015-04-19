@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-03-31 22:08+0200\n"
+"POT-Creation-Date: 2015-04-19 12:10+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -86,227 +86,329 @@ msgstr ""
 msgid "Cannot save settings: {0}"
 msgstr ""
 
-#: lox/gui/gnome/indicator.py:30
+#: lox/gui/gnome/indicator.py:32
 msgid "LocalBox sync client"
 msgstr ""
 
-#: lox/gui/gnome/indicator.py:66
+#: lox/gui/gnome/indicator.py:68
 #, python-brace-format
 msgid "Open folder '{0}'"
 msgstr ""
 
-#: lox/gui/gnome/indicator.py:73
+#: lox/gui/gnome/indicator.py:75
 msgid "Invitations"
 msgstr ""
 
-#: lox/gui/gnome/indicator.py:77
+#: lox/gui/gnome/indicator.py:79
 msgid "Configuration"
 msgstr ""
 
-#: lox/gui/gnome/indicator.py:81
+#: lox/gui/gnome/indicator.py:83
 msgid "Help"
 msgstr ""
 
-#: lox/gui/gnome/indicator.py:88
+#: lox/gui/gnome/indicator.py:90
 msgid "Exit"
 msgstr ""
 
-#: lox/gui/gnome/indicator.py:99
+#: lox/gui/gnome/indicator.py:101
 #, python-brace-format
 msgid "Cannot open folder: {0}"
 msgstr ""
 
-#: lox/gui/gnome/indicator.py:102
+#: lox/gui/gnome/indicator.py:104
 msgid ""
 "Handling invitations is not yet implemented. Use the web interface instead."
 msgstr ""
 
-#: lox/gui/gnome/indicator.py:105
+#: lox/gui/gnome/indicator.py:107
 msgid "Help not yet implemented. Will be added later."
 msgstr ""
 
-#: lox/client.py:43
+#: lox/client.py:43 build/lib.linux-x86_64-2.7/lox/client.py:43
 msgid "Localbox daemon restarted"
 msgstr ""
 
-#: lox/client.py:45
+#: lox/client.py:45 build/lib.linux-x86_64-2.7/lox/client.py:45
 msgid "Localbox daemon started"
 msgstr ""
 
-#: lox/client.py:87
+#: lox/client.py:87 build/lib.linux-x86_64-2.7/lox/client.py:87
 msgid "No sessions configured, use command 'add'"
 msgstr ""
 
-#: lox/client.py:102
+#: lox/client.py:102 build/lib.linux-x86_64-2.7/lox/client.py:102
 msgid "Error: already running"
 msgstr ""
 
-#: lox/client.py:112
+#: lox/client.py:112 build/lib.linux-x86_64-2.7/lox/client.py:112
 msgid "Localbox daemon stopped"
 msgstr ""
 
-#: lox/client.py:114
+#: lox/client.py:114 build/lib.linux-x86_64-2.7/lox/client.py:114
 msgid "Localbox daemon not running"
 msgstr ""
 
-#: lox/client.py:139
+#: lox/client.py:139 build/lib.linux-x86_64-2.7/lox/client.py:139
 msgid "Localbox daemon not running ..."
 msgstr ""
 
-#: lox/client.py:141
+#: lox/client.py:141 build/lib.linux-x86_64-2.7/lox/client.py:141
 msgid "Localbox daemon running with pid {}"
 msgstr ""
 
-#: lox/client.py:151
+#: lox/client.py:151 build/lib.linux-x86_64-2.7/lox/client.py:151
 msgid "Error: a session with name '{}' already exists"
 msgstr ""
 
-#: lox/client.py:154
+#: lox/client.py:154 build/lib.linux-x86_64-2.7/lox/client.py:154
 msgid "Add Localbox session '{}':"
 msgstr ""
 
-#: lox/client.py:160
+#: lox/client.py:160 build/lib.linux-x86_64-2.7/lox/client.py:160
 msgid "Start session [yes]: "
 msgstr ""
 
 #: lox/client.py:161 lox/client.py:209
+#: build/lib.linux-x86_64-2.7/lox/client.py:161
+#: build/lib.linux-x86_64-2.7/lox/client.py:209
 msgid "yes"
 msgstr ""
 
-#: lox/client.py:167
+#: lox/client.py:167 build/lib.linux-x86_64-2.7/lox/client.py:167
 #, python-brace-format
 msgid "Usage: {0} add <name>"
 msgstr ""
 
-#: lox/client.py:178
+#: lox/client.py:178 build/lib.linux-x86_64-2.7/lox/client.py:178
 msgid "Error: a session with name '{}' is not configured"
 msgstr ""
 
-#: lox/client.py:188
+#: lox/client.py:188 build/lib.linux-x86_64-2.7/lox/client.py:188
 #, python-brace-format
 msgid "Usage: {0} delete <name>"
 msgstr ""
 
-#: lox/client.py:199
+#: lox/client.py:199 build/lib.linux-x86_64-2.7/lox/client.py:199
 msgid "Error: a session with name '{}' does not exist"
 msgstr ""
 
-#: lox/client.py:202
+#: lox/client.py:202 build/lib.linux-x86_64-2.7/lox/client.py:202
 msgid "Edit Localbox session with name '{}':"
 msgstr ""
 
-#: lox/client.py:208
+#: lox/client.py:208 build/lib.linux-x86_64-2.7/lox/client.py:208
 msgid "Start this session [yes]: "
 msgstr ""
 
-#: lox/client.py:215
+#: lox/client.py:215 build/lib.linux-x86_64-2.7/lox/client.py:215
 #, python-brace-format
 msgid "Usage: {0} edit <name>"
 msgstr ""
 
-#: lox/client.py:223
+#: lox/client.py:223 build/lib.linux-x86_64-2.7/lox/client.py:223
 msgid "Localbox sessions configured:"
 msgstr ""
 
-#: lox/client.py:234
+#: lox/client.py:234 build/lib.linux-x86_64-2.7/lox/client.py:234
 msgid "Localbox desktop sync version {}"
 msgstr ""
 
-#: lox/client.py:236
+#: lox/client.py:236 build/lib.linux-x86_64-2.7/lox/client.py:236
 msgid "Usage: {} [command]"
 msgstr ""
 
-#: lox/client.py:250
+#: lox/client.py:250 build/lib.linux-x86_64-2.7/lox/client.py:250
 msgid "Localbox invitations"
 msgstr ""
 
-#: lox/client.py:253
+#: lox/client.py:253 build/lib.linux-x86_64-2.7/lox/client.py:253
 msgid "Session '{}': "
 msgstr ""
 
 #: lox/client.py:263 lox/client.py:318 lox/client.py:328
-#: build/lib.linux-x86_64-2.7/lox/client.py:291
+#: build/lib.linux-x86_64-2.7/lox/client.py:263
+#: build/lib.linux-x86_64-2.7/lox/client.py:318
+#: build/lib.linux-x86_64-2.7/lox/client.py:328
 msgid "Error: {}"
 msgstr ""
 
-#: lox/client.py:278
+#: lox/client.py:278 build/lib.linux-x86_64-2.7/lox/client.py:278
 #, python-brace-format
 msgid "Usage: {0} start|stop|run|status|help|... "
 msgstr ""
 
-#: lox/client.py:283
+#: lox/client.py:283 build/lib.linux-x86_64-2.7/lox/client.py:283
 msgid "starts the client"
 msgstr ""
 
-#: lox/client.py:284
+#: lox/client.py:284 build/lib.linux-x86_64-2.7/lox/client.py:284
 msgid "stops the client"
 msgstr ""
 
-#: lox/client.py:285
+#: lox/client.py:285 build/lib.linux-x86_64-2.7/lox/client.py:285
 msgid "run in foreground (interactive)"
 msgstr ""
 
-#: lox/client.py:286
+#: lox/client.py:286 build/lib.linux-x86_64-2.7/lox/client.py:286
 msgid "reloads the confguration"
 msgstr ""
 
-#: lox/client.py:287
+#: lox/client.py:287 build/lib.linux-x86_64-2.7/lox/client.py:287
 msgid "add an account"
 msgstr ""
 
-#: lox/client.py:288
+#: lox/client.py:288 build/lib.linux-x86_64-2.7/lox/client.py:288
 msgid "list configured sessions"
 msgstr ""
 
-#: lox/client.py:289
+#: lox/client.py:289 build/lib.linux-x86_64-2.7/lox/client.py:289
 msgid "edit configuration"
 msgstr ""
 
-#: lox/client.py:290
+#: lox/client.py:290 build/lib.linux-x86_64-2.7/lox/client.py:290
 msgid "delete session from configuration"
 msgstr ""
 
-#: lox/client.py:291
+#: lox/client.py:291 build/lib.linux-x86_64-2.7/lox/client.py:291
 msgid "show the status of the client"
 msgstr ""
 
-#: lox/client.py:292
+#: lox/client.py:292 build/lib.linux-x86_64-2.7/lox/client.py:292
 msgid "show invitations"
 msgstr ""
 
-#: lox/client.py:293
+#: lox/client.py:293 build/lib.linux-x86_64-2.7/lox/client.py:293
 msgid "accept invitation"
 msgstr ""
 
-#: lox/client.py:294
+#: lox/client.py:294 build/lib.linux-x86_64-2.7/lox/client.py:294
 msgid "revoke invitation"
 msgstr ""
 
-#: lox/client.py:295
+#: lox/client.py:295 build/lib.linux-x86_64-2.7/lox/client.py:295
 msgid "show this help"
 msgstr ""
 
-#: lox/client.py:313
+#: lox/client.py:313 build/lib.linux-x86_64-2.7/lox/client.py:313
 msgid "Error: invalid command"
 msgstr ""
 
-#: lox/client.py:323 build/lib.linux-x86_64-2.7/lox/client.py:288
+#: lox/client.py:323 build/lib.linux-x86_64-2.7/lox/client.py:323
 msgid "Error: interrupted"
 msgstr ""
 
-#: lox/auth.py:95 lox/auth.py:158
+#: lox/auth.py:95 lox/auth.py:158 build/lib.linux-x86_64-2.7/lox/auth.py:95
+#: build/lib.linux-x86_64-2.7/lox/auth.py:158
 #, python-brace-format
 msgid "Authentication failed, {0}"
 msgstr ""
 
-#: build/lib.linux-x86_64-2.7/lox/client.py:281
-msgid ""
-"\n"
-"Error: invalid command\n"
+#: lox/session.py:74 build/lib.linux-x86_64-2.7/lox/session.py:74
+#, python-brace-format
+msgid "Interval is {0} seconds, this is short"
 msgstr ""
 
-#: build/lib.linux-x86_64-2.7/lox/client.py:285
+#: lox/session.py:76 build/lib.linux-x86_64-2.7/lox/session.py:76
+msgid "none"
+msgstr ""
+
+#: lox/session.py:77 build/lib.linux-x86_64-2.7/lox/session.py:77
+msgid "initialized"
+msgstr ""
+
+#: lox/session.py:78 build/lib.linux-x86_64-2.7/lox/session.py:78
+msgid "Session loaded"
+msgstr ""
+
+#: lox/session.py:92 build/lib.linux-x86_64-2.7/lox/session.py:92
+msgid "session started"
+msgstr ""
+
+#: lox/session.py:93 build/lib.linux-x86_64-2.7/lox/session.py:93
+msgid "Session started"
+msgstr ""
+
+#: lox/session.py:106 build/lib.linux-x86_64-2.7/lox/session.py:106
+#, python-brace-format
 msgid ""
-"\n"
-"Error: {}\n"
+"Exception in sync\n"
+"{0}"
+msgstr ""
+
+#: lox/session.py:108 build/lib.linux-x86_64-2.7/lox/session.py:108
+msgid "waiting  since {:%Y-%m-%d %H:%M:%S}"
+msgstr ""
+
+#: lox/session.py:109 build/lib.linux-x86_64-2.7/lox/session.py:109
+msgid "Session waiting for next sync"
+msgstr ""
+
+#: lox/session.py:113 build/lib.linux-x86_64-2.7/lox/session.py:113
+msgid "Session stopped"
+msgstr ""
+
+#: lox/session.py:125 build/lib.linux-x86_64-2.7/lox/session.py:125
+msgid "sync running since {:%Y-%m-%d %H:%M:%S}"
+msgstr ""
+
+#: lox/session.py:126 build/lib.linux-x86_64-2.7/lox/session.py:126
+msgid "Sync started"
+msgstr ""
+
+#: lox/session.py:136 build/lib.linux-x86_64-2.7/lox/session.py:136
+#, python-brace-format
+msgid "Resolving '{0}' leads to {1}"
+msgstr ""
+
+#: lox/session.py:139 build/lib.linux-x86_64-2.7/lox/session.py:139
+msgid "Sync completed"
+msgstr ""
+
+#: lox/session.py:147 build/lib.linux-x86_64-2.7/lox/session.py:147
+#, python-brace-format
+msgid "Reconcile '{0}'"
+msgstr ""
+
+#: lox/session.py:156 build/lib.linux-x86_64-2.7/lox/session.py:156
+msgid "Not a directory (local)"
+msgstr ""
+
+#: lox/session.py:166 build/lib.linux-x86_64-2.7/lox/session.py:166
+msgid "Not a directory (remote)"
+msgstr ""
+
+#: lox/session.py:340 build/lib.linux-x86_64-2.7/lox/session.py:340
+#, python-brace-format
+msgid "Download {0}"
+msgstr ""
+
+#: lox/session.py:373 build/lib.linux-x86_64-2.7/lox/session.py:373
+#, python-brace-format
+msgid "Upload {0}"
+msgstr ""
+
+#: lox/session.py:407 build/lib.linux-x86_64-2.7/lox/session.py:407
+#, python-brace-format
+msgid "Delete (local) {0}"
+msgstr ""
+
+#: lox/session.py:423 build/lib.linux-x86_64-2.7/lox/session.py:423
+#, python-brace-format
+msgid "Delete (remote) {0}"
+msgstr ""
+
+#: lox/session.py:445 build/lib.linux-x86_64-2.7/lox/session.py:445
+#, python-brace-format
+msgid "Renamed (local) {0} to {1}"
+msgstr ""
+
+#: lox/session.py:455 build/lib.linux-x86_64-2.7/lox/session.py:455
+#, python-brace-format
+msgid "Resolving '{0}' led to strange situation"
+msgstr ""
+
+#: lox/session.py:461 build/lib.linux-x86_64-2.7/lox/session.py:461
+#, python-brace-format
+msgid "Path '{0}' could not be resolved"
 msgstr ""

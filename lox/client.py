@@ -299,7 +299,7 @@ def main():
     '''
     Main routine: call routine from command
     '''
-    gettext.bindtextdomain('lox-client', os.path.abspath(__file__)+'/i18n')
+    gettext.bindtextdomain('lox-client')
     gettext.textdomain('lox-client')
     cmd = sys.argv[1].lower() if len(sys.argv)>1 else cmd_usage()
     pidfile = os.environ['HOME']+'/.lox/lox-client.pid'

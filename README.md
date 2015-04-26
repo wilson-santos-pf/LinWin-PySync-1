@@ -131,7 +131,3 @@ As this is an alpha version the wishlist is quite long. The following functional
 * add file comparison based on MD5 checksum local bound to the version number remote
 * allow a directory to be published using the context menu
 
-Authors
-----
-Tjeerd van der Laan
-Ivo Tamboer

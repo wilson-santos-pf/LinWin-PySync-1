@@ -124,8 +124,6 @@ Currently, the iOS client_id and client_secret are used so to the server this de
 Wishlist
 ----
 As this is an alpha version the wishlist is quite long. The following functionality will be implemented in a later stage.
-* proper handling of shared folders (revoke invitiation when deleted at top level)
-* sync of encrypted folders
 * use pycurl for better asynchronous handling of large files
 * allow for partial downloads/uploads (if the server supports it)
 * group system messages in logger in order to send notifications with compressed information (i.e. "There are 3 updated files")
@@ -136,3 +134,4 @@ As this is an alpha version the wishlist is quite long. The following functional
 Authors
 ----
 Tjeerd van der Laan
+Ivo Tamboer

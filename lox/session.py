@@ -26,7 +26,7 @@ from lox.api import LoxApi
 from lox.logger import LoxLogger
 from lox.error import LoxError, LoxFatal
 from lox.cache import LoxCache
-from lox.crypto import LoxKey
+from lox.crypto import LoxKey, LoxKeyring
 import gettext
 _ = gettext.gettext
 
@@ -39,15 +39,17 @@ class FileInfo:
     modified = None
     size = None
     hash = None
-    encrypted = None
+    has_keys = None
 
 
 class Path:
 
-    def __init__(self, name, key=LoxKey()):
+    def __init__(self, name, key=None):
         self.name = name
         self.key = key
 
+    def is_encrypted(self):
+        return not self.key is None
 
 class LoxSession(threading.Thread):
     '''
@@ -67,6 +69,7 @@ class LoxSession(threading.Thread):
             os.mkdir(self._root)
         self._logger = LoxLogger(Name)
         self._cache = LoxCache(Name, self._logger)
+        self._keyring = LoxKeyring(Name)
         self._api = LoxApi(Name)
         self._queue = deque()
         self.interval = float(lox.config.settings[Name]['interval'])
@@ -127,13 +130,15 @@ class LoxSession(threading.Thread):
         self._reconcile(path)
         while not self._stop_request.is_set():
             try:
-                filename = self._queue.popleft()
-                next_path = Path(filename, path.key)
-                local = self._file_info_local(filename)
-                remote = self._file_info_remote(filename)
-                cached = self._file_info_cache(filename)
+                next_path = self._queue.popleft()
+                local = self._file_info_local(next_path.name)
+                remote = self._file_info_remote(next_path.name)
+                cached = self._file_info_cache(next_path.name)
+                if remote.has_keys:
+                    self._logger.info(_("Fetch keys for '{0}'").format(next_path.name))
+                    next_path = Path(next_path.name, self._keyring.get_key(next_path.name))
                 action = self._resolve(local,remote,cached)
-                self._logger.debug(_("Resolving '{0}' leads to {1}").format(filename,action.__name__[1:]))
+                self._logger.debug(_("Resolving '{0}' leads to {1}").format(next_path.name,action.__name__[1:]))
                 action(next_path)
             except IndexError:
                 self._logger.info(_("Sync completed"))
@@ -151,7 +156,14 @@ class LoxSession(threading.Thread):
         if os.path.isdir(local_dir):
             for item in os.listdir(local_dir):
                 filename = os.path.join(path.name,item)
-                local_files.add(filename)
+                if not item[0]=='.':
+                    local_files.add(filename)
+                else:
+                    # check if it are files that are left by this app and cleanup
+                    if item.startswith(".download") or item.startswith(".encrypt") or item.startswith(".decrypt"):
+                        fullname = self._root+filename
+                        #os.remove(fullname)
+                        self._logger.info(_("Cleaning up file {}").format(fullname))
         else:
             raise LoxError(_('Not a directory (local)'))
         # fetch remote directory
@@ -168,7 +180,7 @@ class LoxSession(threading.Thread):
         files = local_files | remote_files
         for f in files:
             #self._logger.debug("Added to queue '%s'" % f)
-            self._queue.append(f)
+            self._queue.append(Path(f,path.key))
 
     def _resolve(self,Local,Remote,Cached):
         '''
@@ -240,6 +252,8 @@ class LoxSession(threading.Thread):
         if (Remote.isdir==Cached.isdir==True and
                 Local.size is None):
             return self._delete_remote
+        if (Local.isdir != Cached.isdir):
+            return self._update_cache
         #resolve({file   ,_        ,_    },{dir    ,_        ,_    },{_      ,_        ,_    }) -> conflict;
         #resolve({dir    ,_        ,_    },{file   ,_        ,_    },{_      ,_        ,_    }) -> conflict;
         if (Local.isdir != Remote.isdir):
@@ -291,6 +305,10 @@ class LoxSession(threading.Thread):
                     f.size = len(files)
                 else:
                     f.size = 0
+                if u'has_keys' in meta:
+                    f.has_keys = meta[u'has_keys']
+                else:
+                    f.has_keys = False
             else:
                 f.size = meta[u'size']
         return f
@@ -320,7 +338,11 @@ class LoxSession(threading.Thread):
         Update the cache
         '''
         file_info = self._file_info_local(path.name)
-        self._cache[path.name] = file_info
+        if not file_info.isdir is None:
+            self._cache[path.name] = file_info
+        else:
+            del self._cache[path.name]
+
 
     def _update_and_walk(self,path):
         '''
@@ -347,11 +369,18 @@ class LoxSession(threading.Thread):
             else:
                 contents = self._api.download(path.name)
                 # use temp file in case large downloads get interrupted
-                dl_name = lox.lib.get_dl_name(filename)
-                f = open(dl_name,'wb')
+                download_name = lox.lib.get_tmp_name(filename)
+                f = open(download_name,'wb')
                 f.write(contents)
                 f.close()
-                os.rename(dl_name,filename)
+                if path.is_encrypted():
+                    self._logger.info(_("File {0} is encrypted, decrypt ... ").format(path.name))
+                    decrypt_name = lox.lib.get_tmp_name(filename,'decrypt')
+                    self._keyring.decrypt(path.key,download_name,decrypt_name)
+                    #os.remove(download_name)
+                    os.rename(decrypt_name,filename)
+                else:
+                    os.rename(download_name,filename)
                 modified_at = meta[u'modified_at']
                 modified = iso8601.parse_date(modified_at)
                 mtime = lox.lib.to_timestamp(modified)
@@ -361,7 +390,7 @@ class LoxSession(threading.Thread):
                 file_info.isdir = False
                 file_info.modified = modified
                 file_info.size = os.path.getsize(filename)
-                self._cache[path] = file_info
+                self._cache[path.name] = file_info
 
     def _upload(self,path):
         '''
@@ -373,17 +402,26 @@ class LoxSession(threading.Thread):
         self._logger.info(_("Upload {0}").format(path.name))
         local_dir = self._root+path.name
         if os.path.isdir(local_dir):
-            self._api.create_folder(path)
+            # TODO: check if at highest level, ask via messagebox to encrypt or not
+            self._api.create_folder(path.name)
             file_info = self._file_info_local(path.name)
-            self._cache[path] = file_info
+            self._cache[path.name] = file_info
             self._reconcile(path)
         else:
             # (1) file timestamp must be same as on server after upload, can this be done more efficient?
             content_type,encoding = mimetypes.guess_type(path.name)
             filename = self._root+path.name
-            f = open(filename,'rb')
-            contents = f.read()
-            f.close()
+            if path.is_encrypted():
+                encrypt_name = lox.lib.get_tmp_name(filename,'encrypt')
+                self._keyring.encrypt(path.key,filename,encrypt_name)
+                f = open(encrypt_name,'rb')
+                contents = f.read()
+                f.close()
+                #os.remove(encrypt_name)
+            else:
+                f = open(filename,'rb')
+                contents = f.read()
+                f.close()
             self._api.upload(path.name,content_type,contents)
             # file timestamp must be same as on server:
             # (1) can this be done more efficient?
@@ -409,7 +447,7 @@ class LoxSession(threading.Thread):
         if os.path.isdir(full_path):
             for item in os.listdir(full_path):
                 filename = os.path.join(path.name,item)
-                self._delete_local(filename)
+                self._delete_local(Path(filename,path.key))
             os.rmdir(full_path)
             del self._cache[path.name]
         else:
@@ -419,17 +457,28 @@ class LoxSession(threading.Thread):
     def _delete_remote(self,path):
         '''
         Delete the remote file or directory (recursively)
+        Do not delete the contents of a share, that is not nice to others
+        Revoke the invitation instead
         '''
         self._logger.debug(_("Delete (remote) {0}").format(path.name))
         meta = self._api.meta(path.name)
         if not (meta is None):
-            if meta[u'is_dir']:
-                if u'children' in meta:
-                    for child_meta in meta[u'children']:
-                        child_path = child_meta[u'path']
-                        self._delete_remote(child_path)
-            self._api.delete(path.name)
-            del self._cache[path.name]
+            if meta[u'is_share']:
+                invitations = self._api.invitations()
+                for invite in invitations:
+                    share = invite[u'share']
+                    item = share[u'item']
+                    if item[u'path']==path.name:
+                        self._api.invite_revoke(invite[u'id'])
+                        break
+            else:
+                if meta[u'is_dir']:
+                    if u'children' in meta:
+                        for child_meta in meta[u'children']:
+                            child_path = Path(child_meta[u'path'],path.key)
+                            self._delete_remote(child_path)
+                self._api.delete(path.name)
+                del self._cache[path.name]
 
 
     def _conflict(self,path):
@@ -442,11 +491,11 @@ class LoxSession(threading.Thread):
         full_path = self._root+path.name
         conflict_path = lox.lib.get_conflict_name(path.name)
         new_name =  self._root+conflict_path
-        self._logger.info(_("Renamed (local) {0} to {1}").format(path,conflict_path))
+        self._logger.info(_("Renamed (local) {0} to {1}").format(path.name,conflict_path))
         os.rename(full_path,new_name)
         # (2) download remote to tmp/unique file (like maildir)
         self._download(path)
-        self._upload(conflict_path)
+        self._upload(Path(conflict_path,path.key))
 
     def _strange(self,path):
         '''

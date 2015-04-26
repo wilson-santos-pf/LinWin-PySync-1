@@ -34,11 +34,19 @@ class LoxCache(DbfilenameShelf):
             # Cache is considered not safe, so re-initialized
             logger.warn("Initializing cache")
             self.clear()
-            self['local_dir'] = config_dir
-            self['version'] = api_version
+            self[u'local_dir'] = config_dir
+            self[u'version'] = api_version
 
     #def __del__(self):
     #    self.close()
+
+    def get(self,name,default=None):
+        key = name.encode('utf8')
+        if DbfilenameShelf.has_key(self,key):
+            return DbfilenameShelf.__getitem__(self, key)
+        else:
+            return default
+
 
     def __setitem__(self, name, value):
         key = name.encode('utf8')
@@ -55,4 +63,3 @@ class LoxCache(DbfilenameShelf):
         if DbfilenameShelf.has_key(self,key):
             DbfilenameShelf.__delitem__(self, key)
             self.sync()
-

@@ -14,6 +14,7 @@ class PasswordDialog(gtk.Dialog):
                    (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
                     gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
         self.connect("response", self.response)
+        self.set_default_response(gtk.RESPONSE_ACCEPT)
         self.set_icon_from_file(icon(size=64))
         #self.connect('delete_event',self.delete_event)
         #self.connect('destroy',self.on_destroy)
@@ -37,6 +38,7 @@ class PasswordDialog(gtk.Dialog):
         self.entry.set_visibility(False)
         self.entry.set_invisible_char("*")
         layout.attach(self.entry,1,2,1,2,gtk.EXPAND|gtk.FILL)
+        self.entry.set_activates_default(gtk.TRUE)
 
         self.show_all()
 

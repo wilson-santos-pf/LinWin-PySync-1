@@ -31,7 +31,7 @@ def get_conflict_name(original):
     new_name =  "{0}_conflict_{1}{2}".format(base, x1, ext)
     return new_name
 
-def get_dl_name(original):
+def get_tmp_name(original, state='download'):
     '''
     Get a temporary name for download.
     An original name 'My Document.docx'
@@ -43,5 +43,5 @@ def get_dl_name(original):
     dirname = os.path.dirname(path)
     x0 = os.urandom(3)
     x1 = binascii.hexlify(x0)
-    new_name = "{0}/.download_{1}.{2}{3}".format(dirname,x1,basename,ext)
+    new_name = "{0}/.{4}_{1}.{2}{3}".format(dirname,x1,basename,ext,state)
     return new_name

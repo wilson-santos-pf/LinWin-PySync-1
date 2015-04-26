@@ -14,3 +14,10 @@ def messagebox(icon, message):
     m.destroy()
     return result
 
+def questionbox(message):
+    m = gtk.MessageDialog(None,
+            gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_QUESTION,
+            gtk.BUTTONS_YES_NO, message)
+    result = m.run()
+    m.destroy()
+    return result

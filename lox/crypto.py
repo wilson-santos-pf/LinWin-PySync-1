@@ -7,10 +7,11 @@ Please note:
 (3) The original file length is not stored, so decryption leaves a padded file (!)
 (4) The initialization vector is stored with the key (!) and not in the file
 (5) The key and initialization vector are PGP encrypted
-(6) PGP public and private (!) key are stored on the server
+(6) PGP public and private (!) key are stored ascii armoured (but not PEM) on the server
 (7) PGP keys are not signed
 (8) PGP keys and AES keys are stored base64 on the server, module base64 is used
-(9) The ~/.lox directory is used for the keyring
+(9) The ~/.lox directory is used for the keyring, named after the session
+(A) There is one keyring per session (account) so there is also one private key per account.
 
 '''
 
@@ -21,51 +22,127 @@ from Crypto.Cipher import AES
 from Crypto import Random
 import gnupg
 import lox.config as config
+from lox.api import LoxApi
+import lox.gui
+
 
 class LoxKey:
-    key = None
-    iv = None
-
-
-class LoxCrypto:
     '''
-    A different private key is generated for each session
-    in order to not mix up session security
+    The other Localbox apps see the key and iv together s a key
+    '''
+    def __init__(self, key=None, iv=None):
+        self.key = key
+        self.iv = iv
+
+
+class LoxKeyring:
+    '''
+    The LoxKeyring uses GPG to store its keys. On initializing
+    the object only the GPG object is created. Loading of
+    keys is deferred to the moment when really needed.
+
+    Use a LoxKeyring per account, so a different private key is
+    generated for each session in order to not mix up session
+    security.
     '''
 
-    def __init__(self,name):
-        _passphrase = None
-        conf_dir = os.environ['HOME']+'/.lox'
-        os.chmod(conf_dir,0700)
-        _gpg = gnupg.GPG(
-                            gnupghome=conf_dir,
-                            #keyring='lox-client',
-                            #secret_keyring='lox-client',
+    def __init__(self,session):
+        '''
+        This class uses a GPG object
+        '''
+        keyring = ".{}.pub".format(session)
+        secret_keyring = ".{}.sec".format(session)
+        self.session = session
+        self._passphrase = None
+        self._conf_dir = os.environ['HOME']+'/.lox'
+        # always force restricted access to config dir
+        os.chmod(self._conf_dir,0700)
+        # open a GPG keyring
+        self._gpg = gnupg.GPG(
+                            gnupghome=self._conf_dir,
+                            keyring=keyring,
+                            secret_keyring=secret_keyring,
                             verbose=False,
                             options=['--allow-non-selfsigned-uid']
                         )
-        _id = config.settings[name]['username']
+        self._gpg.encoding = 'utf-8'
+        self._id = config.settings[session]['username']
+
+    def open(self):
+        '''
+        Opening the keyring is done apart from creating the instance
+        because when using unencrypted folders only it is not nescessary
+        to open the keyring.
+
+        When the keyring is opened there is a check if there is already
+        a remote (private) key available. If so and there is not yet a local key the
+        remote key is copied. If not a local key is generated and uploaded. If there
+        are keys in both places the keys are compared, when different an error is
+        raised because this situation needs special attention. When there is no
+        network connection, no keys are generated and encryption cannot be done.
+
+        '''
+        api = LoxApi(self.session)
+        user_info = api.get_user_info()
         # check if private key exists
-        input_data = _gpg.gen_key_input(
-                            key_type='RSA',
-                            key_length=2048,
-                            name_email=self._id,
-                            name_comment='Localbox user',
-                            name_real='Anonymous'
-                        )
-        _gpg.gen_key(input_data)
+        if not user_info[u'private_key']:
+            print "LoxKeyring: no remote private key"
+            # remote private key not set
+            if not self._gpg.list_keys():
+                print "LoxKeyring: generating new private key"
+                input_data = self._gpg.gen_key_input(
+                                    key_type='RSA',
+                                    key_length=2048,
+                                    passphrase = self.get_passphrase(),
+                                    name_email=self._id,
+                                    name_comment='Localbox user',
+                                    name_real='Anonymous'
+                                )
+                self._gpg.gen_key(input_data)
+            else:
+                print "LoxKeyring: remote provate key dropped while local one not?"
+            private_key = self._gpg.export_keys(self._id, True)
+            public_key = self._gpg.export_keys(self._id)
+            print "LoxKeyring: uploading my keys"
+            self.api.set_user_info(binascii.b2a_base64(public_key),binascii.b2a_base64(private_key))
+        else:
+            if not self._gpg.list_keys(True):
+                print "LoxKeyring: downloading remote private key"
+                public_key = base64.b64decode(user_info[u'public_key'])
+                import_result = self._gpg.import_keys(public_key)
+                #assert (import_result.count==1)
+                print import_result.count
+                private_key = base64.b64decode(user_info[u'private_key'])
+                import_result = self._gpg.import_keys(private_key)
+                #assert (import_result.count==1)
+                print import_result.count
+            else:
+                print "LoxKeyring: checking local and remote private keys,",
+                # extreme workaround to compare keys, due to not using PEM format in other apps
+                my_key = self._gpg.export_keys(self._id, True, armor=True, minimal=True)
+                server_key = user_info[u'private_key']
+                my_flattened_key = ''
+                lines = my_key.splitlines()
+                n = len(lines) - 2
+                for i in range(3, n):
+                    my_flattened_key += lines[i]
+                if not my_flattened_key == server_key:
+                    print "they are different"
+                else:
+                    print "they are the same"
 
-    def set_passphrase(password):
+    def get_passphrase(self):
         '''
-        Store a passphrase for keyring and export/import
+        The module stores the passphrase for convenience in memory. For now it is considered
+        that the user defines only one passphrase for all accounts. And we want that the
+        program only asks once for it. Therefore it is a module variable. Any attempt to
+        hide is not the slightest secure, because Python is an extremely introspective
+        scripting language.
         '''
-        _passphrase = md5.new(password).digest()
-
-    def get_passphrase(p):
-        '''
-        Get a passphrase (use?)
-        '''
-        return _passphrase
+        global _passphrase
+        if _passphrase is None:
+            _passphrase = base64.b64encode(lox.gui.get_password())
+        return base64.b64decode(_passphrase)
 
     def set_private(self,key):
         '''
@@ -73,11 +150,11 @@ class LoxCrypto:
         '''
         self._gpg.import_keys(key)
 
-    def get_public(self):
-        self._gpg.export_keys(self._id)
+#    def get_public(self):
+#        self._gpg.export_keys(self._id)
 
-    def get_private():
-        self._gpg.export_keys(self._id,True)
+#    def get_private():
+#        self._gpg.export_keys(self._id,True)
 
     def gpg_decrypt(self, string):
         '''
@@ -85,15 +162,15 @@ class LoxCrypto:
         PGP decrypt a string (usually the AES key)
         '''
         ciphertext = base64.b64decode(string)
-        plaintext = __gpg.decrypt(ciphertext, self._passphrase)
+        plaintext = self._gpg.decrypt(ciphertext, passphrase=self.get_passphrase())
         return plaintext
 
-    def gpg_encrypt(self, string):
+    def gpg_encrypt(self, string, passprhase, recipients):
         '''
         PGP encrypt a string (usually the AES key)
         then base64 encode
         '''
-        ciphertext = __gpg.encrypt(string, self.__passphrase)
+        ciphertext = self._gpg.encrypt(string, self.get_passphrase(), always_trust=True)
         encoded = base64.b64encode(ciphertext)
         return encoded
 
@@ -103,14 +180,14 @@ class LoxCrypto:
         '''
         self._gpg.list_keys(True)
 
-    def aes_new_iv(self):
+    def _aes_new_iv(self):
         '''
         Get a new iv as localbox uses a self generated iv
         '''
         new_iv = Random.new().read(AES.block_size)
         return new_iv
 
-    def aes_pad(self, filename):
+    def _aes_pad(self, filename):
         '''
         Pad file a to a 16 byte block length,
         needed for an omission at this moment:
@@ -118,17 +195,17 @@ class LoxCrypto:
         '''
         size = os.path.getsize(filename)
         if (size % 16) > 0:
-            with open(filename, 'wb') as outfile:
+            with open(filename, 'a') as outfile:
                 chunk = ' ' * (16 - (size % 16))
-                outfile.write(encryptor.encrypt(chunk))
+                outfile.write(chunk)
 
-    def aes_encrypt(self, key, iv, filename_in, filename_out, chunksize=64*1024):
+    def _aes_encrypt(self, key, iv, filename_in, filename_out, chunksize=64*1024):
         '''
         Encrypt a file with AES to another file,
         use function to decrypt from original file to temp file
         Note: initialization vector and original size are not stored
         '''
-        encryptor = AES.new(key, AES.MODE_CBC, iv)
+        cipher = AES.new(key, AES.MODE_CBC, iv)
         with open(filename_in, 'rb') as infile:
             with open(filename_out, 'wb') as outfile:
                 #outfile.write(struct.pack('<Q', filesize))
@@ -139,25 +216,71 @@ class LoxCrypto:
                         break
                     elif len(chunk) % 16 != 0:
                         chunk += ' ' * (16 - len(chunk) % 16)
-                    outfile.write(encryptor.encrypt(chunk))
+                    outfile.write(cipher.encrypt(chunk))
 
-    def aes_decrypt(self, key, iv, filename_in, filename_out, chunksize=64*1024):
+    def _aes_decrypt(self, key, iv, filename_in, filename_out, chunksize=64*1024):
         '''
         Decrypt a file with AES to another file,
-        use function to decrypt from temp file to final file
         Note: initialization vector and original size are not stored
         '''
-        with open(in_filename, 'rb') as infile:
+        with open(filename_in, 'rb') as infile:
             #origsize = struct.unpack('<Q', infile.read(struct.calcsize('Q')))[0]
             #iv = infile.read(16)
-            decryptor = AES.new(key, AES.MODE_CBC, iv)
+            cipher = AES.new(key, AES.MODE_CBC, iv)
             with open(filename_out, 'wb') as outfile:
                 while True:
                     chunk = infile.read(chunksize)
                     if len(chunk) == 0:
                         break
-                    outfile.write(decryptor.decrypt(chunk))
+                    outfile.write(cipher.decrypt(chunk))
                 #outfile.truncate(origsize)
 
+    def get_key(self,path):
+        '''
+        Get the AES key from the server and decrypt it using PGP
+        '''
+        api = LoxApi(self.session)
+        aes = api.get_key(path)
+        encrypted_iv = aes[u'iv']
+        encrypted_key = aes[u'key']
+        key = str(self.gpg_decrypt(encrypted_key))
+        iv = str(self.gpg_decrypt(encrypted_iv))
+        return LoxKey(key,iv)
+
+    def decrypt(self, lox_key, filename_in, filename_out):
+        '''
+        Use this function to decrypt from temp file to final file,
+        it does all checks, i.e if the KeyRing is open.
+        '''
+        assert(isinstance(lox_key,LoxKey))
+        self._aes_decrypt(lox_key.key, lox_key.iv, filename_in, filename_out)
+
+    def encrypt(self, lox_key, filename_in, filename_out):
+        '''
+        Use this function to decrypt from temp file to final file,
+        it does all checks, i.e if the KeyRing is open.
+        '''
+        assert(isinstance(lox_key,LoxKey))
+        self._aes_pad(filename_in)
+        self._aes_encrypt(lox_key.key, lox_key.iv, filename_in, filename_out)
+
+_passphrase = None
+
+
+# not used, function to erase string from memory
+# use in case a password string needs to be cleared
+# note that after multiple assignments multiple copies
+# are stored in memory due to the non mutable state of
+# objects ...
+
+def zerome(string):
+    # find the header size with a dummy string
+    temp = "finding offset"
+    header = ctypes.string_at(id(temp), sys.getsizeof(temp).find(temp))
+    location = id(string) + header
+    size = sys.getsizeof(string) - header
+    memset = ctypes.CDLL("libc.so.6").memset
+    # Windows: memset = ctypes.cdll.msvcrt.memset
+    memset(location, 0, size)
 
 

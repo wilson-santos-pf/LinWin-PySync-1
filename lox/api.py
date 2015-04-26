@@ -9,6 +9,7 @@ Usage: create an instance per account
 
 from httplib import HTTPConnection, HTTPSConnection, HTTPResponse
 import ssl
+import sys
 import traceback
 import urllib
 import json
@@ -54,9 +55,12 @@ class LoxApi:
     def __do_request(self,method,url,body="",headers={}):
         response = LoxApiResponse()
         if self.ssl:
-            ssl_context = ssl.SSLContext()
-            ssl_context.verify_mode = ssl.CERT_NONE # make configurable!
-            connection = HTTPSConnection(self.server, self.port, context = ssl_context)
+            if sys.version_info > (2, 7, 9):
+                ssl_context = ssl.create_default_context()
+                ssl_context.verify_mode = ssl.CERT_NONE # make configurable!
+                connection = HTTPSConnection(self.server, self.port, context = ssl_context)
+            else:
+                connection = HTTPSConnection(self.server, self.port)
         else:
             connection = HTTPConnection(self.server, self.port)
         connection.connect()
@@ -80,7 +84,7 @@ class LoxApi:
         else:
             raise LoxError(resp.reason)
 
-    def user_info(self, name=None):
+    def get_user_info(self, name=None):
         headers = self.auth.header()
         headers.update(self.agent)
         url = self.uri_path
@@ -92,6 +96,18 @@ class LoxApi:
             return json.loads(resp.body)
         else:
             raise LoxError(resp.reason)
+
+    def set_user_info(self, public_key, private_key='PRIVATE'):
+        headers = self.auth.header()
+        headers.update(self.agent)
+        url = self.uri_path
+        url += "lox_api/user"
+        body = json.dumps({'public_key':public_key,'private_key':private_key})
+        resp = self.__do_request("POST",url,body,headers)
+        if resp.status != 200:
+            raise LoxError(resp.reason)
+        else:
+            resp.read()
 
     def meta(self,path):
         headers = self.auth.header()

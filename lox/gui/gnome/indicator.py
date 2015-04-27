@@ -3,10 +3,11 @@ Module that defines the systray indicator class
 for both Unity and Gnome like operating systems
 
 '''
-
+import sys
 import os
 import gtk
 import subprocess
+import lox
 from lox.config import settings
 from lox.gui.gnome.messagebox import messagebox, INFO, ERROR
 from lox.gui.gnome.icon import icon
@@ -82,13 +83,17 @@ class IndicatorMenu(gtk.Menu):
         item3.connect('activate',self._help)
         item3.show()
         self.append(item3)
+        item4 = gtk.MenuItem(_("About"))
+        item4.connect('activate',self._about)
+        item4.show()
+        self.append(item4)
         s = gtk.SeparatorMenuItem()
         s.show()
         self.append(s)
-        item4 = gtk.MenuItem(_("Exit"))
-        item4.connect('activate',self._close)
-        item4.show()
-        self.append(item4)
+        item5 = gtk.MenuItem(_("Exit"))
+        item5.connect('activate',self._close)
+        item5.show()
+        self.append(item5)
 
     def _open(self,obj,session):
         try:
@@ -102,7 +107,26 @@ class IndicatorMenu(gtk.Menu):
         messagebox(INFO,_("Handling invitations is not yet implemented. Use the web interface instead."))
 
     def _help(self,obj):
-        messagebox(INFO,_("Help not yet implemented. Will be added later."))
+        try:
+            subprocess.call(['gnome-www-browser','--new-tab','http://wijdelenveilig.org/'])
+        except Exception as e:
+            messagebox(ERROR,_("Cannot open help: {0}").format(str(e)))
+
+    def _about(SELF,OBJ):
+        d = gtk.AboutDialog()
+        d.set_program_name('lox-client')
+        license_file = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])),"LICENSE")
+        with open(license_file,'r') as f:
+            d.set_license(f.read())
+        d.set_copyright(lox.COPYRIGHT)
+        d.set_comments(lox.COMMENTS)
+        d.set_website(lox.WEBSITE)
+        authors_file = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])),"AUTHORS")
+        with open(authors_file,'r') as f:
+            lines = [line.strip('\n') for line in f.readlines()]
+            d.set_authors(lines)
+        d.run()
+        d.destroy()
 
     def _configure(self,obj):
         d = ConfigDialog()

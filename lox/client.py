@@ -26,11 +26,6 @@ import gettext
 _ = gettext.gettext
 
 
-__author__ = "imtal@yolt.nl"
-__copyright__ = "(C) 2014, see LICENSE file"
-__version__ = "0.2"
-
-
 class Supervisor(Daemon):
     '''
     The daemon: start the sessions as threads and start the GUI
@@ -231,7 +226,7 @@ def cmd_help(daemon):
     '''
     cmd = os.path.basename(sys.argv[0])
     print
-    print _("Localbox desktop sync version {}").format(__version__)
+    print _("Localbox desktop sync version {}").format(lox.VERSION)
     print
     print _("Usage: {} [command]").format(cmd)
     print

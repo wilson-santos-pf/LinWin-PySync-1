@@ -12,8 +12,6 @@ Dependencies:
     sudo apt-get install python-notify
 
 '''
-import sys
-import os
 import gtk
 import gobject
 import lox.config
@@ -54,15 +52,3 @@ def mainloop():
     except KeyboardInterrupt:
         indicator.destroy()
 
-def about():
-    d = gtk.AboutDialog()
-    d.set_program_name('lox-client')
-    license_file = os.path.join(os.path.abspath(sys.argv[0]),"LICENSE")
-    with open(license_file,'r') as f:
-        d.set_license(f.read())
-    d.set_copyright('2014 - imtal@yolt.nl')
-    d.set_comments('LocalBox synchronisation client for Linux/OSX')
-    d.set_website('http://wijdelenveilig.org')
-    d.set_authors(['Tjeerd van der Laan','Ivo Tamboer'])
-    d.run()
-    d.destroy()

@@ -56,7 +56,7 @@ class PasswordDialog(gtk.Dialog):
         if response == gtk.RESPONSE_ACCEPT:
             self.password = self.entry.get_text()
         else:
-            self.password = None
+            self.password = ""
         self.destroy()
 
     def run(self):

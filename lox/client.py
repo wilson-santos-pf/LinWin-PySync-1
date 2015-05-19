@@ -16,6 +16,7 @@ import time
 import traceback
 import crypto
 from getpass import getpass
+import lox
 import lox.config as config
 from lox.api import LoxApi
 from lox.daemon import Daemon, DaemonError

@@ -33,7 +33,8 @@ from lox.error import LoxError
 SETTINGS = [
             ("local_dir", "Local directory to synchronize", ""),
             ("lox_url", "URL of the Localbox server", ""),
-            ("auth_type", "Authentication type", "localbox"),
+            ("auth_type", "Authentication type", "oauth2"),
+            ("encrypt", "Encrypt new folders by default", "yes"),
             ("username", "Account username", ""),
             ("password","Account password", ""),
             ("interval", "Time (s) between synchronizations", "300"),

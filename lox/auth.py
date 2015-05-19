@@ -56,7 +56,7 @@ class Localbox(Auth):
     '''
     Class (plugin) for OAuth2 authentication
 
-    TODO: client_id and client_secret taken from iOS app, no use?
+    TODO: client_id and client_secret taken from "LocalBox iOS" app, no use?
     '''
     client_id = "32yqjbq9u38koggk040w408cccss8og4c0ckso4sgoocwgkkoc"
     client_secret = "4j8jqubjrbi8wwsk0ocowooggkc44wcw0044skgscg4o4o44s4"
@@ -79,7 +79,8 @@ class Localbox(Auth):
 
     def _request(self):
         url = self.uri_path
-        url += "oauth/v2/token" # "lox_api/oauth2/token' in 1.1.3
+        url += "oauth/v2/token" # version 1.1.17b
+        #url += "lox_api/oauth2/token" # version 1.1.3
         url += "?grant_type=" + self.grant_type
         url += "&client_id=" + self.client_id
         url += "&client_secret=" + self.client_secret

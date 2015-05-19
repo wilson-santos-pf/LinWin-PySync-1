@@ -18,7 +18,7 @@ import urlparse
 
 import lox.config
 from lox.auth import Localbox
-from lox.error import LoxError
+from lox.error import LoxError,LoxFatal
 
 
 class LoxApiResponse:

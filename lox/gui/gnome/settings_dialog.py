@@ -24,7 +24,7 @@ class SettingsDialog(gtk.Dialog):
 
         self._name = None
 
-        layout = gtk.Table(10, 2, False)
+        layout = gtk.Table(11, 2, False)
         layout.set_col_spacings(3)
         self.vbox.pack_start(layout)
 
@@ -41,49 +41,55 @@ class SettingsDialog(gtk.Dialog):
         layout.attach(label_dir,0,1,1,2)
         layout.attach(self._dir,1,2,1,2)
 
+        label_enc = gtk.Label(_("Encrypt by default:"))
+        label_enc.set_alignment(0, 0.5)
+        self._enc = gtk.Entry()
+        layout.attach(label_enc,0,1,2,3)
+        layout.attach(self._enc,1,2,2,3)
+
         label_url = gtk.Label(_("Localbox URL:"))
         label_url.set_alignment(0, 0.5)
         self._url = gtk.Entry()
-        layout.attach(label_url,0,1,2,3)
-        layout.attach(self._url,1,2,2,3)
+        layout.attach(label_url,0,1,3,4)
+        layout.attach(self._url,1,2,3,4)
 
         label_auth = gtk.Label(_("Authentication:"))
         label_auth.set_alignment(0, 0.5)
         self._auth = gtk.combo_box_new_text()
         for i in AUTHTYPES:
             self._auth.append_text(i)
-        layout.attach(label_auth,0,1,3,4)
-        layout.attach(self._auth,1,2,3,4)
+        layout.attach(label_auth,0,1,4,5)
+        layout.attach(self._auth,1,2,4,5)
 
         label_username = gtk.Label(_("Username:"))
         label_username.set_alignment(0, 0.5)
         self._username = gtk.Entry()
-        layout.attach(label_username,0,1,4,5)
-        layout.attach(self._username,1,2,4,5)
+        layout.attach(label_username,0,1,5,6)
+        layout.attach(self._username,1,2,5,6)
 
         label_password = gtk.Label(_("Password:"))
         label_password.set_alignment(0, 0.5)
         self._password = gtk.Entry()
-        layout.attach(label_password,0,1,5,6)
-        layout.attach(self._password,1,2,5,6)
+        layout.attach(label_password,0,1,6,7)
+        layout.attach(self._password,1,2,6,7)
 
         label_interval = gtk.Label(_("Refresh interval (seconds)"))
         label_interval.set_alignment(0, 0.5)
         self._interval = gtk.Entry()
-        layout.attach(label_interval,0,1,6,7)
-        layout.attach(self._interval,1,2,6,7)
+        layout.attach(label_interval,0,1,7,8)
+        layout.attach(self._interval,1,2,7,8)
 
         label_loglevel = gtk.Label(_("Log level"))
         label_loglevel.set_alignment(0, 0.5)
         self._loglevel = gtk.combo_box_new_text()
         for i in LOGLEVELS:
             self._loglevel.append_text(i)
-        layout.attach(label_loglevel,0,1,7,8)
-        layout.attach(self._loglevel,1,2,7,8)
+        layout.attach(label_loglevel,0,1,9,10)
+        layout.attach(self._loglevel,1,2,9,10)
 
         # separator
         line = gtk.HSeparator()
-        layout.attach(line,0,2,8,9)
+        layout.attach(line,0,2,10,11)
 
         layout.show_all()
 

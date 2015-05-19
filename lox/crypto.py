@@ -11,7 +11,8 @@ Please note:
 (7) PGP keys are not signed
 (8) PGP keys and AES keys are stored base64 on the server, module base64 is used
 (9) The ~/.lox directory is used for the keyring, named after the session
-(A) There is one keyring per session (account) so there is also one private key per account.
+(A) There is one keyring per session (account) so there is also one private key per account
+(B) The iOS and Android apps (with BouncyCastle libraries) use  a special padding technique, read comments
 
 '''
 
@@ -196,7 +197,12 @@ class LoxKeyring:
         size = os.path.getsize(filename)
         if (size % 16) > 0:
             with open(filename, 'a') as outfile:
-                chunk = ' ' * (16 - (size % 16))
+                # The iOS and Android apps upad with a character that
+                # is the same as the amount of padding characters.
+                # Using only a space or NULL character gives as problem
+                # that documents do not show in apps.
+                n = (16 - (size % 16))
+                chunk = chr(n) * n
                 outfile.write(chunk)
 
     def _aes_encrypt(self, key, iv, filename_in, filename_out, chunksize=64*1024):
@@ -215,7 +221,12 @@ class LoxKeyring:
                     if len(chunk) == 0:
                         break
                     elif len(chunk) % 16 != 0:
-                        chunk += ' ' * (16 - len(chunk) % 16)
+                        # The iOS and Android apps upad with a character that
+                        # is the same as the amount of padding characters.
+                        # Using only a space or NULL character gives as problem
+                        # that documents do not show in apps.
+                        n = (16 - len(chunk) % 16)
+                        chunk += chr(n) * n
                     outfile.write(cipher.encrypt(chunk))
 
     def _aes_decrypt(self, key, iv, filename_in, filename_out, chunksize=64*1024):

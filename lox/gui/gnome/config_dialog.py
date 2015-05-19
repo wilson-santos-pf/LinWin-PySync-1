@@ -16,7 +16,7 @@ _ = gettext.gettext
 class ConfigDialog(gtk.Dialog):
 
     def __init__(self):
-        super(ConfigDialog,self).__init__(_("Localbox password"), None,
+        super(ConfigDialog,self).__init__(_("Localbox configuration"), None,
                     gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
                    (gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
         self.connect("response", self.response)

@@ -114,6 +114,7 @@ class IndicatorMenu(gtk.Menu):
 
     def _about(SELF,OBJ):
         d = gtk.AboutDialog()
+        d.set_icon_from_file(icon(size=64))
         d.set_program_name('lox-client')
         license_file = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])),"LICENSE")
         with open(license_file,'r') as f:

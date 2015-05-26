@@ -10,14 +10,25 @@ from distutils.core import setup
 from babel.messages import frontend as babel
 import lox
 
+def readme():
+    with open('README.md') as f:
+        return f.read()
 
 setup(
-    description = lox.COMMENTS,
-    author = lox.COPYRIGHT,
+    description = lox.__description__,
+    long_description = readme()
+    author = lox.__author__,
+      classifiers=[
+        'Development Status :: 4 - Beta',
+        'License :: OSI Approved :: EUPL-1.1',
+        'Programming Language :: Python :: 2.7',
+        'Topic :: Text Processing :: Linguistic',
+      ],
+    keywords='desktop sync secure cloud storage',
     url = 'http://github.com/2EK/Linux-Sync',
     download_url = 'https://github.com/2EK/Linux-Sync/archive/master.zip',
-    author_email = lox.CONTACT,
-    version = lox.VERSION,
+    author_email = lox.__author_email__,
+    version = lox.__version__,
     packages = ['lox','lox.gui'],
     install_requires = [
         'iso8601',

@@ -1,8 +1,8 @@
 '''
-General settings
+General settings and metadata
 '''
-COPYRIGHT = "(C) 2014, Tjeerd van der Laan"
-CONTACT = "imtal@yolt.nl"
-VERSION = "0.4"
-WEBSITE = "http://wijdelenveilig.org"
-COMMENTS = "LocalBox desktop synchronisation client for Linux/OSX"
+__author__ = "Tjeerd van der Laan"
+__author_email__ = "imtal@yolt.nl"
+__version__ = "0.4"
+__url__ = "http://wijdelenveilig.org"
+__description__ = "LocalBox desktop synchronisation client for Linux/OSX"

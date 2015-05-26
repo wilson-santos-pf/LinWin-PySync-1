@@ -98,8 +98,8 @@ class LoxSession(threading.Thread):
         while not self._stop_request.is_set():
             try:
                 self.sync()
-            except (IOError, LoxError) as e:
-                # IOError means not online, LoxError is a protocol exception, report and continue
+            except (IOError) as e:
+                # IOError means not online, report and continue with interval
                 self._logger.error(str(e))
             except (LoxFatal) as e:
                 # LoxFatal means a fatal error, report this and abort session
@@ -140,6 +140,9 @@ class LoxSession(threading.Thread):
                 action = self._resolve(local,remote,cached)
                 self._logger.debug(_("Resolving '{0}' leads to {1}").format(next_path.name,action.__name__[1:]))
                 action(next_path)
+            except (LoxError) as e:
+                # LoxError is a protocol exception, report and continue with next entry in queue
+                self._logger.error(str(e))
             except IndexError:
                 self._logger.info(_("Sync completed"))
                 break
@@ -162,8 +165,8 @@ class LoxSession(threading.Thread):
                     # check if it are files that are left by this app and cleanup
                     if item.startswith(".download") or item.startswith(".encrypt") or item.startswith(".decrypt"):
                         fullname = self._root+filename
-                        #os.remove(fullname)
                         self._logger.info(_("Cleaning up file {}").format(fullname))
+                        os.remove(fullname)
         else:
             raise LoxError(_('Not a directory (local)'))
         # fetch remote directory
@@ -404,6 +407,12 @@ class LoxSession(threading.Thread):
         if os.path.isdir(local_dir):
             # TODO: check if at highest level, ask via messagebox to encrypt or not
             self._api.create_folder(path.name)
+            if lox.config.settings[self.name]['encrypted']=='yes':
+                k = self._keyring.new_key()
+                key = self._keyring.gpg_encrypt(k.key)
+                iv = self._keyring.gpg_encrypt(k.iv)
+                self._api.set_key(path.name,key,iv,lox.config.settings[self.name]['username'])
+                path = Path(path.name,k)
             file_info = self._file_info_local(path.name)
             self._cache[path.name] = file_info
             self._reconcile(path)

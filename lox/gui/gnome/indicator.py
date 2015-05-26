@@ -119,9 +119,9 @@ class IndicatorMenu(gtk.Menu):
         license_file = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])),"LICENSE")
         with open(license_file,'r') as f:
             d.set_license(f.read())
-        d.set_copyright(lox.COPYRIGHT)
-        d.set_comments(lox.COMMENTS)
-        d.set_website(lox.WEBSITE)
+        d.set_copyright(lox.__author__)
+        d.set_comments(lox.__description__)
+        d.set_website(lox.__url__)
         authors_file = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])),"AUTHORS")
         with open(authors_file,'r') as f:
             lines = [line.strip('\n') for line in f.readlines()]

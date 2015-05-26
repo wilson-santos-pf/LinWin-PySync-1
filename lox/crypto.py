@@ -151,12 +151,6 @@ class LoxKeyring:
         '''
         self._gpg.import_keys(key)
 
-#    def get_public(self):
-#        self._gpg.export_keys(self._id)
-
-#    def get_private():
-#        self._gpg.export_keys(self._id,True)
-
     def gpg_decrypt(self, string):
         '''
         Base64 decode
@@ -166,13 +160,15 @@ class LoxKeyring:
         plaintext = self._gpg.decrypt(ciphertext, passphrase=self.get_passphrase())
         return plaintext
 
-    def gpg_encrypt(self, string, passprhase, recipients):
+    def gpg_encrypt(self, string, recipients=None):
         '''
         PGP encrypt a string (usually the AES key)
         then base64 encode
         '''
-        ciphertext = self._gpg.encrypt(string, self.get_passphrase(), always_trust=True)
-        encoded = base64.b64encode(ciphertext)
+        ciphertext = self._gpg.encrypt(string, recipients=[self._id],
+                                        passphrase=self.get_passphrase(),
+                                        armor=False, always_trust=True)
+        encoded = base64.b64encode(str(ciphertext))
         return encoded
 
     def gpg_list(self):
@@ -180,13 +176,6 @@ class LoxKeyring:
         List (private) keys in keyring
         '''
         self._gpg.list_keys(True)
-
-    def _aes_new_iv(self):
-        '''
-        Get a new iv as localbox uses a self generated iv
-        '''
-        new_iv = Random.new().read(AES.block_size)
-        return new_iv
 
     def _aes_pad(self, filename):
         '''
@@ -245,6 +234,14 @@ class LoxKeyring:
                         break
                     outfile.write(cipher.decrypt(chunk))
                 #outfile.truncate(origsize)
+
+    def new_key(self):
+        '''
+        Get a new AES key and iv, localbox uses a self generated iv
+        '''
+        key = Random.new().read(AES.key_size[2])
+        iv = Random.new().read(AES.block_size)
+        return LoxKey(key,iv)
 
     def get_key(self,path):
         '''

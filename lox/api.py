@@ -176,17 +176,18 @@ class LoxApi:
         else:
             raise LoxError(resp.reason)
 
-    def set_key(self,path,user,key,iv):
+    def set_key(self,path,key,iv,user=None):
         headers = self.auth.header()
         headers.update(self.agent)
         url = self.uri_path
         url += "lox_api/key/"+urllib.pathname2url(path)
-        body = json.dumps({'username':user,'key':key,'iv':iv})
+        if user is None:
+            body = json.dumps({u'key':key,u'iv':iv})
+        else:
+            body = json.dumps({'username':user,'key':key,'iv':iv})
         resp = self.__do_request("POST",url,body,headers)
         if resp.status != 200:
             raise LoxError(resp.reason)
-        else:
-            resp.read()
 
     def key_revoke(self,path,user):
         headers = self.auth.header()

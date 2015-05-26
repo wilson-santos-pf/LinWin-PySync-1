@@ -3,11 +3,11 @@ Module that defines the settings dialog
 '''
 
 import gtk
-from lox.config import settings, load, save, AUTHTYPES, LOGLEVELS
+import lox.config
 from lox.gui.gnome.icon import icon
-
 import gettext
 _ = gettext.gettext
+
 
 class SettingsDialog(gtk.Dialog):
 
@@ -21,127 +21,88 @@ class SettingsDialog(gtk.Dialog):
         self.set_border_width(10)
         self.set_size_request(640,380)
         self.set_position(gtk.WIN_POS_MOUSE)
-
+        # keep original name
         self._name = None
-
-        layout = gtk.Table(11, 2, False)
+        # set up grid
+        rows = len(lox.config.__settings__) + 2
+        cols = 2
+        layout = gtk.Table(rows, cols, False)
         layout.set_col_spacings(3)
         self.vbox.pack_start(layout)
-
-        # settings
-        label_session = gtk.Label(_("Session name:"))
-        label_session.set_alignment(0, 0.5)
-        self._session = gtk.Entry()
-        layout.attach(label_session,0,1,0,1)
-        layout.attach(self._session,1,2,0,1)
-
-        label_dir = gtk.Label(_("Local folder to synchronize:"))
-        label_dir.set_alignment(0, 0.5)
-        self._dir = gtk.Entry()
-        layout.attach(label_dir,0,1,1,2)
-        layout.attach(self._dir,1,2,1,2)
-
-        label_enc = gtk.Label(_("Encrypt by default:"))
-        label_enc.set_alignment(0, 0.5)
-        self._enc = gtk.Entry()
-        layout.attach(label_enc,0,1,2,3)
-        layout.attach(self._enc,1,2,2,3)
-
-        label_url = gtk.Label(_("Localbox URL:"))
-        label_url.set_alignment(0, 0.5)
-        self._url = gtk.Entry()
-        layout.attach(label_url,0,1,3,4)
-        layout.attach(self._url,1,2,3,4)
-
-        label_auth = gtk.Label(_("Authentication:"))
-        label_auth.set_alignment(0, 0.5)
-        self._auth = gtk.combo_box_new_text()
-        for i in AUTHTYPES:
-            self._auth.append_text(i)
-        layout.attach(label_auth,0,1,4,5)
-        layout.attach(self._auth,1,2,4,5)
-
-        label_username = gtk.Label(_("Username:"))
-        label_username.set_alignment(0, 0.5)
-        self._username = gtk.Entry()
-        layout.attach(label_username,0,1,5,6)
-        layout.attach(self._username,1,2,5,6)
-
-        label_password = gtk.Label(_("Password:"))
-        label_password.set_alignment(0, 0.5)
-        self._password = gtk.Entry()
-        layout.attach(label_password,0,1,6,7)
-        layout.attach(self._password,1,2,6,7)
-
-        label_interval = gtk.Label(_("Refresh interval (seconds)"))
-        label_interval.set_alignment(0, 0.5)
-        self._interval = gtk.Entry()
-        layout.attach(label_interval,0,1,7,8)
-        layout.attach(self._interval,1,2,7,8)
-
-        label_loglevel = gtk.Label(_("Log level"))
-        label_loglevel.set_alignment(0, 0.5)
-        self._loglevel = gtk.combo_box_new_text()
-        for i in LOGLEVELS:
-            self._loglevel.append_text(i)
-        layout.attach(label_loglevel,0,1,9,10)
-        layout.attach(self._loglevel,1,2,9,10)
-
+        self._label = dict()
+        self._entry = dict()
+        # place session setting fields in grid
+        self._label['name'] = gtk.Label(_("Session name"))
+        self._label['name'].set_alignment(0, 0.5)
+        self._entry['name'] = gtk.Entry()
+        layout.attach(self._label['name'],0,1,0,1)
+        layout.attach(self._entry['name'],1,2,0,1)
+        i = 1
+        for (key,caption,default,ext) in lox.config.__settings__:
+            self._label[key] = gtk.Label(caption)
+            self._label[key].set_alignment(0, 0.5)
+            layout.attach(self._label[key],0,1,i,i+1)
+            if ext == "text":
+                self._entry[key] = gtk.Entry()
+            if ext.startswith("int"):
+                self._entry[key] = gtk.SpinButton()
+                self._entry[key].set_range(0,10000)
+            if type(ext) is list:
+                self._entry[key] = gtk.combo_box_new_text()
+                for value in ext:
+                    self._entry[key].append_text(value)
+            layout.attach(self._entry[key],1,2,i,i+1)
+            i = i+1
         # separator
         line = gtk.HSeparator()
-        layout.attach(line,0,2,10,11)
-
+        layout.attach(line,0,2,i,i+1)
+        # show
         layout.show_all()
 
     def do_load(self,name = None):
         if name is None:
-            self._name is None
-            self._session.set_text('')
-            self._dir.set_text('')
-            self._url.set_text('')
-            self._auth.set_active(0)
-            self._username.set_text('')
-            self._password.set_text('')
-            self._interval.set_text('300') # five minutes
-            self._loglevel.set_active(2) # warn
+            self._name = _("New account")
+            self._entry["name"].set_text(self._name)
+            for (key,caption,default,ext) in lox.config.__settings__:
+                if ext == "text":
+                    self._entry[key].set_text(default)
+                if ext.startswith("int"):
+                    self._entry[key].set_value(default)
+                if type(ext) is list:
+                    self._entry[key].set_active(default)
         else:
             self._name = name # keep track of original name in case it is changed
-            self._session.set_text(name)
-            self._dir.set_text(settings[name]['local_dir'])
-            self._url.set_text(settings[name]['lox_url'])
-            try:
-                auth_type = AUTHTYPES.index(settings[name]['auth_type'])
-                self._auth.set_active(auth_type)
-            except ValueError:
-                self._auth.set_active(0)
-            self._username.set_text(settings[name]['username'])
-            self._password.set_text(settings[name]['password'])
-            self._interval.set_text(settings[name]['interval'])
-            try:
-                level = LOGLEVELS.index(settings[name]['log_level'])
-                self._loglevel.set_active(level)
-            except ValueError:
-                self._loglevel.set_active(2) # warn
+            self._entry["name"].set_text(name)
+            for (key,caption,default,ext) in lox.config.__settings__:
+                if ext == "text":
+                    self._entry[key].set_text(lox.config.settings[name][key])
+                if ext == "int":
+                    self._entry[key].set_value(int(lox.config.settings[name][key]))
+                if type(ext) is list:
+                    value = lox.config.settings[name][key]
+                    if value in ext:
+                        self._entry[key].set_active(ext.index(value))
+                    else:
+                        self._entry[key].set_active(default)
 
     def response(self, widget, response):
         if response == gtk.RESPONSE_ACCEPT:
-            global config
-            print 'clicked on okay'
             # save settings
-            name = self._session.get_text()
+            name = self._entry['name'].get_text()
             d = dict()
-            d['local_dir'] = self._dir.get_text()
-            d['lox_url'] = self._url.get_text()
-            d['auth_type'] = AUTHTYPES[self._auth.get_active()]
-            d['username'] = self._username.get_text()
-            d['password'] = self._password.get_text()
-            d['interval'] = self._interval.get_text()
-            d['log_level'] = LOGLEVELS[self._loglevel.get_active()]
+            for (key,caption,default,ext) in lox.config.__settings__:
+                if ext == "text":
+                    d[key] = self._entry[key].get_text()
+                if ext == "int":
+                    d[key] = str(self._entry[key].get_value())
+                if type(ext) is list:
+                    index = self._entry[key].get_active()
+                    d[key] = ext[index]
             try:
                 if not (self.name is None):
-                    settings.pop(self._name)
-                settings[name] = d
-                save()
+                    lox.config.settings.pop(self._name)
+                lox.config.settings[name] = d
+                lox.config.save()
             except Exception as e:
                 lox.gui.gnome.messagebox(ERROR,_("Cannot save settings: {0}").format(str(e)))
                 return True

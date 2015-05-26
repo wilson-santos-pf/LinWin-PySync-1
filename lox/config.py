@@ -16,7 +16,7 @@ Usage:
     user = config.settings['localhost']['username']
     config.settings['localhost']['username'] = 'newuser'
     config.save()
-    if 'local_dir'in config.settings['localhost'].changed():
+    if 'local_dir' in config.settings['localhost'].changed():
         # do something because changeing the directory
         # without flushing the cache is like 'rm -r *'
 
@@ -26,23 +26,21 @@ import sys
 import os
 import ConfigParser
 import collections
-
 from lox.error import LoxError
+import gettext
+_ = gettext.gettext
 
-
-SETTINGS = [
-            ("local_dir", "Local directory to synchronize", ""),
-            ("lox_url", "URL of the Localbox server", ""),
-            ("auth_type", "Authentication type", "oauth2"),
-            ("encrypt", "Encrypt new folders by default", "yes"),
-            ("username", "Account username", ""),
-            ("password","Account password", ""),
-            ("interval", "Time (s) between synchronizations", "300"),
-            ("log_level", "Log level", "error")
-          ]
-
-AUTHTYPES = ["localbox"]
-LOGLEVELS = ["none","error","warn","info","debug","traffic"]
+#                name         description                          default   type
+__settings__ = [
+                ("local_dir", _("Local directory to synchronize"),    "",       "text"),
+                ("lox_url",   _("URL of the Localbox server"),        "",       "text"),
+                ("auth_type", _("Authentication type"),               0,        ["localbox","oauth2","saml"]),
+                ("encrypt",   _("Encrypt new folders by default"),    0,        ["yes","no"]),
+                ("username",  _("Account username"),                  "",       "text"),
+                ("password",  _("Account password"),                  "",       "text"),
+                ("interval",  _("Time (s) between synchronizations"), 300,      "int:60,6000,60"), #start, end, step
+                ("log_level", _("Log level"),                         1,        ["none","error","warn","info","debug","traffic"])
+              ]
 
 
 class SectionSettings(collections.MutableMapping):
@@ -56,7 +54,7 @@ class SectionSettings(collections.MutableMapping):
         '''
         self._store = dict()
         self._changed = set()
-        for (key,caption,default) in SETTINGS:
+        for (key,caption,default,ext) in __settings__:
             self._store[key] = default
         #self.update(dict(DEFAULT))
         self.confirm()

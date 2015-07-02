@@ -1,24 +1,26 @@
 '''
-Module containing helper class for encryption of files
+Description:
+
+    Module containing helper class for encryption of files
 
 Please note:
-(1) The files are AES encrypted
-(2) For that reason, the file is aligned (padded) to a block size of 16
-(3) The original file length is not stored, so decryption leaves a padded file (!)
-(4) The initialization vector is stored with the key (!) and not in the file
-(5) The key and initialization vector are PGP encrypted
-(6) PGP public and private (!) key are stored ascii armoured (but not PEM) on the server
-(7) PGP keys are not signed
-(8) PGP keys and AES keys are stored base64 on the server, module base64 is used
-(9) The ~/.lox directory is used for the keyring, named after the session
-(A) There is one keyring per session (account) so there is also one private key per account
-(B) The iOS and Android apps (with BouncyCastle libraries) use  a special padding technique, read comments
+
+    (1) The files are AES encrypted
+    (2) For that reason, the file is aligned (padded) to a block size of 16
+    (3) The original file length is not stored, so decryption leaves a padded file (!)
+    (4) The initialization vector is stored with the key (!) and not in the file
+    (5) The key and initialization vector are PGP encrypted
+    (6) PGP public and private (!) key are stored ascii armoured (but not PEM) on the server
+    (7) PGP keys are not signed
+    (8) PGP keys and AES keys are stored base64 on the server, module base64 is used
+    (9) The ~/.lox directory is used for the keyring, named after the session
+    (A) There is one keyring per session (account) so there is also one private key per account
+    (B) The iOS and Android apps (with BouncyCastle libraries) use  a special padding technique, read comments
 
 '''
 
 import os
 import base64
-import md5
 from Crypto.Cipher import AES
 from Crypto import Random
 import gnupg
@@ -47,7 +49,7 @@ class LoxKeyring:
     security.
     '''
 
-    def __init__(self,session):
+    def __init__(self, session):
         '''
         This class uses a GPG object
         '''
@@ -57,7 +59,7 @@ class LoxKeyring:
         self._passphrase = None
         self._conf_dir = os.environ['HOME']+'/.lox'
         # always force restricted access to config dir
-        os.chmod(self._conf_dir,0700)
+        os.chmod(self._conf_dir, 0700)
         # open a GPG keyring
         self._gpg = gnupg.GPG(
                             gnupghome=self._conf_dir,
@@ -94,18 +96,19 @@ class LoxKeyring:
                 input_data = self._gpg.gen_key_input(
                                     key_type='RSA',
                                     key_length=2048,
-                                    passphrase = self.get_passphrase(),
+                                    passphrase=config.passphrase(),
                                     name_email=self._id,
                                     name_comment='Localbox user',
                                     name_real='Anonymous'
                                 )
                 self._gpg.gen_key(input_data)
             else:
-                print "LoxKeyring: remote provate key dropped while local one not?"
+                print "LoxKeyring: remote private key dropped while local one not?"
             private_key = self._gpg.export_keys(self._id, True)
             public_key = self._gpg.export_keys(self._id)
             print "LoxKeyring: uploading my keys"
-            self.api.set_user_info(binascii.b2a_base64(public_key),binascii.b2a_base64(private_key))
+            self.api.set_user_info(binascii.b2a_base64(public_key), binascii.b2a_base64(private_key))
+            self._privkey = private_key
         else:
             if not self._gpg.list_keys(True):
                 print "LoxKeyring: downloading remote private key"
@@ -117,6 +120,7 @@ class LoxKeyring:
                 import_result = self._gpg.import_keys(private_key)
                 #assert (import_result.count==1)
                 print import_result.count
+                self._privkey = private_key
             else:
                 print "LoxKeyring: checking local and remote private keys,",
                 # extreme workaround to compare keys, due to not using PEM format in other apps
@@ -131,21 +135,9 @@ class LoxKeyring:
                     print "they are different"
                 else:
                     print "they are the same"
+                self._privkey = my_flattened_key
 
-    def get_passphrase(self):
-        '''
-        The module stores the passphrase for convenience in memory. For now it is considered
-        that the user defines only one passphrase for all accounts. And we want that the
-        program only asks once for it. Therefore it is a module variable. Any attempt to
-        hide is not the slightest secure, because Python is an extremely introspective
-        scripting language.
-        '''
-        global _passphrase
-        if _passphrase is None:
-            _passphrase = base64.b64encode(lox.gui.get_password())
-        return base64.b64decode(_passphrase)
-
-    def set_private(self,key):
+    def set_private(self, key):
         '''
         Import a localbox key in the keyring
         '''
@@ -157,7 +149,7 @@ class LoxKeyring:
         PGP decrypt a string (usually the AES key)
         '''
         ciphertext = base64.b64decode(string)
-        plaintext = self._gpg.decrypt(ciphertext, passphrase=self.get_passphrase())
+        plaintext = self._gpg.decrypt(ciphertext, passphrase=config.passphrase())
         return plaintext
 
     def gpg_encrypt(self, string, recipients=None):
@@ -166,7 +158,7 @@ class LoxKeyring:
         then base64 encode
         '''
         ciphertext = self._gpg.encrypt(string, recipients=[self._id],
-                                        passphrase=self.get_passphrase(),
+                                        passphrase=config.passphrase(),
                                         armor=False, always_trust=True)
         encoded = base64.b64encode(str(ciphertext))
         return encoded
@@ -241,9 +233,9 @@ class LoxKeyring:
         '''
         key = Random.new().read(AES.key_size[2])
         iv = Random.new().read(AES.block_size)
-        return LoxKey(key,iv)
+        return LoxKey(key, iv)
 
-    def get_key(self,path):
+    def get_key(self, path):
         '''
         Get the AES key from the server and decrypt it using PGP
         '''
@@ -253,14 +245,14 @@ class LoxKeyring:
         encrypted_key = aes[u'key']
         key = str(self.gpg_decrypt(encrypted_key))
         iv = str(self.gpg_decrypt(encrypted_iv))
-        return LoxKey(key,iv)
+        return LoxKey(key, iv)
 
     def decrypt(self, lox_key, filename_in, filename_out):
         '''
         Use this function to decrypt from temp file to final file,
         it does all checks, i.e if the KeyRing is open.
         '''
-        assert(isinstance(lox_key,LoxKey))
+        assert(isinstance(lox_key, LoxKey))
         self._aes_decrypt(lox_key.key, lox_key.iv, filename_in, filename_out)
 
     def encrypt(self, lox_key, filename_in, filename_out):
@@ -268,20 +260,18 @@ class LoxKeyring:
         Use this function to decrypt from temp file to final file,
         it does all checks, i.e if the KeyRing is open.
         '''
-        assert(isinstance(lox_key,LoxKey))
+        assert(isinstance(lox_key, LoxKey))
         self._aes_pad(filename_in)
         self._aes_encrypt(lox_key.key, lox_key.iv, filename_in, filename_out)
 
-_passphrase = None
-
-
-# not used, function to erase string from memory
-# use in case a password string needs to be cleared
-# note that after multiple assignments multiple copies
-# are stored in memory due to the non mutable state of
-# objects ...
-
 def zerome(string):
+    '''
+    Helper function to erase string from memory,
+    use in case i.e. a password string needs to be cleared.
+    Please note that after multiple assignments multiple copies
+    are stored in memory due to the non mutable state of
+    objects ...
+    '''
     # find the header size with a dummy string
     temp = "finding offset"
     header = ctypes.string_at(id(temp), sys.getsizeof(temp).find(temp))

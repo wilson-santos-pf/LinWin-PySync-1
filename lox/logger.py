@@ -18,14 +18,17 @@ Usage:
 '''
 import os
 from datetime import datetime
-import lox.config as config
-import lox.gui as gui
+import lox.config
+import lox.gui
 
 
-(INFO,CRITICAL,ERROR,WARN,DEBUG) = (0,1,2,3,4)
-LOGLEVELS = ["info","critical","error","warn","debug"]
+(INFO, CRITICAL, ERROR, WARN, DEBUG) = (0, 1, 2, 3, 4)
+LOGLEVELS = ["info", "critical", "error", "warn", "debug"]
 
 class LoxLogger:
+    '''
+    Logger class
+    '''
 
     def __init__(self, name):
         '''
@@ -33,9 +36,9 @@ class LoxLogger:
         '''
         self.__name = name
         self.__log_file = os.environ['HOME']+'/.lox/.'+name+'.log'
-        self.__handle = open(self.__log_file,'a')
+        self.__handle = open(self.__log_file, 'a')
         try:
-            self.__log_level = LOGLEVELS.index(config.settings[name]['log_level'])
+            self.__log_level = LOGLEVELS.index(lox.config.settings[name]['log_level'])
         except KeyError:
             self.__log_level = ERROR
 
@@ -45,54 +48,57 @@ class LoxLogger:
     #    '''
     #    self.__handle.close()
 
-    def __log(self, level, msg, console_msg = True):
+    def __log(self, level, msg, console_msg=True):
         '''
         Print message
         '''
-        dt = datetime.now()
-        self.__handle.write('{:%Y-%m-%d %H:%M:%S}'.format(dt))
+        datetime_now = datetime.now()
+        self.__handle.write('{:%Y-%m-%d %H:%M:%S}'.format(datetime_now))
         self.__handle.write(' - [{0}] '.format(level))
         self.__handle.write(msg)
         self.__handle.write(os.linesep)
         self.__handle.flush()
         if console_msg:
-            print("({0}) {1}".format(self.__name,msg))
+            print "({0}) {1}".format(self.__name, msg)
 
     def set_level(self, level):
+        '''
+        Set logging level
+        '''
         self.__log_level = level
 
-    def info(self,msg):
+    def info(self, msg):
         '''
         Send message to logfile only regardless of loglevel
         '''
-        self.__log("INFO", msg, console_msg = True)
+        self.__log("INFO", msg, console_msg=True)
 
     def critical(self, msg):
         '''
         Send critical message to logfile and console
         '''
         self.__log("CRITICAL", msg)
-        gui.messagebox(gui.ERROR,msg)
+        lox.gui.error(msg)
 
     def error(self, msg):
         '''
         Send error message to logfile and console
         '''
-        if self.__log_level>=ERROR:
+        if self.__log_level >= ERROR:
             self.__log("ERROR", msg)
 
     def warn(self, msg):
         '''
         Send warning message to logfile and console
         '''
-        if self.__log_level>=WARN:
+        if self.__log_level >= WARN:
             self.__log("WARN", msg)
 
-    def debug(self,msg):
+    def debug(self, msg):
         '''
         Send debug message to logfile and console
         '''
-        if self.__log_level>=DEBUG:
+        if self.__log_level >= DEBUG:
             self.__log("DEBUG", msg)
 
 

@@ -19,6 +19,7 @@ The OAuth2 class reads the following parameters from the configuration:
 '''
 
 from httplib import HTTPConnection, HTTPSConnection, HTTPResponse
+import sys
 import json
 import time
 import urlparse
@@ -71,7 +72,12 @@ class Localbox(Auth):
         if o.path[-1:] != '/':
             self.uri_path += '/'
         if o.scheme == 'https':
-            self.connection = HTTPSConnection(o.netloc, o.port)
+            if sys.version_info > (2, 7, 9):
+                ssl_context = ssl.create_default_context()
+                ssl_context.verify_mode = ssl.CERT_NONE # make configurable!
+                self.connection = HTTPSConnection(o.netloc, o.port, context=ssl_context)
+            else:
+                self.connection = HTTPSConnection(o.netloc, o.port)
         elif o.scheme == 'http' or o.scheme == '':
             self.connection = HTTPConnection(o.netloc, o.port)
         self.access_token = ""

@@ -24,7 +24,7 @@ class SettingsDialog(gtk.Dialog):
         # keep original name
         self._name = None
         # set up grid
-        rows = len(lox.config.__settings__) + 2
+        rows = len(lox.config.METADATA) + 3
         cols = 2
         layout = gtk.Table(rows, cols, False)
         layout.set_col_spacings(3)
@@ -38,15 +38,15 @@ class SettingsDialog(gtk.Dialog):
         layout.attach(self._label['name'],0,1,0,1)
         layout.attach(self._entry['name'],1,2,0,1)
         i = 1
-        for (key,caption,default,ext) in lox.config.__settings__:
+        for (key,caption,default,ext) in lox.config.METADATA:
             self._label[key] = gtk.Label(caption)
             self._label[key].set_alignment(0, 0.5)
             layout.attach(self._label[key],0,1,i,i+1)
             if ext == "text":
                 self._entry[key] = gtk.Entry()
-            if ext.startswith("int"):
+            if ext == "int":
                 self._entry[key] = gtk.SpinButton()
-                self._entry[key].set_range(0,10000)
+                self._entry[key].set_range(60,6000)
             if type(ext) is list:
                 self._entry[key] = gtk.combo_box_new_text()
                 for value in ext:
@@ -63,17 +63,17 @@ class SettingsDialog(gtk.Dialog):
         if name is None:
             self._name = _("New account")
             self._entry["name"].set_text(self._name)
-            for (key,caption,default,ext) in lox.config.__settings__:
+            for (key,caption,default,ext) in lox.config.METADATA:
                 if ext == "text":
                     self._entry[key].set_text(default)
-                if ext.startswith("int"):
+                if ext == "int":
                     self._entry[key].set_value(default)
                 if type(ext) is list:
                     self._entry[key].set_active(default)
         else:
             self._name = name # keep track of original name in case it is changed
             self._entry["name"].set_text(name)
-            for (key,caption,default,ext) in lox.config.__settings__:
+            for (key,caption,default,ext) in lox.config.METADATA:
                 if ext == "text":
                     self._entry[key].set_text(lox.config.settings[name][key])
                 if ext == "int":
@@ -90,11 +90,11 @@ class SettingsDialog(gtk.Dialog):
             # save settings
             name = self._entry['name'].get_text()
             d = dict()
-            for (key,caption,default,ext) in lox.config.__settings__:
+            for (key,caption,default,ext) in lox.config.METADATA:
                 if ext == "text":
                     d[key] = self._entry[key].get_text()
                 if ext == "int":
-                    d[key] = str(self._entry[key].get_value())
+                    d[key] = str(self._entry[key].get_value_as_int())
                 if type(ext) is list:
                     index = self._entry[key].get_active()
                     d[key] = ext[index]

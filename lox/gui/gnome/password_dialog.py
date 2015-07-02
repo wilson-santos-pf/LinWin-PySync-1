@@ -1,15 +1,18 @@
 '''
-Module that defines the password dialog
+Module that defines the password dialogs
 '''
 
 import gtk
 from lox.gui.gnome.icon import icon
+import gettext
+_ = gettext.gettext
+
 
 class PasswordDialog(gtk.Dialog):
 
-    def __init__(self):
+    def __init__(self, new=False):
         self.password = None
-        super(PasswordDialog,self).__init__("Localbox password", None,
+        super(PasswordDialog,self).__init__(_("Localbox password"), None,
                     gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
                    (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
                     gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
@@ -30,7 +33,7 @@ class PasswordDialog(gtk.Dialog):
         self.icon.set_alignment(xalign=0.3, yalign=0.5)
         layout.attach(self.icon,0,1,0,2)
 
-        self.label = gtk.Label('Enter passcode:')
+        self.label = gtk.Label(_('Enter passcode:'))
         self.label.set_alignment(xalign=0.0, yalign=0.5)
         layout.attach(self.label,1,2,0,1,gtk.EXPAND|gtk.FILL)
 
@@ -43,12 +46,10 @@ class PasswordDialog(gtk.Dialog):
         self.show_all()
 
     def delete_event(self, widget, event, data=None):
-        print "delete event occurred"
         self.hide()
         return True
 
     def on_destroy(self, widget, obj):
-        print 'clicked on destroy'
         self.hide()
         return True
 

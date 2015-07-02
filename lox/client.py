@@ -26,6 +26,8 @@ import lox.gui as gui
 import gettext
 _ = gettext.gettext
 
+pidfile = os.environ['HOME']+'/.lox/lox-client.pid'
+logfile = os.environ['HOME']+'/.lox/lox-client.log'
 
 class Supervisor(Daemon):
     '''
@@ -82,14 +84,16 @@ def need_sessions():
         print
         print _("No sessions configured, use command 'add'")
         print
-        sys.exit(1)
+        sys.exit(2) # ENOENT
 
-
-def cmd_start(daemon):
+def cmd_start():
     '''
     Start the deamon
     '''
+    global pidfile, logfile
+    config.load()
     need_sessions()
+    daemon = Supervisor(pidfile, path=os.environ['HOME'], umask=100, stdout=logfile, stderr=logfile)
     if daemon.status() is None:
         password = gui.get_password()
         #crypto.set_passphrase(password)
@@ -97,11 +101,15 @@ def cmd_start(daemon):
     else:
         print _("Error: already running")
         print
+        sys.exit(114) # EALREADY
 
-def cmd_stop(daemon):
+def cmd_stop():
     '''
     Stop the daemon
     '''
+    global pidfile, logfile
+    config.load()
+    daemon = Supervisor(pidfile, path=os.environ['HOME'], umask=100, stdout=logfile, stderr=logfile)
     print
     if not daemon.status() is None:
         daemon.stop()
@@ -110,25 +118,35 @@ def cmd_stop(daemon):
         print _("Localbox daemon not running")
     print
 
-def cmd_run(daemon):
+def cmd_run():
     '''
     Run the deamon in the foreground
     '''
+    global pidfile, logfile
+    config.load()
+    need_sessions()
+    daemon = Supervisor(pidfile, path=os.environ['HOME'], umask=100, stdout=logfile, stderr=logfile)
     print
     print "Localbox running in foreground"
     print
     daemon.run()
 
-def cmd_restart(daemon):
+def cmd_restart():
     '''
     Restart daemon
     '''
+    global pidfile, logfile
+    config.load()
+    need_sessions()
+    daemon = Supervisor(pidfile, path=os.environ['HOME'], umask=100, stdout=logfile, stderr=logfile)
     daemon.restart()
 
-def cmd_status(daemon):
+def cmd_status():
     '''
     Show status of daemon
     '''
+    global pidfile, logfile
+    daemon = Supervisor(pidfile, path=os.environ['HOME'], umask=100, stdout=logfile, stderr=logfile)
     s = daemon.status()
     print
     if s is None:
@@ -137,10 +155,11 @@ def cmd_status(daemon):
         print _("Localbox daemon running with pid {}").format(s)
     print
 
-def cmd_add(daemon):
+def cmd_add():
     '''
     Add account
     '''
+    config.load()
     if len(sys.argv)>2:
         name = sys.argv[2]
         if config.settings.has_key(name):
@@ -148,10 +167,12 @@ def cmd_add(daemon):
         else:
             print
             print _("Add Localbox session '{}':").format(name)
-            for (setting,caption,default) in config.SETTINGS:
+            for (setting,caption,default,ext) in config.METADATA:
+                print name, setting
                 value = raw_input("- {0} [{1}]: ".format(caption,default))
                 config.settings[name][setting] = default if value=="" else value
             config.save()
+            daemon = Supervisor(pidfile, path=os.environ['HOME'], umask=100, stdout=logfile, stderr=logfile)
             if not daemon.status() is None:
                 y = raw_input(_("Start session [yes]: "))
                 if y=="" or y==_("yes"):
@@ -163,10 +184,11 @@ def cmd_add(daemon):
         print _("Usage: {0} add <name>").format(cmd,sys.argv[1])
         print
 
-def cmd_delete(daemon):
+def cmd_delete():
     '''
     Delete account
     '''
+    config.load()
     if len(sys.argv)>2:
         name = sys.argv[2]
         if not config.settings.has_key(name):
@@ -176,52 +198,35 @@ def cmd_delete(daemon):
         else:
             config.settings.pop(name)
             config.save()
+            daemon = Supervisor(pidfile, path=os.environ['HOME'], umask=100, stdout=logfile, stderr=logfile)
             if not daemon.status() is None:
                 daemon.restart()
+            print
     else:
         cmd = os.path.basename(sys.argv[0])
         print
         print _("Usage: {0} delete <name>").format(cmd,sys.argv[1])
         print
 
-def cmd_edit(daemon):
+def cmd_edit():
     '''
     Edit configuration walking through accounts one by one
     '''
     if len(sys.argv)>2:
         name = sys.argv[2]
-        if not config.settings.has_key(name):
-            print
-            print _("Error: a session with name '{}' does not exist").format(name)
-        else:
-            print
-            print _("Edit Localbox session with name '{}':").format(name)
-            for (setting,caption,default) in config.SETTINGS:
-                value = raw_input("- {0} [{1}]: ".format(caption,config.settings[name][setting]))
-                config.settings[name][setting] = config.settings[name][setting] if value=="" else value
-            config.save()
-            if not daemon.status() is None:
-                y = raw_input(_("Start this session [yes]: "))
-                if y=="" or y==_("yes"):
-                    daemon.restart()
-        print ""
     else:
-        cmd = os.path.basename(sys.argv[0])
-        print
-        print _("Usage: {0} edit <name>").format(cmd,sys.argv[1])
-        print
+        name = None
+    gui.settings(name)
+    print
 
-def cmd_list(daemon):
+def cmd_list():
     '''
     List the configured sessions
     '''
+    gui.config()
     print
-    print _("Localbox sessions configured:")
-    for name in config.settings.iterkeys():
-        print "  {0:12} ({1})".format(name,config.settings[name]["lox_url"])
-    print ""
 
-def cmd_help(daemon):
+def cmd_help():
     '''
     Show help
     '''
@@ -237,11 +242,13 @@ def cmd_help(daemon):
     print
     sys.exit(0)
 
-def cmd_invitations(daemon):
+def cmd_invitations():
     '''
     Show invirtations for each session
     '''
     need_sessions()
+    config.load()
+    daemon = Supervisor(pidfile, path=os.environ['HOME'], umask=100, stdout=logfile, stderr=logfile)
     print
     print _("Localbox invitations")
     for name in config.settings.iterkeys():
@@ -262,32 +269,46 @@ def cmd_invitations(daemon):
             print
     sys.exit(0)
 
-def cmd_accept(daemon):
+def cmd_clean():
+    '''
+    Cleanup the config directory. TODO: cleanup session files as well
+    '''
+    if gui.ask(_("Are you sure to delete all configurations")):
+        conf_dir = os.environ['HOME']+'/.lox'
+        os.remove(os.path.join(conf_dir,"lox-client.conf"))
+        os.remove(os.path.join(conf_dir,"lox-client.log"))
+    print
+
+def cmd_accept():
     pass
 
-def cmd_revoke(daemon):
+def cmd_revoke():
     pass
+
+def cmd_about():
+    lox.gui.about()
 
 def cmd_usage():
     cmd = os.path.basename(sys.argv[0])
     print
     print _("Usage: {0} start|stop|run|status|help|... ").format(cmd)
     print
-    sys.exit(1)
+    sys.exit(22) # EINVAL
 
 commands = {
                 "start": (cmd_start,_("starts the client")),
                 "stop": (cmd_stop,_("stops the client")),
                 "run": (cmd_run,_("run in foreground (interactive)")),
                 "restart": (cmd_restart,_("reloads the confguration")),
-                "add": (cmd_add,_("add an account")),
                 "list": (cmd_list,_("list configured sessions")),
                 "edit": (cmd_edit,_("edit configuration")),
                 "delete": (cmd_delete,_("delete session from configuration")),
+                "clean": (cmd_clean,_("cleanup configuration")),
                 "status": (cmd_status,_("show the status of the client")),
                 "invitations": (cmd_invitations,_("show invitations")),
                 "accept": (cmd_accept,_("accept invitation")),
                 "revoke": (cmd_revoke,_("revoke invitation")),
+                "about": (cmd_about,_("about this application")),
                 "help": (cmd_help,_("show this help"))
            }
 
@@ -298,30 +319,28 @@ def main():
     gettext.bindtextdomain('lox-client')
     gettext.textdomain('lox-client')
     cmd = sys.argv[1].lower() if len(sys.argv)>1 else cmd_usage()
-    pidfile = os.environ['HOME']+'/.lox/lox-client.pid'
-    logfile = os.environ['HOME']+'/.lox/lox-client.log'
-    daemon = Supervisor(pidfile, path=os.environ['HOME'], umask=100, stdout=logfile, stderr=logfile)
     try:
-        (func,description) = commands[cmd]
-        func(daemon)
-    except KeyError as e:
-        print
-        print _("Error: invalid command")
-        cmd_usage()
-        sys.exit(1)
+        if commands.has_key(cmd):
+            (func,description) = commands[cmd]
+            func()
+        else:
+            print
+            print _("Error: invalid command")
+            cmd_usage()
+            sys.exit(22) # EINVAL
     except (DaemonError, LoxError) as e:
         print
         print _("Error: {}").format(str(e))
         print
-        sys.exit(1)
+        sys.exit(5) # EIO
     except KeyboardInterrupt as e:
         print
         print _("Error: interrupted")
         print
-        sys.exit(1)
+        sys.exit(4) # EINTR
     except Exception as e:
         print
         print _("Error: {}").format(str(e))
         print
         traceback.print_exc()
-        sys.exit(1)
+        sys.exit(1) # EPERM

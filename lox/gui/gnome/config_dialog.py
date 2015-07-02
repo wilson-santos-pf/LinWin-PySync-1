@@ -5,7 +5,7 @@ Module that defines the configuration window class
 import gtk
 import gobject
 
-from lox.config import settings, save
+import lox.config
 from lox.gui.gnome.icon import icon
 from lox.gui.gnome.settings_dialog import SettingsDialog
 
@@ -33,7 +33,7 @@ class ConfigDialog(gtk.Dialog):
 
         # session liststore
         self._liststore = gtk.ListStore(gobject.TYPE_STRING)
-        for session in settings.iterkeys():
+        for session in lox.config.settings.iterkeys():
             self._liststore.append([session])
 
         # session listview
@@ -93,7 +93,7 @@ class ConfigDialog(gtk.Dialog):
         d.run()
         # refresh
         self._liststore.clear()
-        for session in settings.iterkeys():
+        for session in lox.config.settings.iterkeys():
             self._liststore.append([session])
 
     def on_edit(self, widget, obj):
@@ -102,7 +102,7 @@ class ConfigDialog(gtk.Dialog):
         d.run()
         # refresh
         self._liststore.clear()
-        for session in settings.iterkeys():
+        for session in lox.config.settings.iterkeys():
             self._liststore.append([session])
 
     def on_delete(self, widget, obj):

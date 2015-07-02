@@ -8,8 +8,8 @@ import os
 import gtk
 import subprocess
 import lox
-from lox.config import settings
-from lox.gui.gnome.messagebox import messagebox, INFO, ERROR
+import lox.config
+from lox.gui.gnome.messagebox import info, error, ask
 from lox.gui.gnome.icon import icon
 from lox.gui.gnome.config_dialog import ConfigDialog
 from lox.gui.gnome.settings_dialog import SettingsDialog
@@ -63,7 +63,7 @@ class IndicatorMenu(gtk.Menu):
     def __init__(self):
         super(IndicatorMenu,self).__init__()
 
-        for session in settings.iterkeys():
+        for session in lox.config.settings.iterkeys():
             item_open = gtk.MenuItem(_("Open folder '{0}'").format(session))
             item_open.connect('activate',self._open,session)
             item_open.show()
@@ -97,37 +97,23 @@ class IndicatorMenu(gtk.Menu):
 
     def _open(self,obj,session):
         try:
-            path = settings[session]['local_dir']
+            path = lox.config.settings[session]['local_dir']
             fullpath = os.path.expanduser(path)
             subprocess.call(['gnome-open',fullpath])
         except Exception as e:
-            messagebox(ERROR,_("Cannot open folder: {0}").format(str(e)))
+            error(_("Cannot open folder: {0}").format(str(e)))
 
     def _invitations(self,obj):
-        messagebox(INFO,_("Handling invitations is not yet implemented. Use the web interface instead."))
+        info(_("Handling invitations is not yet implemented. Use the web interface instead."))
 
     def _help(self,obj):
         try:
             subprocess.call(['gnome-www-browser','--new-tab','http://wijdelenveilig.org/'])
         except Exception as e:
-            messagebox(ERROR,_("Cannot open help: {0}").format(str(e)))
+            error(_("Cannot open help: {0}").format(str(e)))
 
     def _about(SELF,OBJ):
-        d = gtk.AboutDialog()
-        d.set_icon_from_file(icon(size=64))
-        d.set_program_name('lox-client')
-        license_file = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])),"LICENSE")
-        with open(license_file,'r') as f:
-            d.set_license(f.read())
-        d.set_copyright(lox.__author__)
-        d.set_comments(lox.__description__)
-        d.set_website(lox.__url__)
-        authors_file = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])),"AUTHORS")
-        with open(authors_file,'r') as f:
-            lines = [line.strip('\n') for line in f.readlines()]
-            d.set_authors(lines)
-        d.run()
-        d.destroy()
+        show_about()
 
     def _configure(self,obj):
         d = ConfigDialog()
@@ -146,3 +132,21 @@ class Indicator():
 
     def destroy(self):
         self._indicator.destroy()
+
+def show_about():
+    d = gtk.AboutDialog()
+    d.set_icon_from_file(icon(size=64))
+    d.set_program_name(os.path.basename(sys.argv[0]))
+    license_file = os.path.join(os.path.dirname(os.path.abspath(__file__)),"../../../LICENSE")
+    with open(license_file,'r') as f:
+        d.set_license(f.read())
+    d.set_copyright(lox.AUTHOR)
+    d.set_comments(lox.DESCRIPTION)
+    d.set_website(lox.URL)
+    authors_file = os.path.join(os.path.dirname(os.path.abspath(__file__)),"../../../AUTHORS")
+    with open(authors_file,'r') as f:
+        lines = [line.strip('\n') for line in f.readlines()]
+        d.set_authors(lines)
+    d.run()
+    d.destroy()
+

@@ -7,7 +7,7 @@ Copyright (C) 2014. This software is published under EUPL 1.1, see the LICENSE f
 
 Abstract
 -----
-This software is a LocalBox desktop sync client for Linux (and it can be made run on other platforms with appropriate modifications). The LocalBox server is developed by the ["Wij Delen Veilig"](http://wijdelenveilig.org) foundation. This desktop sync client adheres to the globally specified API and is tested against version 1.1.3.
+This software is a LocalBox desktop sync client for Linux (and it can be made run on other platforms with appropriate modifications). The LocalBox server is developed by the ["Wij Delen Veilig"](http://wijdelenveilig.org) foundation. This desktop sync client adheres to the globally specified API and is tested against version 1.1.17b.
 
 Disclaimer
 ----
@@ -15,11 +15,18 @@ This desktop sync client does NOT offer a secure container for the files that ar
 
 Installation
 -----
-The lox-client desktop sync client has some dependencies to be resolved before being able to build and install the client. On a Debian based system (like Ubuntu and Mint) the following packages are needed.
+The lox-client desktop sync client has some dependencies to be resolved before being able to build and install the client. On a Debian based system (like Ubuntu and Mint) the following packages are needed. All dependencies are taken from the official repositories in order to have some level of code inspection.
 
     $ sudo apt-get install \
         python-httplib2 \
+        python-isodate \
         python-gnupg \
+        python-crypto \
+        python-scrypt \
+        python-gtk2 \
+        python-notify \
+        python-appindicator \
+        python-setuptools \
         gettext \
         haveged
 

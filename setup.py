@@ -15,9 +15,9 @@ def readme():
         return f.read()
 
 setup(
-    description = lox.__description__,
+    description = lox.DESCRIPTION,
     long_description = readme()
-    author = lox.__author__,
+    author = lox.AUTHOR,
       classifiers=[
         'Development Status :: 4 - Beta',
         'License :: OSI Approved :: EUPL-1.1',
@@ -27,8 +27,8 @@ setup(
     keywords='desktop sync secure cloud storage',
     url = 'http://github.com/2EK/Linux-Sync',
     download_url = 'https://github.com/2EK/Linux-Sync/archive/master.zip',
-    author_email = lox.__author_email__,
-    version = lox.__version__,
+    author_email = lox.AUTHOR_EMAIL,
+    version = lox.VERSION,
     packages = ['lox','lox.gui'],
     install_requires = [
         'iso8601',

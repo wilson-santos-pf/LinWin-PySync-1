@@ -70,6 +70,7 @@ class LoxKeyring:
                         )
         self._gpg.encoding = 'utf-8'
         self._id = config.settings[session]['username']
+        self._open = False
 
     def open(self):
         '''
@@ -85,57 +86,59 @@ class LoxKeyring:
         network connection, no keys are generated and encryption cannot be done.
 
         '''
-        api = LoxApi(self.session)
-        user_info = api.get_user_info()
-        # check if private key exists
-        if not user_info[u'private_key']:
-            print "LoxKeyring: no remote private key"
-            # remote private key not set
-            if not self._gpg.list_keys():
-                print "LoxKeyring: generating new private key"
-                input_data = self._gpg.gen_key_input(
-                                    key_type='RSA',
-                                    key_length=2048,
-                                    passphrase=config.passphrase(),
-                                    name_email=self._id,
-                                    name_comment='Localbox user',
-                                    name_real='Anonymous'
-                                )
-                self._gpg.gen_key(input_data)
-            else:
-                print "LoxKeyring: remote private key dropped while local one not?"
-            private_key = self._gpg.export_keys(self._id, True)
-            public_key = self._gpg.export_keys(self._id)
-            print "LoxKeyring: uploading my keys"
-            self.api.set_user_info(binascii.b2a_base64(public_key), binascii.b2a_base64(private_key))
-            self._privkey = private_key
-        else:
-            if not self._gpg.list_keys(True):
-                print "LoxKeyring: downloading remote private key"
-                public_key = base64.b64decode(user_info[u'public_key'])
-                import_result = self._gpg.import_keys(public_key)
-                #assert (import_result.count==1)
-                print import_result.count
-                private_key = base64.b64decode(user_info[u'private_key'])
-                import_result = self._gpg.import_keys(private_key)
-                #assert (import_result.count==1)
-                print import_result.count
+        if not self._open:
+            api = LoxApi(self.session)
+            user_info = api.get_user_info()
+            # check if private key exists
+            if not user_info[u'private_key']:
+                print "LoxKeyring: no remote private key"
+                # remote private key not set
+                if not self._gpg.list_keys():
+                    print "LoxKeyring: generating new private key"
+                    input_data = self._gpg.gen_key_input(
+                                        key_type='RSA',
+                                        key_length=2048,
+                                        passphrase=config.passphrase(),
+                                        name_email=self._id,
+                                        name_comment='Localbox user',
+                                        name_real='Anonymous'
+                                    )
+                    self._gpg.gen_key(input_data)
+                else:
+                    print "LoxKeyring: remote private key dropped while local one not?"
+                private_key = self._gpg.export_keys(self._id, True)
+                public_key = self._gpg.export_keys(self._id)
+                print "LoxKeyring: uploading my keys"
+                self.api.set_user_info(binascii.b2a_base64(public_key), binascii.b2a_base64(private_key))
                 self._privkey = private_key
             else:
-                print "LoxKeyring: checking local and remote private keys,",
-                # extreme workaround to compare keys, due to not using PEM format in other apps
-                my_key = self._gpg.export_keys(self._id, True, armor=True, minimal=True)
-                server_key = user_info[u'private_key']
-                my_flattened_key = ''
-                lines = my_key.splitlines()
-                n = len(lines) - 2
-                for i in range(3, n):
-                    my_flattened_key += lines[i]
-                if not my_flattened_key == server_key:
-                    print "they are different"
+                if not self._gpg.list_keys(True):
+                    print "LoxKeyring: downloading remote private key"
+                    public_key = base64.b64decode(user_info[u'public_key'])
+                    import_result = self._gpg.import_keys(public_key)
+                    #assert (import_result.count==1)
+                    print import_result.count
+                    private_key = base64.b64decode(user_info[u'private_key'])
+                    import_result = self._gpg.import_keys(private_key)
+                    #assert (import_result.count==1)
+                    print import_result.count
+                    self._privkey = private_key
                 else:
-                    print "they are the same"
-                self._privkey = my_flattened_key
+                    print "LoxKeyring: checking local and remote private keys,",
+                    # extreme workaround to compare keys, due to not using PEM format in other apps
+                    my_key = self._gpg.export_keys(self._id, True, armor=True, minimal=True)
+                    server_key = user_info[u'private_key']
+                    my_flattened_key = ''
+                    lines = my_key.splitlines()
+                    n = len(lines) - 2
+                    for i in range(3, n):
+                        my_flattened_key += lines[i]
+                    if not my_flattened_key == server_key:
+                        print "they are different"
+                    else:
+                        print "they are the same"
+                    self._privkey = my_flattened_key
+            self._open = True
 
     def set_private(self, key):
         '''
@@ -148,6 +151,7 @@ class LoxKeyring:
         Base64 decode
         PGP decrypt a string (usually the AES key)
         '''
+        assert(self._open)
         ciphertext = base64.b64decode(string)
         plaintext = self._gpg.decrypt(ciphertext, passphrase=config.passphrase())
         return plaintext
@@ -157,7 +161,8 @@ class LoxKeyring:
         PGP encrypt a string (usually the AES key)
         then base64 encode
         '''
-        ciphertext = self._gpg.encrypt(string, recipients=[self._id],
+        assert(self._open)
+        ciphertext = self._gpg.encrypt(string, recipients=self._id,
                                         passphrase=config.passphrase(),
                                         armor=False, always_trust=True)
         encoded = base64.b64encode(str(ciphertext))
@@ -167,6 +172,7 @@ class LoxKeyring:
         '''
         List (private) keys in keyring
         '''
+        assert(self._open)
         self._gpg.list_keys(True)
 
     def _aes_pad(self, filename):
@@ -239,6 +245,8 @@ class LoxKeyring:
         '''
         Get the AES key from the server and decrypt it using PGP
         '''
+        self.open()
+        assert(self._open)
         api = LoxApi(self.session)
         aes = api.get_key(path)
         encrypted_iv = aes[u'iv']

@@ -407,7 +407,7 @@ class LoxSession(threading.Thread):
         if os.path.isdir(local_dir):
             # TODO: check if at highest level, ask via messagebox to encrypt or not
             self._api.create_folder(path.name)
-            if lox.config.settings[self.name]['encrypted']=='yes':
+            if lox.config.settings[self.name]['encrypt']=='yes':
                 k = self._keyring.new_key()
                 key = self._keyring.gpg_encrypt(k.key)
                 iv = self._keyring.gpg_encrypt(k.iv)

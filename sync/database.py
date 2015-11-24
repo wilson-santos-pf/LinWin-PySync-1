@@ -7,8 +7,10 @@ from sqlite3 import Binary
 from logging import getLogger
 from os.path import exists
 try:
+    from ConfigParser import ConfigParser
     from ConfigParser import NoSectionError
 except ImportError:
+    from configparser import ConfigParser
     from configparser import NoSectionError  # pylint: disable=F0401
 
 try:
@@ -17,15 +19,18 @@ try:
 except ImportError:
     mysql_connect = None
 
+from sqlite3 import Error as SQLiteError
+
 from sqlite3 import connect as sqlite_connect
 
-
-from .config import ConfigSingleton
+class DatabaseError(Exception):
+    pass
 
 def get_sql_log_dict():
-    parser = ConfigSingleton()
+    parser = ConfigParser()
+    parser.read('sync.ini')
     dbtype = parser.get('database', 'type')
-    if dbtype == 'sqlite':
+    if dbtype in ['sqlite', 'sqlite3'] :
         ip = parser.get('database', 'filename')
     else:
         ip = parser.get('database', 'hostname')
@@ -42,7 +47,8 @@ def database_execute(command, params=None):
     """
     getLogger("database").info("database_execute(" + command + ", " +
                                 str(params) + ")", extra=get_sql_log_dict())
-    parser = ConfigSingleton()
+    parser = ConfigParser()
+    parser.read('sync.ini')
     dbtype = parser.get('database', 'type')
 
     if dbtype == "mysql":
@@ -51,10 +57,10 @@ def database_execute(command, params=None):
         command = command.replace('?', '%s')
         return mysql_execute(command, params)
 
-    elif (dbtype == "sqlite3") or (dbtype == "sqlite"):
+    elif (dbtype in ["sqlite3", "sqlite"]):
         return sqlite_execute(command, params)
     else:
-        print("Unknown database type, cannot continue")
+        raise DatabaseError("Unknown database type, cannot continue")
 
 
 def sqlite_execute(command, params=None):
@@ -70,7 +76,9 @@ def sqlite_execute(command, params=None):
     getLogger("database").debug("sqlite_execute(" + command + ", " +
                                 str(params) + ")", extra=get_sql_log_dict())
     try:
-        parser = ConfigSingleton()
+        parser = ConfigParser()
+        parser.read('sync.ini')
+ 
         filename = parser.get('database', 'filename')
         init_db = not exists(filename)
         connection = sqlite_connect(filename)
@@ -87,10 +95,12 @@ def sqlite_execute(command, params=None):
             cursor.execute(command)
         connection.commit()
         return cursor.fetchall()
-    except MySQLError as mysqlerror:
-        print("MySQL Error: %d: %s" % (mysqlerror.args[0], mysqlerror.args[1]))
+    except SQLiteError as sqlerror:
+        raise DatabaseError("SQLite Error: %d: %s" % (sqlerror.args[0], sqlerror.args[1]))
     except NoSectionError:
-        print("Please configure the database")
+        raise DatabaseError("Please configure the database section in the ini file")
+    except TypeError:
+        raise DatabaseError("Please configure the 'filename' parameter in the [database] section in the ini file")
     finally:
         try:
             if connection:
@@ -110,7 +120,8 @@ def mysql_execute(command, params=None):
     """
     getLogger("database").debug("mysql_execute(" + command + ", " + str(params)
                                 + ")", extra=get_sql_log_dict())
-    parser = ConfigSingleton()
+    parser = ConfigParser()
+    parser.read('sync.ini')
     try:
         host = parser.get('database', 'hostname')
         user = parser.get('database', 'username')
@@ -124,7 +135,7 @@ def mysql_execute(command, params=None):
         connection.commit()
         return cursor.fetchall()
     except MySQLError as mysqlerror:
-        print("MySQL Error: %d: %s" % (mysqlerror.args[0], mysqlerror.args[1]))
+        getLogger('database').debug("MySQL Error: %d: %s" % (mysqlerror.args[0], mysqlerror.args[1]), extra=get_sql_log_dict())
     finally:
         try:
             if connection:

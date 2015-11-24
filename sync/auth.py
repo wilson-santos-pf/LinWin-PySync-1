@@ -3,14 +3,17 @@ Authentication module for LocalBox/loauth
 """
 from json import loads
 from time import time
-from database import database_execute
+from .database import database_execute
+from logging import getLogger
 
 try:
     from urllib2 import urlopen
     from urllib import urlencode
+    from urllib2 import HTTPError
 except ImportError:
     from urllib.request import urlopen # pylint: disable=F0401,E0611
     from urllib.parse import urlencode # pylint: disable=F0401,E0611
+    from urllib.error import HTTPError # Pylint: disable=F0401,E0611
 from random import randint
 
 
@@ -20,7 +23,7 @@ from random import randint
 # expiration
 EXPIRATION_LEEWAY = 5
 
-class AuthenticationError(StandardError):
+class AuthenticationError(Exception):
     """
     Custom error class to signify problems in authentication
     """
@@ -46,14 +49,13 @@ class Authenticator(object):
     def __init__(self, authentication_url, localbox_url):
         self.authentication_url = authentication_url
         self.localbox_url = localbox_url
-        # TODO: Get stuff from some config file
         self.client_id = None
         self.client_secret = None
         self.access_token = None
-        # todo:
-        self.refresh_token = None
         self.expires = None
         self.scope = None
+        # todo:
+        self.refresh_token = None
         self.load_client_data()
 
 
@@ -64,10 +66,17 @@ class Authenticator(object):
     def load_client_data(self):
         sql = "select client_id, client_secret from sites where site = ?;"
         result = database_execute(sql, (self.localbox_url,))
-        if result != []:
-            print "loading data"
+        if result != [] and result != None:
+            getLogger('auth').debug("loading data")
             self.client_id = str(result[0][0])
             self.client_secret = str(result[0][1])
+
+    def has_client_credentials(self):
+        if self.client_id != None and self.client_secret != None:
+            return True
+        else:
+            return False
+  
 
     def init_authenticate(self, username, password):
         """
@@ -84,7 +93,7 @@ class Authenticator(object):
                     'client_secret': self.client_secret}
         self._call_authentication_server(authdata)
         if self.access_token != None:
-            print "Authentication Succesful. Saving Client Data"
+            getLogger('auth').debug("Authentication Succesful. Saving Client Data")
             self.save_client_data()
 
 
@@ -108,12 +117,18 @@ class Authenticator(object):
         server and assignment of token data
         """
         request_data = urlencode(authdata)
-        http_request = urlopen(self.authentication_url, request_data)
-        json = loads(http_request.read())
-        self.access_token = json.get('access_token')
-        self.refresh_token = json.get('refresh_token')
-        self.scope = json.get('scope')
-        self.expires = time() + json.get('expires_in', 0) - EXPIRATION_LEEWAY
+        try:
+            http_request = urlopen(self.authentication_url, request_data)
+            json = loads(http_request.read())
+            self.access_token = json.get('access_token')
+            self.refresh_token = json.get('refresh_token')
+            self.scope = json.get('scope')
+            self.expires = time() + json.get('expires_in', 0) - EXPIRATION_LEEWAY
+        except HTTPError as error:
+            if (error.code == 400):
+                raise AuthenticationError()
+            else:
+                raise error
 
 
     def get_authorization_header(self):
@@ -124,6 +139,6 @@ class Authenticator(object):
         if self.access_token == None:
             raise AuthenticationError("Please authenticate first")
         if time() > self.expires:
-            print "Reauthenticating"
+            getLogger('auth').debug("Reauthenticating")
             self.authenticate
         return 'Bearer ' + self.access_token

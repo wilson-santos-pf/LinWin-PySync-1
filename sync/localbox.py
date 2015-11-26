@@ -1,25 +1,34 @@
 """
 localbox client library
 """
+from pprint import pprint 
 try:
     from urllib2 import urlopen
     from urllib2 import HTTPError
+    from urllib2 import HTTPHandler
+    from urllib2 import Request
+    from urllib import quote
 except ImportError:
+    from urllib import quote
     from urllib.request import urlopen # pylint: disable=F0401,E0611
+    from urllib.request import Request # pylint: disable=F0401,E0611
+    from urllib.request import HTTPHandler # pylint: disable=F0401,E0611
     from urllib.error import HTTPError # pylint: disable=F0401,E0611
+from json import loads
 
 
 class AlreadyAuthenticatedError(Exception):
     pass
 
-class LocalBoxSync(object):
-    def __init__(self, url, path, direction):
+
+class LocalBox(object):
+    def __init__(self, url):
         self.url = url
-        self.path = path
-        if direction not in ['up', 'down', 'sync']:
-            raise ValueError("The direction must be either 'up', 'down' or 'sync'")
-        self.direction = direction
         self.authentication_url = None
+        self.authenticator = None
+
+    def add_authenticator(self, authenticator):
+        self.authenticator = authenticator
 
     def get_authentication_url(self):
         if self.authentication_url != None:
@@ -41,5 +50,15 @@ class LocalBoxSync(object):
                     if field.lower() == 'bearer':
                         bearer = True
         raise AlreadyAuthenticatedError()
+
+    def make_call(self, request):
+        request.add_header('Authorization', self.authenticator.get_authorization_header())
+        return urlopen(request)
+
+    def get_meta(self, path=''):
+        metapath = quote(path)
+        request = Request(url=self.url + "lox_api/meta" + metapath)
+        json_text = self.make_call(request).read()
+        return loads(json_text)
 
 

@@ -8,7 +8,8 @@ from logging import StreamHandler
 
 from .auth import Authenticator
 from .auth import AuthenticationError
-from .localbox import LocalBoxSync
+from .localbox import LocalBox
+from .syncer import Syncer
 try:
     from ConfigParser import ConfigParser
     from ConfigParser import NoOptionError, NoSectionError
@@ -36,35 +37,28 @@ def main():
             url = configparser.get(section, 'url')
             path = configparser.get(section, 'path')
             direction = configparser.get(section, 'direction')
-            sites.append(LocalBoxSync(url, path, direction))
+            localbox = LocalBox(url)
+            authenticator = Authenticator(localbox.get_authentication_url(), section)
+            localbox.add_authenticator(authenticator)
+            if not authenticator.has_client_credentials():
+                print("Don't have client credentials for this host yet. We need to log in with your data for once.")
+                username = raw_input("Username: ")
+                password = getpass("Password: ")
+                try:
+                    result = authenticator.init_authenticate(username, password)
+                    sites.append(localbox)
+                except AuthenticationError:
+                    print("authentication data incorrect. Skipping entry.")
+            else:
+                syncer = Syncer(localbox, path, direction)
+                sites.append(syncer)
         except NoOptionError as error:
             getLogger('main').debug("Skipping LocalBox '%s' due to missing option '%s'" % (section, error.option))
-    for site in sites:
-        x = Authenticator(site.get_authentication_url(), site.url)
-        if not x.has_client_credentials():
-            print("Don't have client credentials for this host yet. We need to log in with your data for once.")
-            username = raw_input("Username: ")
-            password = getpass("Password: ")
-            try:
-                result = x.init_authenticate(username, password)
-            except AuthenticationError:
-                print("authentication data incorrect. Skipping entry for now")
-    exit(1)
-    
 
-    ConfigSingleton('sync.ini')
-    auth = Authenticator('http://localhost:8000/', "http://localhost:8001")
-    #auth.init_authenticate('user', 'pass')
-    #auth.client_id = 'id608516886'
-    #auth.client_secret = 'secret389242875'
-    if auth.has_client_credentials():
-        getLogger('main').debug("Already have client credentials, using those")
-        auth.authenticate()
-    else:
-        getLogger('main').debug("Don't have client credentials yet, using Resource Owner Credentials")
-        auth.init_authenticate('user', 'pass')
-       
-    print(auth.get_authorization_header())
+    print "LocalBox:"
+    syncer.localbox_metadata.debug_print()
+    print "FilePath:"
+    syncer.filepath_metadata.debug_print()
 
 if __name__ == '__main__':
     main()

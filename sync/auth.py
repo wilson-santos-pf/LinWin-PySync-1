@@ -1,6 +1,7 @@
 """
 Authentication module for LocalBox/loauth
 """
+from pprint import pprint
 from json import loads
 from time import time
 from .database import database_execute
@@ -46,13 +47,13 @@ class Authenticator(object):
     """
     class implementing the authentication code
     """
-    def __init__(self, authentication_url, localbox_url):
+    def __init__(self, authentication_url, label):
         self.authentication_url = authentication_url
-        self.localbox_url = localbox_url
+        self.label = label
         self.client_id = None
         self.client_secret = None
         self.access_token = None
-        self.expires = None
+        self.expires = 0
         self.scope = None
         # todo:
         self.refresh_token = None
@@ -61,11 +62,11 @@ class Authenticator(object):
 
     def save_client_data(self):
         sql = "insert into sites (site, client_id, client_secret) values (?, ?, ?);"
-        database_execute(sql, (self.localbox_url, self.client_id, self.client_secret))
+        database_execute(sql, (self.label, self.client_id, self.client_secret))
 
     def load_client_data(self):
         sql = "select client_id, client_secret from sites where site = ?;"
-        result = database_execute(sql, (self.localbox_url,))
+        result = database_execute(sql, (self.label,))
         if result != [] and result != None:
             getLogger('auth').debug("loading data")
             self.client_id = str(result[0][0])
@@ -82,7 +83,7 @@ class Authenticator(object):
         """
         Do initial authentication with the resource owner password credentials
         """
-        if (self.client_id != None) or (self.client_secret != None):
+        if (self.client_id is not None) or (self.client_secret is not None):
             raise AuthenticationError("Do not call init_authenticate w"
                                       "hen client_id and client_secret"
                                       " are already set")
@@ -116,15 +117,17 @@ class Authenticator(object):
         function responsible for the actual call to the authentication
         server and assignment of token data
         """
-        request_data = urlencode(authdata)
+        request_data = urlencode(authdata).encode('utf-8')
         try:
             http_request = urlopen(self.authentication_url, request_data)
-            json = loads(http_request.read())
+            json_text = http_request.read().decode('utf-8')
+            json = loads(json_text)
             self.access_token = json.get('access_token')
             self.refresh_token = json.get('refresh_token')
             self.scope = json.get('scope')
             self.expires = time() + json.get('expires_in', 0) - EXPIRATION_LEEWAY
         except HTTPError as error:
+            getLogger('auth').debug('HTTPError when calling the authentication server')
             if (error.code == 400):
                 raise AuthenticationError()
             else:
@@ -136,9 +139,9 @@ class Authenticator(object):
         Returns the Authorization header for authorizing against the
         LocalBox server proper.
         """
-        if self.access_token == None:
-            raise AuthenticationError("Please authenticate first")
+        if self.access_token is None and self.client_id is None and self.client_secret is None:
+            raise AuthenticationError("Please authenticate with resource owner credentials first")
         if time() > self.expires:
             getLogger('auth').debug("Reauthenticating")
-            self.authenticate
+            self.authenticate()
         return 'Bearer ' + self.access_token

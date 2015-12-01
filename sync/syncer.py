@@ -128,7 +128,9 @@ class Syncer(object):
         for vfsfilename in self.localbox_metadata.yield_files():
             filename = vfsfilename.path
             print "processing file " + filename
-            if self.filepath_metadata.get_entry(filename).modified_at < self.localbox_metadata.get_entry(filename).modified_at + 2:
+            localfile = self.filepath_metadata.get_entry(filename)
+            remotefile = self.localbox_metadata.get_entry(filename)
+            if localfile is None or (remotefile != None and localfile.modified_at < remotefile.modified_at + 2):
                 print "downloading " + filename
                 contents = self.localbox.get_file(filename)
                 localfilename = join(self.filepath, filename[1:])

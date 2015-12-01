@@ -1,7 +1,6 @@
 """
 Authentication module for LocalBox/loauth
 """
-from pprint import pprint
 from json import loads
 from time import time
 from .database import database_execute
@@ -14,7 +13,7 @@ try:
 except ImportError:
     from urllib.request import urlopen # pylint: disable=F0401,E0611
     from urllib.parse import urlencode # pylint: disable=F0401,E0611
-    from urllib.error import HTTPError # Pylint: disable=F0401,E0611
+    from urllib.error import HTTPError # pylint: disable=F0401,E0611
 from random import randint
 
 

@@ -1,7 +1,6 @@
 """
 main module for localbox sync
 """
-from pprint import pprint
 from getpass import getpass
 from logging import getLogger
 from logging import StreamHandler
@@ -12,12 +11,12 @@ from .localbox import LocalBox
 from .syncer import Syncer
 try:
     from ConfigParser import ConfigParser
-    from ConfigParser import NoOptionError, NoSectionError
+    from ConfigParser import NoOptionError
 except ImportError:
-    from configparser import ConfigParser  # pylint: disable=F0401
+    from configparser import ConfigParser  # pylint: disable=F0401,W0611
     # pylint: disable=F0401
-    from configparser import NoOptionError, NoSectionError
-    raw_input = input
+    from configparser import NoOptionError
+    raw_input = input #pylint: disable=W0622
 
 def main():
     """
@@ -26,7 +25,7 @@ def main():
     handler = StreamHandler()
     for name in 'main', 'database', 'auth', 'localbox':
         logger = getLogger(name)
-        logger.addHandler(StreamHandler())
+        logger.addHandler(handler)
         logger.setLevel(5)
     location='sites.ini'
     configparser = ConfigParser()
@@ -46,6 +45,8 @@ def main():
                 password = getpass("Password: ")
                 try:
                     result = authenticator.init_authenticate(username, password)
+                    from pprint import pprint
+                    pprint(result)
                     sites.append(localbox)
                 except AuthenticationError:
                     print("authentication data incorrect. Skipping entry.")
@@ -53,12 +54,17 @@ def main():
                 syncer = Syncer(localbox, path, direction)
                 sites.append(syncer)
         except NoOptionError as error:
-            getLogger('main').debug("Skipping LocalBox '%s' due to missing option '%s'" % (section, error.option))
+            string = "Skipping LocalBox '%s' due to missing option '%s'" % (section, error.option)
+            getLogger('main').debug(string)
 
     print "LocalBox:"
     syncer.localbox_metadata.debug_print()
     print "FilePath:"
     syncer.filepath_metadata.debug_print()
+    print "downsync:"
+    syncer.downsync()
+    print "upsync:"
+    syncer.upsync()
 
 if __name__ == '__main__':
     main()

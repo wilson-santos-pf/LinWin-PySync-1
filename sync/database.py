@@ -10,7 +10,7 @@ try:
     from ConfigParser import ConfigParser
     from ConfigParser import NoSectionError
 except ImportError:
-    from configparser import ConfigParser
+    from configparser import ConfigParser  # pylint: disable=F0401,W0611
     from configparser import NoSectionError  # pylint: disable=F0401
 
 try:
@@ -135,7 +135,8 @@ def mysql_execute(command, params=None):
         connection.commit()
         return cursor.fetchall()
     except MySQLError as mysqlerror:
-        getLogger('database').debug("MySQL Error: %d: %s" % (mysqlerror.args[0], mysqlerror.args[1]), extra=get_sql_log_dict())
+        string = "MySQL Error: %d: %s" % (mysqlerror.args[0], mysqlerror.args[1])
+        getLogger('database').debug(string, extra=get_sql_log_dict())
     finally:
         try:
             if connection:

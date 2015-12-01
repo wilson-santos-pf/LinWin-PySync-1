@@ -71,6 +71,12 @@ class LocalBox(object):
         request = Request(url=self.url + 'lox_api/operations/create_folder/', data=metapath)
         return self._make_call(request)
 
+    def delete(self, path):
+        if path[0] != '/':
+            path = '/' + path
+        metapath = urlencode({'path': path})
+        request = Request(url=self.url + 'lox_api/operations/delete/', data=metapath)
+
     def upload_file(self, path, localpath):
         if path[0] == '.':
             path = path[1:]

@@ -1,5 +1,8 @@
 from os import listdir
+from pprint import pprint
+from os import remove
 from os import utime
+from shutil import rmtree
 from os.path import isdir
 from os import stat
 from os.path import join
@@ -19,6 +22,12 @@ class MetaVFS(object):
         if self.children is None:
             self.children = []
         self.parent = None
+
+    def get_paths(self):
+        paths = [self.path]
+        for child in self.children:
+            paths += child.get_paths()
+        return paths
 
     def save(self, filename):
         fd = open(filename, 'w')
@@ -140,6 +149,7 @@ class Syncer(object):
                 utime(localfilename, (time(), self.localbox_metadata.get_entry(filename).modified_at))
             else:
                 print "Already downloaded " + filename
+        self.filepath_metadata.save('localbox.pickle')
 
     def upsync(self):
         for vfsdirname in self.filepath_metadata.yield_directories():
@@ -168,5 +178,62 @@ class Syncer(object):
         print(newthing)
         self.filepath_metadata.debug_print()
 
+    def syncsync(self):
+        allpaths = set(self.filepath_metadata.get_paths() + self.localbox_metadata.get_paths())
+        try:
+            oldmetadata = self.filepath_metadata.load('localbox.pickle')
+            allpaths = set(list(allpaths) + oldmetadata.get_paths())
+        except IOError:
+            print "Old data unknown"
+            oldmetadata =  MetaVFS(path='/', modified_at=0)
+        deleted_folders = []
+        for path in sorted(allpaths):
+            skip = False
+            for entry in deleted_folders:
+                if path.startswith(entry):
+                    skip = True
+            if skip:
+                continue
+            oldfile = oldmetadata.get_entry(path)
+            localfile = self.filepath_metadata.get_entry(path)
+            remotefile = self.localbox_metadata.get_entry(path)
 
-
+            if localfile is not None and remotefile is not None:
+                if not localfile.is_dir and (localfile.modified_at - remotefile.modified_at) > 2:
+                    self.localbox.upload_file(path, join(self.filepath, path[1:]))
+                if not localfile.is_dir and (remotefile.modified_at - localfile.modified_at) > 2:
+                    contents = self.localbox.get_file(path)
+                    localfilename = join(self.filepath, path[1:])
+                    localfile = open(localfilename, 'w')
+                    localfile.write(contents)
+                    localfile.close()
+                    utime(localfilename, (time(), self.localbox_metadata.get_entry(path).modified_at))
+            if oldfile is None:
+                if remotefile is not None and (localfile is None or localfile.modified_at + 2 < remotefile.modified_at) and not remotefile.is_dir:
+                    contents = self.localbox.get_file(path)
+                    localfilename = join(self.filepath, path[1:])
+                    localfile = open(localfilename, 'w')
+                    localfile.write(contents)
+                    localfile.close()
+                    utime(localfilename, (time(), self.localbox_metadata.get_entry(path).modified_at))
+                elif remotefile is not None and localfile is None and remotefile.is_dir:
+                    mkdir(join(self.filepath, path[1:]))
+                elif remotefile is None or (localfile.modified_at > remotefile.modified_at + 2):
+                    if localfile.is_dir and remotefile is None:
+                        self.localbox.create_directory(path)
+                    elif not localfile.is_dir:
+                        self.localbox.upload_file(path, join(self.filepath, path[1:]))
+                else:
+                    assert localfile.is_dir or remotefile.is_dir or (abs(localfile.modified_at - remotefile.modified_at) < 2)
+            elif oldfile is not None:
+                if localfile is None and remotefile is not None:
+                    self.localbox.delete(path)
+                if localfile is not None and remotefile is None:
+                    filepath = join(self.filepath, path[1:])
+                    if isdir(filepath):
+                        rmtree(filepath)
+                    else:
+                        remove(filepath)
+            else:
+                raise(Error("unreachable"))
+        self.filepath_metadata.save('localbox.pickle')

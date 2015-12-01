@@ -61,10 +61,9 @@ def main():
     syncer.localbox_metadata.debug_print()
     print "FilePath:"
     syncer.filepath_metadata.debug_print()
-    print "downsync:"
-    syncer.downsync()
-    print "upsync:"
-    syncer.upsync()
+    print "syncsync:"
+    #syncer.upsync()
+    syncer.syncsync()
 
 if __name__ == '__main__':
     main()

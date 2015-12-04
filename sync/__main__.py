@@ -5,10 +5,12 @@ from getpass import getpass
 from logging import getLogger
 from logging import StreamHandler
 
+from sys import argv
 from .auth import Authenticator
 from .auth import AuthenticationError
 from .localbox import LocalBox
 from .syncer import Syncer
+from .gui import main as guimain
 try:
     from ConfigParser import ConfigParser
     from ConfigParser import NoOptionError
@@ -66,4 +68,8 @@ def main():
     syncer.syncsync()
 
 if __name__ == '__main__':
-    main()
+    print argv
+    if argv[-1] == "--gui":
+        guimain()
+    else:
+        main()

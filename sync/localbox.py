@@ -13,7 +13,8 @@ except ImportError:
     from urllib.request import Request # pylint: disable=F0401,E0611
     from urllib.error import HTTPError # pylint: disable=F0401,E0611
 from json import loads
-
+from ssl import SSLContext, PROTOCOL_TLSv1
+from httplib import BadStatusLine
 
 class AlreadyAuthenticatedError(Exception):
     pass
@@ -33,7 +34,12 @@ class LocalBox(object):
             return self.authentication_url
         else:
             try:
-                urlopen(self.url)
+                print self.url
+                non_verifying_context = SSLContext(PROTOCOL_TLSv1)
+                urlopen(self.url, context=non_verifying_context)
+            except BadStatusLine as error:
+                print error.line
+                raise error
             except HTTPError as error:
                 auth_header = error.headers['WWW-Authenticate'].split(' ')
                 bearer = False
@@ -51,7 +57,8 @@ class LocalBox(object):
 
     def _make_call(self, request):
         request.add_header('Authorization', self.authenticator.get_authorization_header())
-        return urlopen(request)
+        non_verifying_context = SSLContext(PROTOCOL_TLSv1)
+        return urlopen(request, context=non_verifying_context)
 
     def get_meta(self, path=''):
         metapath = quote(path)

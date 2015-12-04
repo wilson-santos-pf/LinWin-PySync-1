@@ -5,6 +5,7 @@ from json import loads
 from time import time
 from .database import database_execute
 from logging import getLogger
+from ssl import SSLContext, PROTOCOL_TLSv1
 
 try:
     from urllib2 import urlopen
@@ -70,6 +71,8 @@ class Authenticator(object):
             getLogger('auth').debug("loading data")
             self.client_id = str(result[0][0])
             self.client_secret = str(result[0][1])
+            return True
+        return False
 
     def has_client_credentials(self):
         if self.client_id != None and self.client_secret != None:
@@ -95,7 +98,8 @@ class Authenticator(object):
         if self.access_token != None:
             getLogger('auth').debug("Authentication Succesful. Saving Client Data")
             self.save_client_data()
-
+            return True
+        return False
 
     def authenticate(self):
         """
@@ -118,7 +122,8 @@ class Authenticator(object):
         """
         request_data = urlencode(authdata).encode('utf-8')
         try:
-            http_request = urlopen(self.authentication_url, request_data)
+            non_verifying_context = SSLContext(PROTOCOL_TLSv1)
+            http_request = urlopen(self.authentication_url, request_data, context=non_verifying_context)
             json_text = http_request.read().decode('utf-8')
             json = loads(json_text)
             self.access_token = json.get('access_token')

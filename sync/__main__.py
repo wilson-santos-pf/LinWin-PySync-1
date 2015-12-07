@@ -4,6 +4,7 @@ main module for localbox sync
 from getpass import getpass
 from logging import getLogger
 from logging import StreamHandler
+from threading import Thread
 
 from sys import argv
 from .auth import Authenticator
@@ -11,6 +12,7 @@ from .auth import AuthenticationError
 from .localbox import LocalBox
 from .syncer import Syncer
 from .gui import main as guimain
+from time import sleep
 try:
     from ConfigParser import ConfigParser
     from ConfigParser import NoOptionError
@@ -19,6 +21,15 @@ except ImportError:
     # pylint: disable=F0401
     from configparser import NoOptionError
     raw_input = input #pylint: disable=W0622
+
+class SyncRunner(Thread):
+    def __init__(self, group=None, target=None, name=None, args=(), kwargs=None, verbose=None, syncer=None):
+        Thread.__init__(self, group=group, target=target, name=name, args=args, kwargs=kwargs, verbose=verbose)
+        self.syncer = syncer
+
+    def run(self):
+        syncer.syncsync()
+        
 
 def main():
     """
@@ -58,14 +69,18 @@ def main():
         except NoOptionError as error:
             string = "Skipping LocalBox '%s' due to missing option '%s'" % (section, error.option)
             getLogger('main').debug(string)
-
-    print "LocalBox:"
-    syncer.localbox_metadata.debug_print()
-    print "FilePath:"
-    syncer.filepath_metadata.debug_print()
-    print "syncsync:"
-    #syncer.upsync()
-    syncer.syncsync()
+    configparser.read('sync.ini')
+    delay = int(configparser.get('sync','delay'))
+    while(True):
+        for syncer in sites:
+            runner = SyncRunner(syncer=syncer)
+            if syncer.direction == 'up':
+                syncer.syncup()
+            if syncer.direction == 'down':
+                syncer.syncdown()
+            if syncer.direction == 'sync':
+                syncer.syncsync()
+        sleep(delay)
 
 if __name__ == '__main__':
     print argv

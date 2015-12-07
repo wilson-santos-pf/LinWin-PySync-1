@@ -6,6 +6,7 @@ from shutil import rmtree
 from os.path import isdir
 from os import stat
 from os.path import join
+from os.path import abspath
 from os import mkdir
 from itertools import chain
 from time import mktime
@@ -95,6 +96,7 @@ class Syncer(object):
         self.filepath_metadata = None
         if direction not in ['up', 'down', 'sync']:
             raise ValueError("direction needs to be either 'up', 'down' or 'sync'")
+        self.direction = direction
         print "LocalBox:"
         self.populate_localbox_metadata(path='/', parent=None)
         print "Local FS:"
@@ -115,7 +117,7 @@ class Syncer(object):
     def populate_filepath_metadata(self, path='./', parent=None):
         if path == '.':
             path = './'
-        realpath = join(self.filepath, path)
+        realpath = abspath(join(self.filepath, path))
         print "processing " + path + " transformed to " + realpath
         is_dir = isdir(realpath)
         modtime = stat(realpath).st_mtime

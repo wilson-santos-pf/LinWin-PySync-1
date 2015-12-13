@@ -1,3 +1,4 @@
+gpg/
 *.pyc
 tmp
 build
@@ -5,3 +6,7 @@ dist
 *.egg-info
 *.save
 *.po~
+localbox-log-file.log
+localbox.pickle
+syncdatabase.sqlite3
+

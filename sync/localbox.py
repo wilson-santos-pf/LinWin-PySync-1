@@ -90,11 +90,15 @@ class LocalBox(object):
         if len(path) > 0 and path[0] == '/':
             path = path[1:]
         metapath = quote(path)
-        print metapath
         contents = open(localpath).read()
         request = Request(url=self.url + 'lox_api/files/' + metapath, data=contents) 
         return self._make_call(request)
 
+    def call_user(self):
+        url = self.url + "lox_api/user"
+        request = Request(url) 
+        return self._make_call(request)
+ 
 
 
 

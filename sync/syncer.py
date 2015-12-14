@@ -144,6 +144,9 @@ class Syncer(object):
             if localfile is None or (remotefile != None and localfile.modified_at < remotefile.modified_at + 2):
                 print "downloading " + filename
                 contents = self.localbox.get_file(filename)
+                decoded = self.localbox.decode_file(path, contents)
+                print decoded
+                exit(1)
                 localfilename = join(self.filepath, filename[1:])
                 localfile = open(localfilename, 'w')
                 localfile.write(contents)

@@ -6,6 +6,8 @@ from logging import getLogger
 from logging import StreamHandler
 from threading import Thread
 from json import loads
+from gpg import gpg
+from base64 import b64decode
 
 from sys import argv
 from .auth import Authenticator
@@ -53,30 +55,16 @@ def main():
             localbox = LocalBox(url)
             authenticator = Authenticator(localbox.get_authentication_url(), section)
             localbox.add_authenticator(authenticator)
-            from pprint import pprint
-            pprint(localbox.call_user().__dict__)
-            keys = loads(localbox.call_user().read())
-            pubkey = keys['public_key']
-            privkey = keys['private_key']
-            print pubkey
-            print privkey
-            
-            from Crypto.PublicKey import RSA
-            from Crypto.Util import asn1
-            from base64 import b64decode
-            seq = asn1.DerSequence()
-            key2= b64decode(pubkey)
-            print key2
-            seq.decode(key2)
-            key =  RSA.construct( (seq[0], seq[1]) )
-            print(key)
-            pprint(key)
-            print(key.__dict__)
-           
-
-
+            keys = loads(localbox.call_keys('abcdefg').read())
+            key = gpg().decrypt(b64decode(keys['key']), 'ponies')
+            open("aesfile", 'w').write(key)
+            open("iv_file", 'w').write(gpg().decrypt(b64decode(keys['iv']), 'ponies'))
+            exit(1)
+            #pubkey = keys['public_key']
+            #privkey = keys['private_key']
+            #print pubkey
+            #print privkey
             if not authenticator.has_client_credentials():
-
                 print("Don't have client credentials for this host yet. We need to log in with your data for once.")
                 username = raw_input("Username: ")
                 password = getpass("Password: ")

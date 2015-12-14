@@ -86,6 +86,10 @@ class Authenticator(object):
         Do initial authentication with the resource owner password credentials
         """
         if (self.client_id is not None) or (self.client_secret is not None):
+            print "init authenticate data"
+            print self.client_id
+            print self.client_secret
+            print "end init authenticate data"
             raise AuthenticationError("Do not call init_authenticate w"
                                       "hen client_id and client_secret"
                                       " are already set")
@@ -94,6 +98,8 @@ class Authenticator(object):
         authdata = {'grant_type': 'password', 'username': username,
                     'password': password, 'client_id': self.client_id,
                     'client_secret': self.client_secret}
+        from pprint import pprint
+        pprint(authdata)
         self._call_authentication_server(authdata)
         if self.access_token != None:
             getLogger('auth').debug("Authentication Succesful. Saving Client Data")

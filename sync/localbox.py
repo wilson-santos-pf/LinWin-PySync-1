@@ -1,6 +1,9 @@
 """
 localbox client library
 """
+
+from Crypto.Cipher.AES import new as AES_Key
+
 try:
     from urllib2 import urlopen
     from urllib2 import HTTPError
@@ -69,7 +72,10 @@ class LocalBox(object):
     def get_file(self, path=''):
         metapath = quote(path)
         request = Request(url=self.url + 'lox_api/files' + metapath)
-        return self._make_call(request).read()
+        data = self._make_call(request).read()
+        if get_meta(path)['has_keys'] == True:
+            data = decode_file(path, data)
+        return data
 
     def create_directory(self, path):
         if path[0] != '/':
@@ -91,6 +97,8 @@ class LocalBox(object):
             path = path[1:]
         metapath = quote(path)
         contents = open(localpath).read()
+        if get_meta(path)['has_keys'] == True:
+            contents = self.encrypt(path, contents)
         request = Request(url=self.url + 'lox_api/files/' + metapath, data=contents) 
         return self._make_call(request)
 
@@ -98,8 +106,29 @@ class LocalBox(object):
         url = self.url + "lox_api/user"
         request = Request(url) 
         return self._make_call(request)
- 
 
+    def call_keys(self, path):
+        if path[0] == '.':
+            path = path[1:]
+        if len(path) > 0 and path[0] == '/':
+            path = path[1:]
+        try:
+            index = path.index('/')
+            cryptopath = path[:index]
+        except ValueError:
+            cryptopath = path
+        request = Request(url=self.url + 'lox_api/key/' + cryptopath)
+        return self._make_call(request)
 
+    def decode_file(self, path, contents):
+        keydata = loads(call_keys(path))
+        key = AESkey(keydata['key'], AES.MODE_CBC, keydata['iv'])
+        key.decrypt(contents)
+        return contents
 
+    def encode_file(self, path, contents):
+        keydata = loads(call_keys(path))
+        key = AESkey(keydata['key'], AES.MODE_CBC, keydata['iv'])
+        key.encrypt(contents)
+        return contents
 

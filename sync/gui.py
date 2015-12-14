@@ -22,9 +22,11 @@ class ConfigError(Exception):
     pass
 
 class UsernameAndPasswordAsker(Tk):
-    def __init__(self, parent=None):
+    def __init__(self, authenticator, parent=None):
         Tk.__init__(self, parent)
         self.title("Authentication Data")
+        self.authenticator = authenticator
+
         Label(self, text="username").grid(row=0, column=0)
         self.username = Entry(self)
         self.username.grid(row=0, column=1)
@@ -36,8 +38,12 @@ class UsernameAndPasswordAsker(Tk):
         self.lock = Event()
 
     def stop_window(self):
-        self.lock.set()
-        self.destroy()
+        if self.authenticator.init_authenticate(self.username.get(), self.password.get()):
+            self.lock.set()
+            self.destroy()
+        else:
+            # TODO: window saying authentication failed
+            pass
 
     def __call__(self):
         self.mainloop()
@@ -136,7 +142,7 @@ class DataEntry(Frame):
         authurl = localbox.get_authentication_url()
         authenticator = Authenticator(authurl, self.site_name.get())
         if not authenticator.has_client_credentials():
-            credentials = UsernameAndPasswordAsker()
+            credentials = UsernameAndPasswordAsker(authenticator)
             credentials.__call__()
             credentials.lock.wait()
             # Show username/password field

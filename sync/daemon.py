@@ -12,7 +12,6 @@ def main():
     location='sync.ini'
     configparser = ConfigParser()
     configparser.read(location)
-    :
 
 if __name__ == "__main__":
     main()

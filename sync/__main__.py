@@ -1,6 +1,7 @@
 """
 main module for localbox sync
 """
+from threading import Lock
 from getpass import getpass
 from logging import getLogger
 from logging import StreamHandler
@@ -16,6 +17,7 @@ from .localbox import LocalBox
 from .syncer import Syncer
 from .gui import main as guimain
 from time import sleep
+from .taskbar import taskbarmain
 try:
     from ConfigParser import ConfigParser
     from ConfigParser import NoOptionError
@@ -25,14 +27,25 @@ except ImportError:
     from configparser import NoOptionError
     raw_input = input #pylint: disable=W0622
 
+
+KEEP_RUNNING=True
+
 class SyncRunner(Thread):
     def __init__(self, group=None, target=None, name=None, args=(), kwargs=None, verbose=None, syncer=None):
         Thread.__init__(self, group=group, target=target, name=name, args=args, kwargs=kwargs, verbose=verbose)
+        self.setDaemon(True)
         self.syncer = syncer
+        self.lock = Lock()
 
     def run(self):
+        self.lock.acquire()
         syncer.syncsync()
+        self.lock.release()
         
+
+def stop_running():
+    global KEEP_RUNNING
+    KEEP_RUNNING=False
 
 def main():
     """
@@ -55,15 +68,6 @@ def main():
             localbox = LocalBox(url)
             authenticator = Authenticator(localbox.get_authentication_url(), section)
             localbox.add_authenticator(authenticator)
-            keys = loads(localbox.call_keys('abcdefg').read())
-            key = gpg().decrypt(b64decode(keys['key']), 'ponies')
-            open("aesfile", 'w').write(key)
-            open("iv_file", 'w').write(gpg().decrypt(b64decode(keys['iv']), 'ponies'))
-            exit(1)
-            #pubkey = keys['public_key']
-            #privkey = keys['private_key']
-            #print pubkey
-            #print privkey
             if not authenticator.has_client_credentials():
                 print("Don't have client credentials for this host yet. We need to log in with your data for once.")
                 username = raw_input("Username: ")
@@ -72,7 +76,6 @@ def main():
                     result = authenticator.init_authenticate(username, password)
                     from pprint import pprint
                     pprint(result)
-                    sites.append(localbox)
                 except AuthenticationError:
                     print("authentication data incorrect. Skipping entry.")
             else:
@@ -83,20 +86,22 @@ def main():
             getLogger('main').debug(string)
     configparser.read('sync.ini')
     delay = int(configparser.get('sync','delay'))
-    while(True):
+    while(KEEP_RUNNING):
         for syncer in sites:
             runner = SyncRunner(syncer=syncer)
             if syncer.direction == 'up':
-                syncer.syncup()
+                syncer.upsync()
             if syncer.direction == 'down':
-                syncer.syncdown()
+                syncer.downsync()
             if syncer.direction == 'sync':
                 syncer.syncsync()
         sleep(delay)
 
 if __name__ == '__main__':
-    print argv
-    if argv[-1] == "--gui":
-        guimain()
-    else:
-        main()
+    mainthread = Thread(target=main)
+    mainthread.daemon = True
+    taskbarmain()
+#    if argv[-1] == "--gui":
+#        guimain()
+#    else:
+#        main()

@@ -73,7 +73,7 @@ class LocalBox(object):
         metapath = quote(path)
         request = Request(url=self.url + 'lox_api/files' + metapath)
         data = self._make_call(request).read()
-        if get_meta(path)['has_keys'] == True:
+        if self.get_meta(path)['has_keys'] == True:
             data = decode_file(path, data)
         return data
 

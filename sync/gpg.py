@@ -7,8 +7,17 @@ from os.path import join
 from os.path import isdir
 from os.path import isfile
 
+from distutils.sysconfig import project_base
+
 class gpg():
-    def __init__(self, folder_path=None, binary_path='gpg'):
+    def __init__(self, folder_path=None, binary_path=None):
+        #ugly but working
+        if binary_path is None:
+            binary_path = join(project_base, "gpg", "gpg.exe")
+            if not isfile(binary_path):
+                binary_path = join(project_base, 'gpg')
+                if not isfile(binary_path):
+                    binary_path = None
         self.gpg = GPG(gpgbinary=binary_path, gnupghome=folder_path, verbose=False, options="--allow-non-selfsigned-uid")
 
     #def remove_passphrase(self, fingerprint):

@@ -52,9 +52,10 @@ class Gui(Tk):
     def __init__(self, parent=None, configparser=None):
         Tk.__init__(self, parent)
         self.configs = []
-        self.button = Button(text="Add New", command=self.addNew)
+        self.button = Button(text="Voeg Nieuwe LocalBox Toe", command=self.addNew)
         self.button.grid(row=0, column=0)
         self.configparser = configparser
+        self.iconify()
 
     def add_entries(self, dataentryframe):
         self.configs.append(dataentryframe)
@@ -62,11 +63,11 @@ class Gui(Tk):
         dataentryframe.grid(row=position, column=0)
 
     def addNew(self):
-        de = DataEntry(self, '', '', '', '', self.configparser)
+        de = DataEntry(self, '', '', '', '', self.configparser, '')
         self.add_entries(de)
 
 def get_entry_fields(parent, text, value, row):
-    label = Label(text=text, master=parent)
+    label = Label(text=text, master=parent, justify="left")
     label.grid(column=0, row=row)
     entry = Entry(master=parent)
     entry.insert(0, value)
@@ -79,32 +80,33 @@ class DataEntry(Frame):
         self.local_path.delete(0, END)
         self.local_path.insert(0, result)
 
-    def __init__(self, master=None, name=None, url=None, localdir=None, direction=None, config=None):
+    def __init__(self, master=None, name=None, url=None, localdir=None, direction=None, config=None, passphrase=None):
         Frame.__init__(self, master=master, relief="raised", borderwidth=2)
         self.configparser = config
         self.orig_name = name
-        self.site_name = get_entry_fields(self, "Sitename", name, 0)
+        self.site_name = get_entry_fields(self, "Naam Box", name, 0)
         self.localbox_url = get_entry_fields(self, "LocalBox URL", url, 1)
-        self.local_path = get_entry_fields(self, "Local Path", localdir, 2)
-        self.lpbutton = Button(master=self, text="select directory", command=self.getfile)
+        self.local_path = get_entry_fields(self, "Lokale Folder", localdir, 2)
+        self.passphrase = get_entry_fields(self, "Passphrase", passphrase, 3)
+        self.lpbutton = Button(master=self, text="selecteer folder", command=self.getfile)
         self.lpbutton.grid(column=2, row=2)
         
 
-        label = Label(text="Direction", master=self)
-        label.grid(column=0, row=3)
+        label = Label(text="Up/Down/Sync", master=self)
+        label.grid(column=0, row=4)
         self.sync_direction = Combobox(master=self)
         self.sync_direction['values'] = ['up', 'down', 'sync']
-        self.sync_direction.grid(column=1, row=3)
+        self.sync_direction.grid(column=1, row=4)
 
         self.savebutton = Button(master=self, text="Save", command=self.save)
-        self.savebutton.grid(row=4, column=0)
-        self.authbutton = Button(master=self, text="Authenticate", command=self.authenticate)
-        self.authbutton.grid(row=4, column=1)
+        self.savebutton.grid(row=5, column=2)
+        self.authbutton = Button(master=self, text="Authenticeer", command=self.authenticate)
+        self.authbutton.grid(row=5, column=1)
 
     def save(self):
         try:
             if self.site_name.get() != self.orig_name:
-                if self.site_name.get() in self.configparser.sections():
+                if self.configparser.sections() is not None and self.site_name.get() in self.configparser.sections():
                     raise ConfigError("There is already a site with that name")
             if not isdir(self.local_path.get()):
                 raise ConfigError("Share path needs to be a directory")
@@ -121,6 +123,7 @@ class DataEntry(Frame):
             self.configparser.set(self.site_name.get(), 'url', self.localbox_url.get())
             self.configparser.set(self.site_name.get(), 'path', self.local_path.get())
             self.configparser.set(self.site_name.get(), 'direction', self.sync_direction.get())
+            self.configparser.set(self.site_name.get(), 'passphrase', self.passphrase.get())
             with open('sites.ini', 'wb') as configfile:
                 self.configparser.write(configfile)
             
@@ -157,11 +160,11 @@ class DataEntry(Frame):
             except AuthenticationError:
                 print "your credentials are invalidated"
 def main():
-    gui = Gui()
-    gui.title('app')
     location='sites.ini'
     configparser = ConfigParser()
     configparser.read(location)
+    gui = Gui(configparser=configparser)
+    gui.title('LocalBox instellingen')
     sites = []
     for section in configparser.sections():
         try:
@@ -171,14 +174,14 @@ def main():
                 'direction': configparser.get(section, 'direction')
             }
             sites.append(dictionary)
-
-            de = DataEntry(gui, section, dictionary['url'], dictionary['path'], dictionary['direction'], configparser)
+            de = DataEntry(gui, section, dictionary['url'], dictionary['path'], dictionary['direction'], configparser, passphrase=configparser.get(section, 'passphrase'))
             gui.add_entries(de)
 
         except NoOptionError as error:
             string = "Skipping LocalBox '%s' due to missing option '%s'" % (section, error.option)
             getLogger('main').debug(string)
     print sites
+    gui.iconify()
     gui.mainloop()
 
 if __name__ == "__main__":

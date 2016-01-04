@@ -56,7 +56,7 @@ def main():
         logger = getLogger(name)
         logger.addHandler(handler)
         logger.setLevel(5)
-    location='sites.ini'
+    location = join(expandvars("%APPDATA%"), 'LocalBox', 'sites.ini')
     configparser = ConfigParser()
     configparser.read(location)
     sites = []
@@ -84,7 +84,7 @@ def main():
         except NoOptionError as error:
             string = "Skipping LocalBox '%s' due to missing option '%s'" % (section, error.option)
             getLogger('main').debug(string)
-    configparser.read('sync.ini')
+    configparser.read(join(expandvars("%APPDATA%"), 'LocalBox', 'sync.ini'))
     delay = int(configparser.get('sync','delay'))
     while(KEEP_RUNNING):
         for syncer in sites:

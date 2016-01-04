@@ -6,6 +6,7 @@ from sqlite3 import Binary
 
 from logging import getLogger
 from os.path import exists
+from os.path import expandvars
 try:
     from ConfigParser import ConfigParser
     from ConfigParser import NoSectionError
@@ -28,7 +29,7 @@ class DatabaseError(Exception):
 
 def get_sql_log_dict():
     parser = ConfigParser()
-    parser.read('sync.ini')
+    parser.read(join(expandvars("%APPDATA%"), 'LocalBox', 'sync.ini'))
     dbtype = parser.get('database', 'type')
     if dbtype in ['sqlite', 'sqlite3'] :
         ip = parser.get('database', 'filename')
@@ -48,7 +49,7 @@ def database_execute(command, params=None):
     getLogger("database").info("database_execute(" + command + ", " +
                                 str(params) + ")", extra=get_sql_log_dict())
     parser = ConfigParser()
-    parser.read('sync.ini')
+    parser.read(join(expandvars("%APPDATA%"), 'LocalBox', 'sync.ini'))
     dbtype = parser.get('database', 'type')
 
     if dbtype == "mysql":
@@ -77,15 +78,16 @@ def sqlite_execute(command, params=None):
                                 str(params) + ")", extra=get_sql_log_dict())
     try:
         parser = ConfigParser()
-        parser.read('sync.ini')
+        parser.read(join(expandvars("%APPDATA%"), 'LocalBox', 'sync.ini'))
  
         filename = parser.get('database', 'filename')
-        init_db = not exists(filename)
+        init_db = not exists(expandvars(filename))
         connection = sqlite_connect(filename)
         connection.text_factory = Binary
         cursor = connection.cursor()
         if init_db:
-            for sql in open('database.sql').read().split("\n"):
+            for sql in 'CREATE TABLE sites (site char(255), client_id char(255), client_secret char(255));', 
+                       'CREATE TABLE keys (site char(255), user char(255), fingerprint char(40));':
                 if sql != "" and sql is not None:
                     cursor.execute(sql)
                     connection.commit()
@@ -121,7 +123,7 @@ def mysql_execute(command, params=None):
     getLogger("database").debug("mysql_execute(" + command + ", " + str(params)
                                 + ")", extra=get_sql_log_dict())
     parser = ConfigParser()
-    parser.read('sync.ini')
+    parser.read(join(expandvars("%APPDATA%"), 'LocalBox', 'sync.ini'))
     try:
         host = parser.get('database', 'hostname')
         user = parser.get('database', 'username')

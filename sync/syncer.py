@@ -237,5 +237,5 @@ class Syncer(object):
                     else:
                         remove(filepath)
             else:
-                raise(Error("unreachable"))
+                raise(Exception("unreachable"))
         self.filepath_metadata.save('localbox.pickle')

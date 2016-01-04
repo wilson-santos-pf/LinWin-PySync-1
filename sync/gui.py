@@ -3,7 +3,6 @@ from Tkinter import Frame
 from Tkinter import Label
 from Tkinter import Entry
 from Tkinter import Button
-from Tkinter import Listbox
 import tkFileDialog
 from ttk import Combobox
 from Tkinter import END
@@ -14,12 +13,14 @@ from .localbox import LocalBox
 from .auth import Authenticator
 from .auth import AuthenticationError
 from os.path import isdir
+from logging import getLogger
 
 from threading import Event
 
 
 class ConfigError(Exception):
     pass
+
 
 class UsernameAndPasswordAsker(Tk):
     def __init__(self, authenticator, parent=None):
@@ -33,12 +34,14 @@ class UsernameAndPasswordAsker(Tk):
         Label(self, text="password").grid(row=1, column=0)
         self.password = Entry(self, show="*")
         self.password.grid(row=1, column=1)
-        self.button = Button(master=self, text="something", command=self.stop_window)
+        self.button = Button(master=self, text="something",
+                             command=self.stop_window)
         self.button.grid(row=2)
         self.lock = Event()
 
     def stop_window(self):
-        if self.authenticator.init_authenticate(self.username.get(), self.password.get()):
+        if self.authenticator.init_authenticate(self.username.get(),
+                                                self.password.get()):
             self.lock.set()
             self.destroy()
         else:
@@ -48,11 +51,13 @@ class UsernameAndPasswordAsker(Tk):
     def __call__(self):
         self.mainloop()
 
+
 class Gui(Tk):
     def __init__(self, parent=None, configparser=None):
         Tk.__init__(self, parent)
         self.configs = []
-        self.button = Button(text="Voeg Nieuwe LocalBox Toe", command=self.addNew)
+        self.button = Button(text="Voeg Nieuwe LocalBox Toe",
+                             command=self.addNew)
         self.button.grid(row=0, column=0)
         self.configparser = configparser
         self.iconify()
@@ -66,6 +71,7 @@ class Gui(Tk):
         de = DataEntry(self, '', '', '', '', self.configparser, '')
         self.add_entries(de)
 
+
 def get_entry_fields(parent, text, value, row):
     label = Label(text=text, master=parent, justify="left")
     label.grid(column=0, row=row)
@@ -74,13 +80,15 @@ def get_entry_fields(parent, text, value, row):
     entry.grid(column=1, row=row)
     return entry
 
+
 class DataEntry(Frame):
     def getfile(self):
         result = tkFileDialog.askdirectory()
         self.local_path.delete(0, END)
         self.local_path.insert(0, result)
 
-    def __init__(self, master=None, name=None, url=None, localdir=None, direction=None, config=None, passphrase=None):
+    def __init__(self, master=None, name=None, url=None, localdir=None,
+                 direction=None, config=None, passphrase=None):
         Frame.__init__(self, master=master, relief="raised", borderwidth=2)
         self.configparser = config
         self.orig_name = name
@@ -88,9 +96,9 @@ class DataEntry(Frame):
         self.localbox_url = get_entry_fields(self, "LocalBox URL", url, 1)
         self.local_path = get_entry_fields(self, "Lokale Folder", localdir, 2)
         self.passphrase = get_entry_fields(self, "Passphrase", passphrase, 3)
-        self.lpbutton = Button(master=self, text="selecteer folder", command=self.getfile)
+        self.lpbutton = Button(master=self, text="selecteer folder",
+                               command=self.getfile)
         self.lpbutton.grid(column=2, row=2)
-        
 
         label = Label(text="Up/Down/Sync", master=self)
         label.grid(column=0, row=4)
@@ -100,19 +108,20 @@ class DataEntry(Frame):
 
         self.savebutton = Button(master=self, text="Save", command=self.save)
         self.savebutton.grid(row=5, column=2)
-        self.authbutton = Button(master=self, text="Authenticeer", command=self.authenticate)
+        self.authbutton = Button(master=self, text="Authenticeer",
+                                 command=self.authenticate)
         self.authbutton.grid(row=5, column=1)
 
     def save(self):
         try:
             if self.site_name.get() != self.orig_name:
-                if self.configparser.sections() is not None and self.site_name.get() in self.configparser.sections():
+                if (self.configparser.sections() is not None and
+                   self.site_name.get() in self.configparser.sections()):
                     raise ConfigError("There is already a site with that name")
             if not isdir(self.local_path.get()):
                 raise ConfigError("Share path needs to be a directory")
             if not self.sync_direction.get() in ['up', 'down', 'sync']:
-                raise ConfigError("Direction needs to be either up, down or sync")
-        
+                raise ConfigError("Direction needs to be up, down or sync")
 
             if self.site_name.get() != self.orig_name:
                 self.configparser.remove_section(self.orig_name)
@@ -120,22 +129,30 @@ class DataEntry(Frame):
                 sql = "update sites set site=? where site=?;"
                 database_execute(sql, (self.site_name.get(), self.orig_name))
                 self.orig_name = self.site_name.get()
-            self.configparser.set(self.site_name.get(), 'url', self.localbox_url.get())
-            self.configparser.set(self.site_name.get(), 'path', self.local_path.get())
-            self.configparser.set(self.site_name.get(), 'direction', self.sync_direction.get())
-            self.configparser.set(self.site_name.get(), 'passphrase', self.passphrase.get())
+            self.configparser.set(self.site_name.get(), 'url',
+                                  self.localbox_url.get())
+            self.configparser.set(self.site_name.get(), 'path',
+                                  self.local_path.get())
+            self.configparser.set(self.site_name.get(), 'direction',
+                                  self.sync_direction.get())
+            self.configparser.set(self.site_name.get(), 'passphrase',
+                                  self.passphrase.get())
             with open('sites.ini', 'wb') as configfile:
                 self.configparser.write(configfile)
-            
             self.ew = Tk()
             self.ew.title("Success")
-            Label(text="Config saved succesfully", master=self.ew).grid(row=0, column=0)
-            Button(master=self.ew, text="close", command=self.closeExceptionWindow).grid(row=1, column=0)
+            conflabel = Label(text="Config saved succesfully", master=self.ew)
+            conflabel.grid(row=0, column=0)
+            confbutton = Button(master=self.ew, text="close",
+                                command=self.closeExceptionWindow)
+            confbutton.grid(row=1, column=0)
         except ConfigError as e:
             self.ew = Tk()
             self.ew.title("error")
             Label(text=e.message, master=self.ew).grid(row=0, column=0)
-            Button(master=self.ew, text="close", command=self.closeExceptionWindow).grid(row=1, column=0)
+            errorbutton = Button(master=self.ew, text="close",
+                                 command=self.closeExceptionWindow)
+            errorbutton.grid(row=1, column=0)
 
     def closeExceptionWindow(self):
         self.ew.destroy()
@@ -149,7 +166,8 @@ class DataEntry(Frame):
             credentials.__call__()
             credentials.lock.wait()
             # Show username/password field
-            if authenticator.init_authenticate(credentials.username.get(), credentials.password.get()):
+            if authenticator.init_authenticate(credentials.username.get(),
+                                               credentials.password.get()):
                 print "succes"
             else:
                 print "failure"
@@ -159,8 +177,11 @@ class DataEntry(Frame):
                 print "credentials seem valid"
             except AuthenticationError:
                 print "your credentials are invalidated"
+
+
 def main():
-    location='sites.ini'
+    location = join(expandvars("%APPDATA%"), 'LocalBox', 'sites.ini')
+
     configparser = ConfigParser()
     configparser.read(location)
     gui = Gui(configparser=configparser)
@@ -179,7 +200,7 @@ def main():
 
         except NoOptionError as error:
             string = "Skipping LocalBox '%s' due to missing option '%s'" % (section, error.option)
-            getLogger('main').debug(string)
+            getLogger('gui').debug(string)
     print sites
     gui.iconify()
     gui.mainloop()

@@ -1,36 +1,45 @@
 import wx
 
+from sysconfig import get_path
 from sync import gui
+from os.path import join
 
 class LocalBoxIcon(wx.TaskBarIcon):
 
     TBMENU_RESTORE = wx.NewId()
-    TBMENU_CLOSE   = wx.NewId()
-    TBMENU_CHANGE  = wx.NewId()
-    TBMENU_REMOVE  = wx.NewId()
+    TBMENU_CLOSE = wx.NewId()
+    TBMENU_CHANGE = wx.NewId()
+    TBMENU_REMOVE = wx.NewId()
     TBMENU_GUI = wx.NewId()
- 
+    icon_path = None
+
     def __init__(self):
         wx.TaskBarIcon.__init__(self)
-        # The purpose of this 'frame' is to keep the mainloop of wx alive (which checks for living wx thingies)
+        # The purpose of this 'frame' is to keep the mainloop of wx alive
+        # (which checks for living wx thingies)
         self.frame = wx.Frame(parent=None)
         self.frame.Show(False)
- 
+
         # Set the image
-        self.tbIcon = wx.Icon('localbox.ico')
- 
-        self.SetIcon(self.tbIcon, "Test")
- 
+        self.taskbar_icon = wx.Icon(self.iconpath())
+
+        self.SetIcon(self.taskbar_icon, "Test")
+
         # bind some events
         self.Bind(wx.EVT_MENU, self.OnTaskBarClose, id=self.TBMENU_CLOSE)
-        self.Bind(wx.EVT_MENU, self.StartGui, id=self.TBMENU_GUI)
+        self.Bind(wx.EVT_MENU, self.start_gui, id=self.TBMENU_GUI)
         self.Bind(wx.EVT_TASKBAR_LEFT_DOWN, self.OnTaskBarLeftClick)
 
 
-    def StartGui(self, evt=None):
+    def iconpath(self):
+        return join(get_path('data'), 'localbox', 'localbox.ico')
+
+
+    def start_gui(self, evt=None):
         gui.main()
 
-    def CreatePopupMenu(self, evt=None):
+
+    def create_popup_menu(self, evt=None):
         """
         This method is called by the base class when it needs to popup
         the menu for the default EVT_RIGHT_DOWN event.  Just create
@@ -41,13 +50,13 @@ class LocalBoxIcon(wx.TaskBarIcon):
         menu.Append(self.TBMENU_GUI, "Open Configuratie gebruikers interface")
         # TODO: 'force sync'/'wait sync' dependant on lock status
         menu.AppendSeparator()
-        menu.Append(self.TBMENU_CLOSE,   "Exit Program")
+        menu.Append(self.TBMENU_CLOSE, "Exit Program")
         return menu
- 
+
     def OnTaskBarActivate(self, evt):
         """"""
         pass
- 
+
     #----------------------------------------------------------------------
     def OnTaskBarClose(self, evt):
         """
@@ -55,42 +64,17 @@ class LocalBoxIcon(wx.TaskBarIcon):
         """
         self.frame.Close()
         exit(1)
- 
+
     #----------------------------------------------------------------------
     def OnTaskBarLeftClick(self, evt):
         """
         Create the right-click menu
         """
-        menu = self.CreatePopupMenu()
+        menu = self.create_popup_menu()
         self.PopupMenu(menu)
         menu.Destroy()
 
 def taskbarmain():
-   app = wx.App(False)
-   icon = LocalBoxIcon()
-   app.MainLoop()
-
-#def testfunc(argument):
-#    print "testfunc"
-#    print argument
-#    print "testfunc start"
-#    gui.main()
-#    print "end testfunc"
-
-#app=wx.PySimpleApp(False)
-#tb=wx.TaskBarIcon()
-#icon = wx.Icon('qemu.ico')
-#tb.SetIcon(icon)
-
-#menu=wx.Menu()
-#menu.append(
-#wx.MenuItem("test")
-#)
-
-#wx.EVT_TASKBAR_LEFT_DCLICK(tb, testfunc)
-#wx.EVT_TASKBAR_RIGHT_UP(tb, testfunc)
-
-#app.MainLoop()
-#print "after main"
-#from time import sleep
-#sleep(1000)
+    app = wx.App(False)
+    icon = LocalBoxIcon()
+    app.MainLoop()

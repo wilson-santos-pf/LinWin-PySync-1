@@ -5,7 +5,7 @@ from json import loads
 from time import time
 from .database import database_execute
 from logging import getLogger
-from ssl import SSLContext, PROTOCOL_TLSv1
+from ssl import SSLContext, PROTOCOL_TLSv1 #pylint: disable=E0611
 
 try:
     from urllib2 import urlopen
@@ -79,7 +79,7 @@ class Authenticator(object):
             return True
         else:
             return False
-  
+
 
     def init_authenticate(self, username, password):
         """
@@ -129,7 +129,8 @@ class Authenticator(object):
         request_data = urlencode(authdata).encode('utf-8')
         try:
             non_verifying_context = SSLContext(PROTOCOL_TLSv1)
-            http_request = urlopen(self.authentication_url, request_data, context=non_verifying_context)
+            http_request = urlopen(self.authentication_url, request_data,
+                                   context=non_verifying_context)
             json_text = http_request.read().decode('utf-8')
             json = loads(json_text)
             self.access_token = json.get('access_token')
@@ -138,7 +139,7 @@ class Authenticator(object):
             self.expires = time() + json.get('expires_in', 0) - EXPIRATION_LEEWAY
         except HTTPError as error:
             getLogger('auth').debug('HTTPError when calling the authentication server')
-            if (error.code == 400):
+            if error.code == 400:
                 raise AuthenticationError()
             else:
                 raise error

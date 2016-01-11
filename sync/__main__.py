@@ -6,16 +6,13 @@ from getpass import getpass
 from logging import getLogger
 from logging import StreamHandler
 from threading import Thread
-from json import loads
-from gpg import gpg
-from base64 import b64decode
+from os.path import join
+from os.path import expandvars
 
-from sys import argv
 from .auth import Authenticator
 from .auth import AuthenticationError
 from .localbox import LocalBox
 from .syncer import Syncer
-from .gui import main as guimain
 from time import sleep
 from .taskbar import taskbarmain
 try:
@@ -25,27 +22,30 @@ except ImportError:
     from configparser import ConfigParser  # pylint: disable=F0401,W0611
     # pylint: disable=F0401
     from configparser import NoOptionError
-    raw_input = input #pylint: disable=W0622
+    raw_input = input #pylint: disable=W0622,C0103
 
 
-KEEP_RUNNING=True
+KEEP_RUNNING = True
 
 class SyncRunner(Thread):
-    def __init__(self, group=None, target=None, name=None, args=(), kwargs=None, verbose=None, syncer=None):
-        Thread.__init__(self, group=group, target=target, name=name, args=args, kwargs=kwargs, verbose=verbose)
+    def __init__(self, group=None, target=None, name=None, args=(), kwargs=None,
+                 verbose=None, syncer=None):
+        Thread.__init__(self, group=group, target=target, name=name, args=args,
+                        kwargs=kwargs, verbose=verbose)
         self.setDaemon(True)
         self.syncer = syncer
         self.lock = Lock()
 
     def run(self):
         self.lock.acquire()
-        syncer.syncsync()
+        # TODO: Direction
+        self.syncer.syncsync()
         self.lock.release()
-        
+
 
 def stop_running():
     global KEEP_RUNNING
-    KEEP_RUNNING=False
+    KEEP_RUNNING = False
 
 def main():
     """
@@ -69,26 +69,28 @@ def main():
             authenticator = Authenticator(localbox.get_authentication_url(), section)
             localbox.add_authenticator(authenticator)
             if not authenticator.has_client_credentials():
-                print("Don't have client credentials for this host yet. We need to log in with your data for once.")
+                print("Don't have client credentials for this host yet."
+                      " We need to log in with your data for once.")
                 username = raw_input("Username: ")
                 password = getpass("Password: ")
                 try:
-                    result = authenticator.init_authenticate(username, password)
-                    from pprint import pprint
-                    pprint(result)
+                    authenticator.init_authenticate(username, password)
                 except AuthenticationError:
-                    print("authentication data incorrect. Skipping entry.")
+                    print "authentication data incorrect. Skipping entry."
             else:
                 syncer = Syncer(localbox, path, direction)
                 sites.append(syncer)
         except NoOptionError as error:
-            string = "Skipping LocalBox '%s' due to missing option '%s'" % (section, error.option)
+            string = "Skipping '%s' due to missing option '%s'" % (section, error.option)
             getLogger('main').debug(string)
     configparser.read(join(expandvars("%APPDATA%"), 'LocalBox', 'sync.ini'))
-    delay = int(configparser.get('sync','delay'))
-    while(KEEP_RUNNING):
+    try:
+        delay = int(configparser.get('sync', 'delay'))
+    except NoSectionError:
+        delay = 3600
+    while KEEP_RUNNING:
         for syncer in sites:
-            runner = SyncRunner(syncer=syncer)
+            #runner = SyncRunner(syncer=syncer)
             if syncer.direction == 'up':
                 syncer.upsync()
             if syncer.direction == 'down':
@@ -98,10 +100,6 @@ def main():
         sleep(delay)
 
 if __name__ == '__main__':
-    mainthread = Thread(target=main)
-    mainthread.daemon = True
+    MAIN = Thread(target=main)
+    MAIN.daemon = True
     taskbarmain()
-#    if argv[-1] == "--gui":
-#        guimain()
-#    else:
-#        main()

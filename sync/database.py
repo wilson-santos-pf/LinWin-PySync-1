@@ -7,6 +7,7 @@ from sqlite3 import Binary
 from logging import getLogger
 from os.path import exists
 from os.path import expandvars
+from os.path import join
 try:
     from ConfigParser import ConfigParser
     from ConfigParser import NoSectionError
@@ -29,13 +30,19 @@ class DatabaseError(Exception):
 
 def get_sql_log_dict():
     parser = ConfigParser()
-    parser.read(join(expandvars("%APPDATA%"), 'LocalBox', 'sync.ini'))
-    dbtype = parser.get('database', 'type')
-    if dbtype in ['sqlite', 'sqlite3'] :
-        ip = parser.get('database', 'filename')
+    parser.read(join(expandvars("%APPDATA%"), 'localbox', 'sync.ini'))
+    try:
+        dbtype = parser.get('database', 'type')
+    except NoSectionError:
+        dbtype = "sqlite"
+    if dbtype in ['sqlite', 'sqlite3']:
+        try:
+            ip_address = parser.get('database', 'filename')
+        except NoSectionError:
+            ip_address = join(expandvars("%APPDATA%"), 'localbox', 'database.sqlite')
     else:
-        ip = parser.get('database', 'hostname')
-    return { 'ip': ip, 'user': '', 'path': 'database/' }
+        ip_address = parser.get('database', 'hostname')
+    return {'ip': ip_address, 'user': '', 'path': 'database/'}
 
 def database_execute(command, params=None):
     """
@@ -47,10 +54,13 @@ def database_execute(command, params=None):
     @returns a list of dictionaries representing the sql result
     """
     getLogger("database").info("database_execute(" + command + ", " +
-                                str(params) + ")", extra=get_sql_log_dict())
+                               str(params) + ")", extra=get_sql_log_dict())
     parser = ConfigParser()
-    parser.read(join(expandvars("%APPDATA%"), 'LocalBox', 'sync.ini'))
-    dbtype = parser.get('database', 'type')
+    parser.read(join(expandvars("%APPDATA%"), 'localbox', 'sync.ini'))
+    try:
+        dbtype = parser.get('database', 'type')
+    except NoSectionError:
+        dbtype = 'sqlite'
 
     if dbtype == "mysql":
         if mysql_execute is None:
@@ -78,16 +88,22 @@ def sqlite_execute(command, params=None):
                                 str(params) + ")", extra=get_sql_log_dict())
     try:
         parser = ConfigParser()
-        parser.read(join(expandvars("%APPDATA%"), 'LocalBox', 'sync.ini'))
+        parser.read(join(expandvars("%APPDATA%"), 'localbox', 'sync.ini'))
  
-        filename = parser.get('database', 'filename')
+        try:
+            filename = parser.get('database', 'filename')
+        except NoSectionError:
+            filename = join(expandvars("%APPDATA%"), 'localbox', 'database.sqlite')
+
         init_db = not exists(expandvars(filename))
         connection = sqlite_connect(filename)
         connection.text_factory = Binary
         cursor = connection.cursor()
         if init_db:
-            for sql in 'CREATE TABLE sites (site char(255), client_id char(255), client_secret char(255));', 
-                       'CREATE TABLE keys (site char(255), user char(255), fingerprint char(40));':
+            for sql in ('CREATE TABLE sites (site char(255), client_id'
+                        ' char(255), client_secret char(255));',
+                        'CREATE TABLE keys (site char(255), user char(255),'
+                        ' fingerprint char(40));'):
                 if sql != "" and sql is not None:
                     cursor.execute(sql)
                     connection.commit()
@@ -98,11 +114,14 @@ def sqlite_execute(command, params=None):
         connection.commit()
         return cursor.fetchall()
     except SQLiteError as sqlerror:
-        raise DatabaseError("SQLite Error: %d: %s" % (sqlerror.args[0], sqlerror.args[1]))
+        raise DatabaseError("SQLite Error: %d: %s" % (sqlerror.args[0],
+                                                      sqlerror.args[1]))
     except NoSectionError:
-        raise DatabaseError("Please configure the database section in the ini file")
+        raise DatabaseError("Please configure the database section"
+                            " in the ini file")
     except TypeError:
-        raise DatabaseError("Please configure the 'filename' parameter in the [database] section in the ini file")
+        raise DatabaseError("Please configure the 'filename' parameter"
+                            " in the [database] section in the ini file")
     finally:
         try:
             if connection:
@@ -123,7 +142,7 @@ def mysql_execute(command, params=None):
     getLogger("database").debug("mysql_execute(" + command + ", " + str(params)
                                 + ")", extra=get_sql_log_dict())
     parser = ConfigParser()
-    parser.read(join(expandvars("%APPDATA%"), 'LocalBox', 'sync.ini'))
+    parser.read(join(expandvars("%APPDATA%"), 'localbox', 'sync.ini'))
     try:
         host = parser.get('database', 'hostname')
         user = parser.get('database', 'username')
@@ -157,7 +176,8 @@ def get_key_and_iv(localbox_path, user):
     sql = "select key, iv from keys where path = ? and user = ?"
     try:
         result = database_execute(sql, (localbox_path, user))[0]
-    except(IndexError):
-        getLogger("database").debug("cannot find key", extra={'ip': '', 'user': user, 'path': localbox_path})
+    except IndexError:
+        extradict = {'ip': '', 'user': user, 'path': localbox_path}
+        getLogger("database").debug("cannot find key", extra=extradict)
         result = None
     return result

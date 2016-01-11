@@ -13,6 +13,8 @@ from .localbox import LocalBox
 from .auth import Authenticator
 from .auth import AuthenticationError
 from os.path import isdir
+from os.path import join
+from os.path import expandvars
 from logging import getLogger
 
 from threading import Event
@@ -34,7 +36,7 @@ class UsernameAndPasswordAsker(Tk):
         Label(self, text="password").grid(row=1, column=0)
         self.password = Entry(self, show="*")
         self.password.grid(row=1, column=1)
-        self.button = Button(master=self, text="something",
+        self.button = Button(master=self, text="OK",
                              command=self.stop_window)
         self.button.grid(row=2)
         self.lock = Event()
@@ -57,7 +59,7 @@ class Gui(Tk):
         Tk.__init__(self, parent)
         self.configs = []
         self.button = Button(text="Voeg Nieuwe LocalBox Toe",
-                             command=self.addNew)
+                             command=self.add_new)
         self.button.grid(row=0, column=0)
         self.configparser = configparser
         self.iconify()
@@ -67,9 +69,9 @@ class Gui(Tk):
         position = len(self.configs)
         dataentryframe.grid(row=position, column=0)
 
-    def addNew(self):
-        de = DataEntry(self, '', '', '', '', self.configparser, '')
-        self.add_entries(de)
+    def add_new(self):
+        dataentry = DataEntry(self, '', '', '', '', self.configparser, '')
+        self.add_entries(dataentry)
 
 
 def get_entry_fields(parent, text, value, row):
@@ -90,6 +92,8 @@ class DataEntry(Frame):
     def __init__(self, master=None, name=None, url=None, localdir=None,
                  direction=None, config=None, passphrase=None):
         Frame.__init__(self, master=master, relief="raised", borderwidth=2)
+        self.eventwindow = None
+        self.direction = direction
         self.configparser = config
         self.orig_name = name
         self.site_name = get_entry_fields(self, "Naam Box", name, 0)
@@ -116,7 +120,7 @@ class DataEntry(Frame):
         try:
             if self.site_name.get() != self.orig_name:
                 if (self.configparser.sections() is not None and
-                   self.site_name.get() in self.configparser.sections()):
+                        self.site_name.get() in self.configparser.sections()):
                     raise ConfigError("There is already a site with that name")
             if not isdir(self.local_path.get()):
                 raise ConfigError("Share path needs to be a directory")
@@ -139,23 +143,23 @@ class DataEntry(Frame):
                                   self.passphrase.get())
             with open('sites.ini', 'wb') as configfile:
                 self.configparser.write(configfile)
-            self.ew = Tk()
-            self.ew.title("Success")
-            conflabel = Label(text="Config saved succesfully", master=self.ew)
+            self.eventwindow = Tk()
+            self.eventwindow.title("Success")
+            conflabel = Label(text="Config saved succesfully", master=self.eventwindow)
             conflabel.grid(row=0, column=0)
-            confbutton = Button(master=self.ew, text="close",
-                                command=self.closeExceptionWindow)
+            confbutton = Button(master=self.eventwindow, text="close",
+                                command=self.close_exception_window)
             confbutton.grid(row=1, column=0)
-        except ConfigError as e:
-            self.ew = Tk()
-            self.ew.title("error")
-            Label(text=e.message, master=self.ew).grid(row=0, column=0)
-            errorbutton = Button(master=self.ew, text="close",
-                                 command=self.closeExceptionWindow)
+        except ConfigError as error:
+            self.eventwindow = Tk()
+            self.eventwindow.title("error")
+            Label(text=error.message, master=self.eventwindow).grid(row=0, column=0)
+            errorbutton = Button(master=self.eventwindow, text="close",
+                                 command=self.close_exception_window)
             errorbutton.grid(row=1, column=0)
 
-    def closeExceptionWindow(self):
-        self.ew.destroy()
+    def close_exception_window(self):
+        self.eventwindow.destroy()
 
     def authenticate(self):
         localbox = LocalBox(self.localbox_url.get())
@@ -189,14 +193,16 @@ def main():
     sites = []
     for section in configparser.sections():
         try:
-            dictionary = { 'name': section,
-                'url': configparser.get(section, 'url'),
-                'path': configparser.get(section, 'path'),
-                'direction': configparser.get(section, 'direction')
-            }
+            dictionary = {'name': section,
+                          'url': configparser.get(section, 'url'),
+                          'path': configparser.get(section, 'path'),
+                          'direction': configparser.get(section, 'direction')}
             sites.append(dictionary)
-            de = DataEntry(gui, section, dictionary['url'], dictionary['path'], dictionary['direction'], configparser, passphrase=configparser.get(section, 'passphrase'))
-            gui.add_entries(de)
+            passphrase = configparser.get(section, 'passphrase')
+            dataentry = DataEntry(gui, section, dictionary['url'],
+                                  dictionary['path'], dictionary['direction'],
+                                  configparser, passphrase=passphrase)
+            gui.add_entries(dataentry)
 
         except NoOptionError as error:
             string = "Skipping LocalBox '%s' due to missing option '%s'" % (section, error.option)

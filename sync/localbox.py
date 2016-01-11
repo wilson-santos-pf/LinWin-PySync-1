@@ -3,6 +3,7 @@ localbox client library
 """
 
 from Crypto.Cipher.AES import new as AES_Key
+from Crypto.Cipher.AES import MODE_CBC
 
 try:
     from urllib2 import urlopen
@@ -16,7 +17,7 @@ except ImportError:
     from urllib.request import Request # pylint: disable=F0401,E0611
     from urllib.error import HTTPError # pylint: disable=F0401,E0611
 from json import loads
-from ssl import SSLContext, PROTOCOL_TLSv1
+from ssl import SSLContext, PROTOCOL_TLSv1 #pylint: disable=E0611
 from httplib import BadStatusLine
 
 class AlreadyAuthenticatedError(Exception):
@@ -74,7 +75,7 @@ class LocalBox(object):
         request = Request(url=self.url + 'lox_api/files' + metapath)
         data = self._make_call(request).read()
         if self.get_meta(path)['has_keys'] == True:
-            data = decode_file(path, data)
+            data = self.decode_file(path, data)
         return data
 
     def create_directory(self, path):
@@ -89,6 +90,7 @@ class LocalBox(object):
             path = '/' + path
         metapath = urlencode({'path': path})
         request = Request(url=self.url + 'lox_api/operations/delete/', data=metapath)
+        return self._make_call(request)
 
     def upload_file(self, path, localpath):
         if path[0] == '.':
@@ -97,14 +99,14 @@ class LocalBox(object):
             path = path[1:]
         metapath = quote(path)
         contents = open(localpath).read()
-        if get_meta(path)['has_keys'] == True:
-            contents = self.encrypt(path, contents)
-        request = Request(url=self.url + 'lox_api/files/' + metapath, data=contents) 
+        if self.get_meta(path)['has_keys'] == True:
+            contents = self.encode_file(path, contents)
+        request = Request(url=self.url + 'lox_api/files/' + metapath, data=contents)
         return self._make_call(request)
 
     def call_user(self):
         url = self.url + "lox_api/user"
-        request = Request(url) 
+        request = Request(url)
         return self._make_call(request)
 
     def call_keys(self, path):
@@ -121,14 +123,14 @@ class LocalBox(object):
         return self._make_call(request)
 
     def decode_file(self, path, contents):
-        keydata = loads(call_keys(path))
-        key = AESkey(keydata['key'], AES.MODE_CBC, keydata['iv'])
+        keydata = loads(self.call_keys(path))
+        key = AES_Key(keydata['key'], MODE_CBC, keydata['iv'])
         key.decrypt(contents)
         return contents
 
     def encode_file(self, path, contents):
-        keydata = loads(call_keys(path))
-        key = AESkey(keydata['key'], AES.MODE_CBC, keydata['iv'])
+        keydata = loads(self.call_keys(path))
+        key = AES_Key(keydata['key'], MODE_CBC, keydata['iv'])
         key.encrypt(contents)
         return contents
 

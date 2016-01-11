@@ -1,0 +1,19 @@
+RequestExecutionLevel admin
+
+Section Install
+  SetOverwrite Try
+  SetOutPath $TEMP
+
+  File /oname=$TEMP\python.msi python-2.7.11.msi
+  File /oname=$TEMP\wxpython.exe wxPython3.0-win32-3.0.2.0-py27.exe
+  File /oname=$TEMP\localBoxSync.exe LocalboxSync-0.1a0.win32.exe
+  File /oname=$TEMP\pycrypto.exe pycrypto-2.6.win32-py2.7.exe
+  File /oname=$SMSTARTUP\LocalBox.bat localbox.bat
+
+  ExecWait "msiexec.exe /i $TEMP\python.msi /quiet"
+  ExecWait "$TEMP\wxpython.exe /silent"
+  ExecWait "$TEMP\pycrypto.exe"
+  ExecWait "$TEMP\LocalBoxSync.exe"
+SectionEnd
+
+OutFile LocalBoxInstaller.exe

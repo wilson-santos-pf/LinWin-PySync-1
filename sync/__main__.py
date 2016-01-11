@@ -18,10 +18,12 @@ from .taskbar import taskbarmain
 try:
     from ConfigParser import ConfigParser
     from ConfigParser import NoOptionError
+    from ConfigParser import NoSectionError
 except ImportError:
     from configparser import ConfigParser  # pylint: disable=F0401,W0611
     # pylint: disable=F0401
     from configparser import NoOptionError
+    from configparser import NoSectionError
     raw_input = input #pylint: disable=W0622,C0103
 
 
@@ -86,7 +88,7 @@ def main():
     configparser.read(join(expandvars("%APPDATA%"), 'LocalBox', 'sync.ini'))
     try:
         delay = int(configparser.get('sync', 'delay'))
-    except NoSectionError:
+    except (NoSectionError, NoOptionError):
         delay = 3600
     while KEEP_RUNNING:
         for syncer in sites:

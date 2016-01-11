@@ -130,9 +130,11 @@ class DataEntry(Frame):
             if self.site_name.get() != self.orig_name:
                 self.configparser.remove_section(self.orig_name)
                 self.configparser.add_section(self.site_name.get())
-                sql = "update sites set site=? where site=?;"
-                database_execute(sql, (self.site_name.get(), self.orig_name))
+                if self.orig_name in self.configparser.sections():
+                    sql = "update sites set site=? where site=?;"
+                    database_execute(sql, (self.site_name.get(), self.orig_name))
                 self.orig_name = self.site_name.get()
+
             self.configparser.set(self.site_name.get(), 'url',
                                   self.localbox_url.get())
             self.configparser.set(self.site_name.get(), 'path',
@@ -141,7 +143,8 @@ class DataEntry(Frame):
                                   self.sync_direction.get())
             self.configparser.set(self.site_name.get(), 'passphrase',
                                   self.passphrase.get())
-            with open('sites.ini', 'wb') as configfile:
+            sitesini = join(expandvars("%APPDATA%"), 'LocalBox', 'sites.ini')
+            with open(sitesini, 'wb') as configfile:
                 self.configparser.write(configfile)
             self.eventwindow = Tk()
             self.eventwindow.title("Success")

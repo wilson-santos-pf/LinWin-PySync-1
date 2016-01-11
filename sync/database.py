@@ -8,12 +8,16 @@ from logging import getLogger
 from os.path import exists
 from os.path import expandvars
 from os.path import join
+from os.path import dirname
+from os import makedirs
 try:
     from ConfigParser import ConfigParser
     from ConfigParser import NoSectionError
+    from ConfigParser import NoOptionError
 except ImportError:
     from configparser import ConfigParser  # pylint: disable=F0401,W0611
     from configparser import NoSectionError  # pylint: disable=F0401
+    from configparser import NoOptionError  # pylint: disable=F0401
 
 try:
     from MySQLdb import connect as mysql_connect
@@ -33,12 +37,12 @@ def get_sql_log_dict():
     parser.read(join(expandvars("%APPDATA%"), 'localbox', 'sync.ini'))
     try:
         dbtype = parser.get('database', 'type')
-    except NoSectionError:
+    except (NoSectionError, NoOptionError):
         dbtype = "sqlite"
     if dbtype in ['sqlite', 'sqlite3']:
         try:
             ip_address = parser.get('database', 'filename')
-        except NoSectionError:
+        except (NoSectionError, NoOptionError):
             ip_address = join(expandvars("%APPDATA%"), 'localbox', 'database.sqlite')
     else:
         ip_address = parser.get('database', 'hostname')
@@ -59,7 +63,7 @@ def database_execute(command, params=None):
     parser.read(join(expandvars("%APPDATA%"), 'localbox', 'sync.ini'))
     try:
         dbtype = parser.get('database', 'type')
-    except NoSectionError:
+    except (NoSectionError, NoOptionError):
         dbtype = 'sqlite'
 
     if dbtype == "mysql":
@@ -92,10 +96,13 @@ def sqlite_execute(command, params=None):
  
         try:
             filename = parser.get('database', 'filename')
-        except NoSectionError:
+        except (NoSectionError, NoOptionError):
             filename = join(expandvars("%APPDATA%"), 'localbox', 'database.sqlite')
 
         init_db = not exists(expandvars(filename))
+        #make sure the folder in which the database is saved exists
+        if init_db:
+            makedirs(dirname(filename))
         connection = sqlite_connect(filename)
         connection.text_factory = Binary
         cursor = connection.cursor()
@@ -114,9 +121,10 @@ def sqlite_execute(command, params=None):
         connection.commit()
         return cursor.fetchall()
     except SQLiteError as sqlerror:
+        print sqlerror
         raise DatabaseError("SQLite Error: %d: %s" % (sqlerror.args[0],
                                                       sqlerror.args[1]))
-    except NoSectionError:
+    except (NoSectionError, NoOptionError):
         raise DatabaseError("Please configure the database section"
                             " in the ini file")
     except TypeError:

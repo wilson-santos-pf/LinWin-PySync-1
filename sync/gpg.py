@@ -52,7 +52,7 @@ class gpg(object):
 
     def decrypt(self, data, site):
         configparser = ConfigParser()
-        configparser.read('sites.ini')
+        configparser.read(join(expandvars("%APPDATA%"), 'LocalBox', 'sites.ini'))
         passphrase = configparser.get(site, 'passphrase')
         return str(self.gpg.decrypt_file(StringIO(data), passphrase=passphrase))
 

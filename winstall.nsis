@@ -4,11 +4,12 @@ Section Install
   SetOverwrite Try
   SetOutPath $TEMP
 
-  File /oname=$TEMP\python.msi python-2.7.11.msi
-  File /oname=$TEMP\wxpython.exe wxPython3.0-win32-3.0.2.0-py27.exe
+  File /oname=$TEMP\python.msi win/python-2.7.11.msi
+  File /oname=$TEMP\wxpython.exe win/wxPython3.0-win32-3.0.2.0-py27.exe
+  File /oname=$TEMP\pycrypto.exe win/pycrypto-2.6.win32-py2.7.exe
   File /oname=$TEMP\localBoxSync.exe LocalboxSync-0.1a0.win32.exe
-  File /oname=$TEMP\pycrypto.exe pycrypto-2.6.win32-py2.7.exe
-  File /oname=$SMSTARTUP\LocalBox.bat localbox.bat
+
+  CreateShortcut "$SMSTARTUP\localbox.lnk" "python27\pythonw.exe" "-m sync" "C:\python27\localbox\localbox.ico"
 
   ExecWait "msiexec.exe /i $TEMP\python.msi /quiet"
   ExecWait "$TEMP\wxpython.exe /silent"

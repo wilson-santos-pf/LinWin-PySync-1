@@ -3,7 +3,7 @@ clean:
 
 all: winstall
 
-winstall: installer
+winstall: clean  installer
 
 installer: exe
 	makensis winstall.nsis

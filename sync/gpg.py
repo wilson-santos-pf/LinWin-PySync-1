@@ -7,6 +7,7 @@ from os.path import isfile
 from os.path import expandvars
 
 from distutils.sysconfig import project_base
+from .defaults import SITESINI_PATH
 
 class gpg(object):
     """
@@ -68,7 +69,7 @@ class gpg(object):
         decrypt data received from site.
         """
         configparser = ConfigParser()
-        configparser.read(join(expandvars("%APPDATA%"), 'LocalBox', 'sites.ini'))
+        configparser.read(SITESINI_PATH)
         passphrase = configparser.get(site, 'passphrase')
         return str(self.gpg.decrypt_file(StringIO(data), passphrase=passphrase))
 

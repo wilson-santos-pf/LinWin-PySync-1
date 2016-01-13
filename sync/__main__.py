@@ -9,6 +9,8 @@ from threading import Thread
 from os.path import join
 from os.path import expandvars
 from .defaults import KEEP_RUNNING
+from .defaults import SITESINI_PATH
+from .defaults import SYNCINI_PATH
 
 from .auth import Authenticator
 from .auth import AuthenticationError
@@ -52,11 +54,13 @@ def main():
     temp test function
     """
     handler = StreamHandler()
+    fhandler = FileHandler('localbox-sync.log')
     for name in 'main', 'database', 'auth', 'localbox':
         logger = getLogger(name)
         logger.addHandler(handler)
+        logger.addHandler(fhandler)
         logger.setLevel(5)
-    location = join(expandvars("%APPDATA%"), 'LocalBox', 'sites.ini')
+    location = SITESINI_PATH
     configparser = ConfigParser()
     configparser.read(location)
     sites = []
@@ -83,7 +87,7 @@ def main():
         except NoOptionError as error:
             string = "Skipping '%s' due to missing option '%s'" % (section, error.option)
             getLogger('main').debug(string)
-    configparser.read(join(expandvars("%APPDATA%"), 'LocalBox', 'sync.ini'))
+    configparser.read(SYNCINI_PATH)
     try:
         delay = int(configparser.get('sync', 'delay'))
     except (NoSectionError, NoOptionError):

@@ -1,5 +1,18 @@
 RequestExecutionLevel admin
 
+
+!include LogicLib.nsh
+
+Function .onInit
+UserInfo::GetAccountType
+pop $0
+${If} $0 != "admin" ;Require admin rights on NT4+
+    MessageBox mb_iconstop "Administrator rights required!"
+    SetErrorLevel 740 ;ERROR_ELEVATION_REQUIRED
+    Quit
+${EndIf}
+FunctionEnd
+
 Section Install
   SetOverwrite Try
   SetOutPath $TEMP
@@ -9,9 +22,11 @@ Section Install
   File /oname=$TEMP\pycrypto.exe win/pycrypto-2.6.win32-py2.7.exe
   File /oname=$TEMP\localBoxSync.exe LocalboxSync-0.1a0.win32.exe
 
-  CreateShortcut "$SMSTARTUP\localbox.lnk" "python27\pythonw.exe" "-m sync" "C:\python27\localbox\localbox.ico"
+  CreateShortcut "$SMSTARTUP\localbox.lnk" "localbox\pythonw.exe" "-m sync" "C:\localbox\localbox\localbox.ico"
+  CreateDirectory "$SMPROGRAMS\localbox\"
+  CreateShortcut "$SMPROGRAMS\localbox\localbox.lnk" "localbox\pythonw.exe" "-m sync" "C:\localbox\localbox\localbox.ico"
 
-  ExecWait "msiexec.exe /i $TEMP\python.msi /quiet"
+  ExecWait "msiexec.exe /i $TEMP\python.msi TARGETDIR=C:\localbox /quiet"
   ExecWait "$TEMP\wxpython.exe /silent"
   ExecWait "$TEMP\pycrypto.exe"
   ExecWait "$TEMP\LocalBoxSync.exe"

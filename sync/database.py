@@ -2,12 +2,13 @@
 Database implementation class
 """
 
+from .defaults import SYNCINI_PATH
+from .defaults import DATABASE_PATH
 from sqlite3 import Binary
 
 from logging import getLogger
 from os.path import exists
 from os.path import expandvars
-from os.path import join
 from os.path import dirname
 from os import makedirs
 try:
@@ -30,11 +31,17 @@ from sqlite3 import Error as SQLiteError
 from sqlite3 import connect as sqlite_connect
 
 class DatabaseError(Exception):
+    """
+    An error related to the database has occurred
+    """
     pass
 
 def get_sql_log_dict():
+    """
+    get logging dictionary related to the database
+    """
     parser = ConfigParser()
-    parser.read(join(expandvars("%APPDATA%"), 'localbox', 'sync.ini'))
+    parser.read(SYNCINI_PATH)
     try:
         dbtype = parser.get('database', 'type')
     except (NoSectionError, NoOptionError):
@@ -43,7 +50,7 @@ def get_sql_log_dict():
         try:
             ip_address = parser.get('database', 'filename')
         except (NoSectionError, NoOptionError):
-            ip_address = join(expandvars("%APPDATA%"), 'localbox', 'database.sqlite')
+            ip_address = DATABASE_PATH
     else:
         ip_address = parser.get('database', 'hostname')
     return {'ip': ip_address, 'user': '', 'path': 'database/'}
@@ -60,7 +67,7 @@ def database_execute(command, params=None):
     getLogger("database").info("database_execute(" + command + ", " +
                                str(params) + ")", extra=get_sql_log_dict())
     parser = ConfigParser()
-    parser.read(join(expandvars("%APPDATA%"), 'localbox', 'sync.ini'))
+    parser.read(SYNCINI_PATH)
     try:
         dbtype = parser.get('database', 'type')
     except (NoSectionError, NoOptionError):
@@ -92,12 +99,12 @@ def sqlite_execute(command, params=None):
                                 str(params) + ")", extra=get_sql_log_dict())
     try:
         parser = ConfigParser()
-        parser.read(join(expandvars("%APPDATA%"), 'localbox', 'sync.ini'))
+        parser.read(SYNCINI_PATH)
  
         try:
             filename = parser.get('database', 'filename')
         except (NoSectionError, NoOptionError):
-            filename = join(expandvars("%APPDATA%"), 'localbox', 'database.sqlite')
+            filename = DATABASE_PATH
 
         init_db = not exists(expandvars(filename))
         #make sure the folder in which the database is saved exists
@@ -121,7 +128,6 @@ def sqlite_execute(command, params=None):
         connection.commit()
         return cursor.fetchall()
     except SQLiteError as sqlerror:
-        print sqlerror
         raise DatabaseError("SQLite Error: %d: %s" % (sqlerror.args[0],
                                                       sqlerror.args[1]))
     except (NoSectionError, NoOptionError):
@@ -150,7 +156,7 @@ def mysql_execute(command, params=None):
     getLogger("database").debug("mysql_execute(" + command + ", " + str(params)
                                 + ")", extra=get_sql_log_dict())
     parser = ConfigParser()
-    parser.read(join(expandvars("%APPDATA%"), 'localbox', 'sync.ini'))
+    parser.read(SYNCINI_PATH)
     try:
         host = parser.get('database', 'hostname')
         user = parser.get('database', 'username')

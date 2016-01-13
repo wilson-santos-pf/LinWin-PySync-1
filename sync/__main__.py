@@ -8,6 +8,7 @@ from logging import StreamHandler
 from threading import Thread
 from os.path import join
 from os.path import expandvars
+from .defaults import KEEP_RUNNING
 
 from .auth import Authenticator
 from .auth import AuthenticationError
@@ -25,9 +26,6 @@ except ImportError:
     from configparser import NoOptionError
     from configparser import NoSectionError
     raw_input = input #pylint: disable=W0622,C0103
-
-
-KEEP_RUNNING = True
 
 class SyncRunner(Thread):
     def __init__(self, group=None, target=None, name=None, args=(), kwargs=None,
@@ -78,7 +76,7 @@ def main():
                 try:
                     authenticator.init_authenticate(username, password)
                 except AuthenticationError:
-                    print "authentication data incorrect. Skipping entry."
+                    print("authentication data incorrect. Skipping entry.")
             else:
                 syncer = Syncer(localbox, path, direction)
                 sites.append(syncer)

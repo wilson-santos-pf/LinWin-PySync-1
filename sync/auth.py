@@ -61,10 +61,17 @@ class Authenticator(object):
 
 
     def save_client_data(self):
+        """
+        Save the client credentials for the localbox identified by the label in
+        the database 
+        """
         sql = "insert into sites (site, client_id, client_secret) values (?, ?, ?);"
         database_execute(sql, (self.label, self.client_id, self.client_secret))
 
     def load_client_data(self):
+        """
+        Get client data belonging to the localbox identified by label
+        """
         sql = "select client_id, client_secret from sites where site = ?;"
         result = database_execute(sql, (self.label,))
         if result != [] and result != None:
@@ -75,6 +82,9 @@ class Authenticator(object):
         return False
 
     def has_client_credentials(self):
+        """
+        check whether client credentials are available for this host
+        """
         if self.client_id != None and self.client_secret != None:
             return True
         else:
@@ -86,10 +96,10 @@ class Authenticator(object):
         Do initial authentication with the resource owner password credentials
         """
         if (self.client_id is not None) or (self.client_secret is not None):
-            print "init authenticate data"
-            print self.client_id
-            print self.client_secret
-            print "end init authenticate data"
+            print("init authenticate data")
+            print(self.client_id)
+            print(self.client_secret)
+            print("end init authenticate data")
             raise AuthenticationError("Do not call init_authenticate w"
                                       "hen client_id and client_secret"
                                       " are already set")
@@ -98,8 +108,6 @@ class Authenticator(object):
         authdata = {'grant_type': 'password', 'username': username,
                     'password': password, 'client_id': self.client_id,
                     'client_secret': self.client_secret}
-        from pprint import pprint
-        pprint(authdata)
         self._call_authentication_server(authdata)
         if self.access_token != None:
             getLogger('auth').debug("Authentication Succesful. Saving Client Data")

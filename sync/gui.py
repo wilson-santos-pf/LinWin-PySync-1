@@ -8,17 +8,18 @@ from ttk import Combobox
 from Tkinter import END
 from ConfigParser import ConfigParser
 from ConfigParser import NoOptionError
-from .database import database_execute
-from .localbox import LocalBox
-from .auth import Authenticator
-from .auth import AuthenticationError
 from os.path import isdir
-from os.path import join
-from os.path import expandvars
+from os.path import exists
+from os.path import dirname
+from os import makedirs
 from logging import getLogger
-
 from threading import Event
 
+from .auth import Authenticator
+from .auth import AuthenticationError
+from .database import database_execute
+from .defaults import SITESINI_PATH
+from .localbox import LocalBox
 
 class ConfigError(Exception):
     pass
@@ -143,7 +144,9 @@ class DataEntry(Frame):
                                   self.sync_direction.get())
             self.configparser.set(self.site_name.get(), 'passphrase',
                                   self.passphrase.get())
-            sitesini = join(expandvars("%APPDATA%"), 'LocalBox', 'sites.ini')
+            sitesini = SITESINI_PATH
+            if not exists(dirname(sitesini)):
+                makedirs(dirname(sitesini))
             with open(sitesini, 'wb') as configfile:
                 self.configparser.write(configfile)
             self.eventwindow = Tk()
@@ -187,7 +190,7 @@ class DataEntry(Frame):
 
 
 def main():
-    location = join(expandvars("%APPDATA%"), 'LocalBox', 'sites.ini')
+    location = SITESINI_PATH
 
     configparser = ConfigParser()
     configparser.read(location)

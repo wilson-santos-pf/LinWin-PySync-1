@@ -1,8 +1,9 @@
 import wx
 
 from sysconfig import get_path
-from sync import gui
+from . import gui
 from os.path import join
+
 
 class LocalBoxIcon(wx.TaskBarIcon):
 
@@ -29,6 +30,7 @@ class LocalBoxIcon(wx.TaskBarIcon):
         self.Bind(wx.EVT_MENU, self.OnTaskBarClose, id=self.TBMENU_CLOSE)
         self.Bind(wx.EVT_MENU, self.start_gui, id=self.TBMENU_GUI)
         self.Bind(wx.EVT_TASKBAR_LEFT_DOWN, self.OnTaskBarLeftClick)
+        self.Bind(wx.EVT_TASKBAR_RIGHT_DOWN, self.OnTaskBarLeftClick)
 
 
     def iconpath(self):
@@ -47,10 +49,10 @@ class LocalBoxIcon(wx.TaskBarIcon):
         the base class takes care of the rest.
         """
         menu = wx.Menu()
-        menu.Append(self.TBMENU_GUI, "Open Configuratie gebruikers interface")
+        menu.Append(self.TBMENU_GUI, "Instellingen")
         # TODO: 'force sync'/'wait sync' dependant on lock status
         menu.AppendSeparator()
-        menu.Append(self.TBMENU_CLOSE, "Exit Program")
+        menu.Append(self.TBMENU_CLOSE, "Afsluiten")
         return menu
 
     def OnTaskBarActivate(self, evt):
@@ -68,7 +70,7 @@ class LocalBoxIcon(wx.TaskBarIcon):
     #----------------------------------------------------------------------
     def OnTaskBarLeftClick(self, evt):
         """
-        Create the right-click menu
+        Create the taskbar-click menu
         """
         menu = self.create_popup_menu()
         self.PopupMenu(menu)

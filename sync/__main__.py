@@ -11,6 +11,7 @@ from os.path import expandvars
 from .defaults import KEEP_RUNNING
 from .defaults import SITESINI_PATH
 from .defaults import SYNCINI_PATH
+from .defaults import LOGDIR
 
 from .auth import Authenticator
 from .auth import AuthenticationError
@@ -54,7 +55,7 @@ def main():
     temp test function
     """
     handler = StreamHandler()
-    fhandler = FileHandler('localbox-sync.log')
+    fhandler = FileHandler(LOG_PATH)
     for name in 'main', 'database', 'auth', 'localbox':
         logger = getLogger(name)
         logger.addHandler(handler)

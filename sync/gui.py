@@ -20,13 +20,14 @@ from .auth import AuthenticationError
 from .database import database_execute
 from .defaults import SITESINI_PATH
 from .localbox import LocalBox
+from gettext import translation
 
 class ConfigError(Exception):
     pass
 
 
 class UsernameAndPasswordAsker(Tk):
-    def __init__(self, authenticator, parent=None):
+    def __init__(self, authenticator, translator, parent=None):
         Tk.__init__(self, parent)
         self.title("Authentication Data")
         self.authenticator = authenticator
@@ -58,12 +59,14 @@ class UsernameAndPasswordAsker(Tk):
 class Gui(Tk):
     def __init__(self, parent=None, configparser=None):
         Tk.__init__(self, parent)
+        #todo: more languages stuff
+        self.language =  translation('localboxsync', localedir='locale', languages=['nl'])
         self.configs = []
-        self.button = Button(text="Voeg Nieuwe LocalBox Toe",
+        self.button = Button(text=self.language.lgettext("add localbox"),
                              command=self.add_new)
         self.button.grid(row=0, column=0)
         self.configparser = configparser
-        self.iconify()
+        self.lift()
 
     def add_entries(self, dataentryframe):
         self.configs.append(dataentryframe)
@@ -93,27 +96,28 @@ class DataEntry(Frame):
     def __init__(self, master=None, name=None, url=None, localdir=None,
                  direction=None, config=None, passphrase=None):
         Frame.__init__(self, master=master, relief="raised", borderwidth=2)
+        self.master = master
         self.eventwindow = None
         self.direction = direction
         self.configparser = config
         self.orig_name = name
-        self.site_name = get_entry_fields(self, "Naam Box", name, 0)
-        self.localbox_url = get_entry_fields(self, "LocalBox URL", url, 1)
-        self.local_path = get_entry_fields(self, "Lokale Folder", localdir, 2)
-        self.passphrase = get_entry_fields(self, "Passphrase", passphrase, 3)
-        self.lpbutton = Button(master=self, text="selecteer folder",
+        self.site_name = get_entry_fields(self, master.language.lgettext("name box"), name, 0)
+        self.localbox_url = get_entry_fields(self, master.language.lgettext("localbox url"), url, 1)
+        self.local_path = get_entry_fields(self, master.language.lgettext("local path"), localdir, 2)
+        self.passphrase = get_entry_fields(self, master.language.lgettext("passphrase"), passphrase, 3)
+        self.lpbutton = Button(master=self, text=master.language.lgettext("folder select"),
                                command=self.getfile)
         self.lpbutton.grid(column=2, row=2)
 
-        label = Label(text="Up/Down/Sync", master=self)
+        label = Label(text=master.language.lgettext("Up/Down/Sync"), master=self)
         label.grid(column=0, row=4)
         self.sync_direction = Combobox(master=self)
         self.sync_direction['values'] = ['up', 'down', 'sync']
         self.sync_direction.grid(column=1, row=4)
 
-        self.savebutton = Button(master=self, text="Save", command=self.save)
+        self.savebutton = Button(master=self, text=master.language.lgettext("save"), command=self.save)
         self.savebutton.grid(row=5, column=2)
-        self.authbutton = Button(master=self, text="Authenticeer",
+        self.authbutton = Button(master=self, text=master.language.lgettext("authenticeer"),
                                  command=self.authenticate)
         self.authbutton.grid(row=5, column=1)
 
@@ -150,17 +154,17 @@ class DataEntry(Frame):
             with open(sitesini, 'wb') as configfile:
                 self.configparser.write(configfile)
             self.eventwindow = Tk()
-            self.eventwindow.title("Success")
-            conflabel = Label(text="Config saved succesfully", master=self.eventwindow)
+            self.eventwindow.title(self.master.language.lgettext("successwindowtitle"))
+            conflabel = Label(text=self.master.language.lgettext("config safe success text"), master=self.eventwindow)
             conflabel.grid(row=0, column=0)
-            confbutton = Button(master=self.eventwindow, text="close",
+            confbutton = Button(master=self.eventwindow, text=self.master.language.lgettext("closebutton"),
                                 command=self.close_exception_window)
             confbutton.grid(row=1, column=0)
         except ConfigError as error:
             self.eventwindow = Tk()
-            self.eventwindow.title("error")
+            self.eventwindow.title(self.master.language.lgettext("error"))
             Label(text=error.message, master=self.eventwindow).grid(row=0, column=0)
-            errorbutton = Button(master=self.eventwindow, text="close",
+            errorbutton = Button(master=self.eventwindow, text=self.master.language.lgettext("close"),
                                  command=self.close_exception_window)
             errorbutton.grid(row=1, column=0)
 
@@ -172,7 +176,7 @@ class DataEntry(Frame):
         authurl = localbox.get_authentication_url()
         authenticator = Authenticator(authurl, self.site_name.get())
         if not authenticator.has_client_credentials():
-            credentials = UsernameAndPasswordAsker(authenticator)
+            credentials = UsernameAndPasswordAsker(authenticator, self.language)
             credentials.__call__()
             credentials.lock.wait()
             # Show username/password field
@@ -195,7 +199,7 @@ def main():
     configparser = ConfigParser()
     configparser.read(location)
     gui = Gui(configparser=configparser)
-    gui.title('LocalBox instellingen')
+    gui.title(gui.language.lgettext('settingstitle'))
     sites = []
     for section in configparser.sections():
         try:
@@ -213,8 +217,6 @@ def main():
         except NoOptionError as error:
             string = "Skipping LocalBox '%s' due to missing option '%s'" % (section, error.option)
             getLogger('gui').debug(string)
-    print sites
-    gui.iconify()
     gui.mainloop()
 
 if __name__ == "__main__":

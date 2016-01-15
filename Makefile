@@ -13,4 +13,8 @@ exe:
 	#python setup.py bdist_wininst
 	cp dist/LocalboxSync-0.1a0.win32.exe .
 
-	
+translatefile:
+	pygettext.py -o localboxsync.pot -k lgettext sync
+
+translate:
+	msgfmt.py -o locale/nl/LC_MESSAGES/localboxsync.mo localboxsync.po

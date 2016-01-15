@@ -1,1 +1,0 @@
-create table sites (site char(255), client_id char(255), client_secret char(255));

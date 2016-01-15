@@ -17,4 +17,4 @@ translatefile:
 	pygettext.py -o localboxsync.pot -k lgettext sync
 
 translate:
-	msgfmt.py -o locale/nl/LC_MESSAGES/localboxsync.mo localboxsync.po
+	msgfmt.py -o sync/locale/nl/LC_MESSAGES/localboxsync.mo localboxsync.po

@@ -20,6 +20,7 @@ from .auth import AuthenticationError
 from .database import database_execute
 from .defaults import SITESINI_PATH
 from .localbox import LocalBox
+from .defaults import LOCALE_PATH
 from gettext import translation
 
 class ConfigError(Exception):
@@ -60,7 +61,7 @@ class Gui(Tk):
     def __init__(self, parent=None, configparser=None):
         Tk.__init__(self, parent)
         #todo: more languages stuff
-        self.language =  translation('localboxsync', localedir='locale', languages=['nl'])
+        self.language =  translation('localboxsync', localedir=LOCALE_PATH, languages=['nl'], fallback=True)
         self.configs = []
         self.button = Button(text=self.language.lgettext("add localbox"),
                              command=self.add_new)

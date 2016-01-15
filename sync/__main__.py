@@ -11,7 +11,7 @@ from os.path import expandvars
 from .defaults import KEEP_RUNNING
 from .defaults import SITESINI_PATH
 from .defaults import SYNCINI_PATH
-from .defaults import LOGDIR
+from .defaults import LOG_PATH
 
 from .auth import Authenticator
 from .auth import AuthenticationError

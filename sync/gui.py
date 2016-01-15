@@ -75,7 +75,7 @@ class Gui(Tk):
         dataentryframe.grid(row=position, column=0)
 
     def add_new(self):
-        dataentry = DataEntry(self, '', '', '', '', self.configparser, '')
+        dataentry = DataEntry(self, '', '', '', '', self.configparser, '', self.language)
         self.add_entries(dataentry)
 
 
@@ -95,13 +95,14 @@ class DataEntry(Frame):
         self.local_path.insert(0, result)
 
     def __init__(self, master=None, name=None, url=None, localdir=None,
-                 direction=None, config=None, passphrase=None):
+                 direction=None, config=None, passphrase=None, language=None):
         Frame.__init__(self, master=master, relief="raised", borderwidth=2)
         self.master = master
         self.eventwindow = None
         self.direction = direction
         self.configparser = config
         self.orig_name = name
+        self.language = language
         self.site_name = get_entry_fields(self, master.language.lgettext("name box"), name, 0)
         self.localbox_url = get_entry_fields(self, master.language.lgettext("localbox url"), url, 1)
         self.local_path = get_entry_fields(self, master.language.lgettext("local path"), localdir, 2)
@@ -212,7 +213,7 @@ def main():
             passphrase = configparser.get(section, 'passphrase')
             dataentry = DataEntry(gui, section, dictionary['url'],
                                   dictionary['path'], dictionary['direction'],
-                                  configparser, passphrase=passphrase)
+                                  configparser, passphrase=passphrase, language=gui.language)
             gui.add_entries(dataentry)
 
         except NoOptionError as error:

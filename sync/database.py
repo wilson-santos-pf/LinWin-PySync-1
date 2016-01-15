@@ -108,7 +108,7 @@ def sqlite_execute(command, params=None):
 
         init_db = not exists(expandvars(filename))
         #make sure the folder in which the database is saved exists
-        if init_db:
+        if init_db and not exists(dirname(filename)):
             makedirs(dirname(filename))
         connection = sqlite_connect(filename)
         connection.text_factory = Binary

@@ -61,6 +61,7 @@ def main():
         logger.addHandler(handler)
         logger.addHandler(fhandler)
         logger.setLevel(5)
+        logger.info("Starting Localbox Sync logger " + name)
     location = SITESINI_PATH
     configparser = ConfigParser()
     configparser.read(location)
@@ -74,20 +75,20 @@ def main():
             authenticator = Authenticator(localbox.get_authentication_url(), section)
             localbox.add_authenticator(authenticator)
             if not authenticator.has_client_credentials():
-                print("Don't have client credentials for this host yet."
+                getLogger('main').info("Don't have client credentials for this host yet."
                       " We need to log in with your data for once.")
                 username = raw_input("Username: ")
                 password = getpass("Password: ")
                 try:
                     authenticator.init_authenticate(username, password)
                 except AuthenticationError:
-                    print("authentication data incorrect. Skipping entry.")
+                    getLogger.info("authentication data incorrect. Skipping entry.")
             else:
                 syncer = Syncer(localbox, path, direction)
                 sites.append(syncer)
         except NoOptionError as error:
             string = "Skipping '%s' due to missing option '%s'" % (section, error.option)
-            getLogger('main').debug(string)
+            getLogger('main').info(string)
     configparser.read(SYNCINI_PATH)
     try:
         delay = int(configparser.get('sync', 'delay'))

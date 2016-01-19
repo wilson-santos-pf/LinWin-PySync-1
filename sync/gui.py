@@ -184,15 +184,15 @@ class DataEntry(Frame):
             # Show username/password field
             if authenticator.init_authenticate(credentials.username.get(),
                                                credentials.password.get()):
-                print "succes"
+                getLogger('auth').info("succes")
             else:
-                print "failure"
+                getLogger('auth').info("failure")
         else:
             try:
                 authenticator.authenticate()
-                print "credentials seem valid"
+                getLogger('auth').info("credentials seem valid")
             except AuthenticationError:
-                print "your credentials are invalidated"
+                getLogger('auth').info("your credentials are invalid")
 
 
 def main():

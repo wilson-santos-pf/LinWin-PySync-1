@@ -96,10 +96,10 @@ class Authenticator(object):
         Do initial authentication with the resource owner password credentials
         """
         if (self.client_id is not None) or (self.client_secret is not None):
-            print("init authenticate data")
-            print(self.client_id)
-            print(self.client_secret)
-            print("end init authenticate data")
+            getLogger('auth').info("init authenticate data")
+            getLogger('auth').info(self.client_id)
+            getLogger('auth').info(self.client_secret)
+            getLogger('auth').info("end init authenticate data")
             raise AuthenticationError("Do not call init_authenticate w"
                                       "hen client_id and client_secret"
                                       " are already set")

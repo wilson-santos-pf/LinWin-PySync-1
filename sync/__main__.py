@@ -5,6 +5,7 @@ from threading import Lock
 from getpass import getpass
 from logging import getLogger
 from logging import StreamHandler
+from logging import FileHandler
 from threading import Thread
 from os.path import join
 from os.path import expandvars
@@ -12,6 +13,7 @@ from .defaults import KEEP_RUNNING
 from .defaults import SITESINI_PATH
 from .defaults import SYNCINI_PATH
 from .defaults import LOG_PATH
+from sys import stdout
 
 from .auth import Authenticator
 from .auth import AuthenticationError
@@ -54,14 +56,6 @@ def main():
     """
     temp test function
     """
-    handler = StreamHandler()
-    fhandler = FileHandler(LOG_PATH)
-    for name in 'main', 'database', 'auth', 'localbox':
-        logger = getLogger(name)
-        logger.addHandler(handler)
-        logger.addHandler(fhandler)
-        logger.setLevel(5)
-        logger.info("Starting Localbox Sync logger " + name)
     location = SITESINI_PATH
     configparser = ConfigParser()
     configparser.read(location)
@@ -106,6 +100,15 @@ def main():
         sleep(delay)
 
 if __name__ == '__main__':
+    handlers = [StreamHandler(stdout), FileHandler(LOG_PATH)]
+    for name in 'main', 'database', 'auth', 'localbox':
+        logger = getLogger(name)
+        for handler in handlers:
+            logger.addHandler(handler)
+        logger.setLevel(5)
+        logger.info("Starting Localbox Sync logger " + name)
+
     MAIN = Thread(target=main)
     MAIN.daemon = True
+
     taskbarmain()

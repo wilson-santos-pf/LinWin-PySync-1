@@ -9,6 +9,9 @@ from logging import FileHandler
 from threading import Thread
 from os.path import join
 from os.path import expandvars
+from os import makedirs
+from os.path import isdir
+from os.path import dirname
 from .defaults import KEEP_RUNNING
 from .defaults import SITESINI_PATH
 from .defaults import SYNCINI_PATH
@@ -100,6 +103,8 @@ def main():
         sleep(delay)
 
 if __name__ == '__main__':
+    if not isdir(dirname(LOG_PATH)):
+        makedirs(dirname(LOG_PATH))
     handlers = [StreamHandler(stdout), FileHandler(LOG_PATH)]
     for name in 'main', 'database', 'auth', 'localbox':
         logger = getLogger(name)

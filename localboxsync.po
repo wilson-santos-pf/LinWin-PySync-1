@@ -5,70 +5,135 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.1\n"
-"POT-Creation-Date: 2016-01-13 18:09+CET\n"
-"PO-Revision-Date: 2016-01-13 18:09+CET\n"
+"POT-Creation-Date: 2016-01-22 14:17+0100\n"
+"PO-Revision-Date: 2016-01-22 14:20+0100\n"
 "Last-Translator: Ivo Tamboer <ivo@letshare.com>\n"
 "Language-Team: Nederlands <ivo@letshare.com>\n"
+"Language: nl\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF8\n"
-"Content-Transfer-Encoding: UTF8\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
 "Generated-By: pygettext.py 1.5\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 1.8.5\n"
+"X-Poedit-KeywordsList: translate;lgettext;language\n"
 
-
-#: sync/gui.py:103
-msgid "name box"
-msgstr "Naam Localbox"
-
-#: sync/gui.py:104
-msgid "localbox url"
-msgstr "LocalBox URL"
-
-#: sync/gui.py:105
-msgid "local path"
-msgstr "Lokaal pad"
-
-#: sync/gui.py:106
-msgid "passphrase"
-msgstr "Wachtwoordzin"
-
-#: sync/gui.py:107
-msgid "folder select"
-msgstr "Selecteer folder"
-
-#: sync/gui.py:111
-msgid "Up/Down/Sync"
-msgstr "Up/Down/Sync"
-
-#: sync/gui.py:117
-msgid "save"
-msgstr "Sla op"
-
-#: sync/gui.py:119
-msgid "authenticeer"
-msgstr "Authenticeer"
-
-#: sync/gui.py:156
-msgid "successwindowtitle"
-msgstr "Success"
-
-#: sync/gui.py:157
-msgid "config safe success text"
-msgstr "Opslag configuratie succesvol."
-
-#: sync/gui.py:159
-msgid "closebutton"
-msgstr "Sluit af"
-
-#: sync/gui.py:166
-msgid "close"
-msgstr "Sluit"
-
-#: sync/gui.py:201
-msgid "settingstitle"
-msgstr "Instellingen"
-
+#: sync/gui.py:64
 msgid "add localbox"
 msgstr "Voeg LocalBox toe"
 
+#: sync/gui.py:106
+msgid "name box"
+msgstr "Naam Localbox"
+
+#: sync/gui.py:107
+msgid "localbox url"
+msgstr "LocalBox URL"
+
+#: sync/gui.py:108
+msgid "local path"
+msgstr "Lokaal pad"
+
+#: sync/gui.py:109
+msgid "passphrase"
+msgstr "Wachtwoordzin"
+
+#: sync/gui.py:110
+msgid "folder select"
+msgstr "Selecteer folder"
+
+#: sync/gui.py:114
+msgid "Up/Down/Sync"
+msgstr "Up/Down/Sync"
+
+#: sync/gui.py:120
+msgid "save"
+msgstr "Sla op"
+
+#: sync/gui.py:122
+msgid "authenticeer"
+msgstr "Authenticeer"
+
+#: sync/gui.py:159
+msgid "successwindowtitle"
+msgstr "Success"
+
+#: sync/gui.py:160 sync/wizard.py:234
+msgid "config safe success text"
+msgstr "Opslag configuratie succesvol."
+
+#: sync/gui.py:162 sync/wizard.py:236
+msgid "closebutton"
+msgstr "Sluit af"
+
+#: sync/gui.py:167
 msgid "error"
 msgstr "誤"
+
+#: sync/gui.py:169 sync/wizard.py:241
+msgid "close"
+msgstr "Sluit"
+
+#: sync/gui.py:204
+msgid "settingstitle"
+msgstr "Instellingen"
+
+#: sync/wizard.py:42
+msgid "Error"
+msgstr "Fout"
+
+#: sync/wizard.py:45
+msgid "errorbuttontext"
+msgstr "Ok"
+
+#: sync/wizard.py:58
+msgid "wizardtitle"
+msgstr "LocalBox Wizard"
+
+#: sync/wizard.py:74
+msgid "urltext"
+msgstr "Geef LocalBox URL:"
+
+#: sync/wizard.py:79
+msgid "labeltext"
+msgstr "Naam LocalBox"
+
+#: sync/wizard.py:84
+msgid "buttontext"
+msgstr "Ok"
+
+#: sync/wizard.py:101
+msgid "label2text"
+msgstr "Selecteer syncfolder"
+
+#: sync/wizard.py:105
+msgid "choosertext"
+msgstr "Selecteer"
+
+#: sync/wizard.py:107
+msgid "button2text"
+msgstr "Ok"
+
+#: sync/wizard.py:126
+msgid "label3textusername"
+msgstr "Gebruikersnaam"
+
+#: sync/wizard.py:130
+msgid "label3textpass"
+msgstr "Wachtwoord"
+
+#: sync/wizard.py:134
+msgid "button3text"
+msgstr "Ok"
+
+#: sync/wizard.py:159
+msgid "give passphrase"
+msgstr "Wachtwoodzin"
+
+#: sync/wizard.py:163
+msgid "new passphrase"
+msgstr "Nieuwe wachtwoordzin"
+
+#: sync/wizard.py:167
+msgid "passpharsebutton"
+msgstr "Ok"

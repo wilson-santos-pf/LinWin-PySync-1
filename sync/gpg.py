@@ -1,4 +1,5 @@
 from .database import database_execute
+from pprint import pprint
 from ConfigParser import ConfigParser
 from gnupg import GPG
 from StringIO import StringIO
@@ -27,6 +28,8 @@ class gpg(object):
     #def remove_passphrase(self, fingerprint):
 
     #def add_passphrase(self, fingerprint, passphrase):
+    def get_key(self, fingerprint, private):
+        return self.gpg.export_keys(fingerprint, private, armor=False)
 
     def add_pubkey(self, public_key, site, user):
         """
@@ -39,7 +42,7 @@ class gpg(object):
         return fingerprint
 
 
-    def add_keypair(self, public_key, private_key, site, user):
+    def add_keypair(self, public_key, private_key, site, user, passphrase):
         """
         add a keypair into the gpg key database
         """
@@ -48,9 +51,23 @@ class gpg(object):
         # make sure this is a key _pair_
         assert result1.fingerprints[0] == result2.fingerprints[0]
         fingerprint = result1.fingerprints[0]
+        sign = self.gpg.sign("test", keyid=fingerprint, passphrase=passphrase)
+        if sign.data == '':
+            return None
+        else:
+            sql = "INSERT INTO keys (site, user, fingerprint) VALUES (?, ?, ?);"
+            database_execute(sql, (site, user, fingerprint))
+            return fingerprint
+
+    def generate(self, passphrase, site, user):
+        data = self.gpg.gen_key_input(key_length = 2048, passphrase=passphrase)
+        dat = self.gpg.gen_key(data)
+        fingerprint = dat.fingerprint
         sql = "INSERT INTO keys (site, user, fingerprint) VALUES (?, ?, ?);"
         database_execute(sql, (site, user, fingerprint))
         return fingerprint
+
+
 
     def encrypt(self, data, site, user):
         """

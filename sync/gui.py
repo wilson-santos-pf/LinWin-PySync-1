@@ -22,10 +22,8 @@ from .defaults import SITESINI_PATH
 from .localbox import LocalBox
 from .defaults import LOCALE_PATH
 from gettext import translation
-
-class ConfigError(Exception):
-    pass
-
+from .wizard import Wizard
+from .wizard import ConfigError
 
 class UsernameAndPasswordAsker(Tk):
     def __init__(self, authenticator, translator, parent=None):
@@ -63,11 +61,13 @@ class Gui(Tk):
         #todo: more languages stuff
         self.language =  translation('localboxsync', localedir=LOCALE_PATH, languages=['nl'], fallback=True)
         self.configs = []
+        self.configparser = configparser
+        self.lift()
+
+    def localbox_button(self):
         self.button = Button(text=self.language.lgettext("add localbox"),
                              command=self.add_new)
         self.button.grid(row=0, column=0)
-        self.configparser = configparser
-        self.lift()
 
     def add_entries(self, dataentryframe):
         self.configs.append(dataentryframe)
@@ -75,9 +75,33 @@ class Gui(Tk):
         dataentryframe.grid(row=position, column=0)
 
     def add_new(self):
-        dataentry = DataEntry(self, '', '', '', '', self.configparser, '', self.language)
-        self.add_entries(dataentry)
+        #dataentry = DataEntry(self, '', '', '', '', self.configparser, '', self.language)
+        #self.add_entries(dataentry)
+        wizard = Wizard(None, self.language, self.configparser, self)
+        wizard.mainloop()
 
+    def update_window(self):
+        for widget in self.winfo_children():
+            widget.destroy()
+        self.localbox_button()
+        location = SITESINI_PATH
+        self.configparser.read(location)
+        sites = []
+        for section in self.configparser.sections():
+            try:
+                dictionary = {'name': section,
+                              'url': self.configparser.get(section, 'url'),
+                              'path': self.configparser.get(section, 'path')}
+                sites.append(dictionary)
+                passphrase = self.configparser.get(section, 'passphrase')
+                dataentry = DataEntry(self, section, dictionary['url'],
+                                      dictionary['path'], 
+                                      self.configparser, passphrase=passphrase, language=self.language)
+                self.add_entries(dataentry)
+
+            except NoOptionError as error:
+                string = "Skipping LocalBox '%s' due to missing option '%s'" % (section, error.option)
+                getLogger('gui').debug(string)
 
 def get_entry_fields(parent, text, value, row):
     label = Label(text=text, master=parent, justify="left")
@@ -95,11 +119,10 @@ class DataEntry(Frame):
         self.local_path.insert(0, result)
 
     def __init__(self, master=None, name=None, url=None, localdir=None,
-                 direction=None, config=None, passphrase=None, language=None):
+                 config=None, passphrase=None, language=None):
         Frame.__init__(self, master=master, relief="raised", borderwidth=2)
         self.master = master
         self.eventwindow = None
-        self.direction = direction
         self.configparser = config
         self.orig_name = name
         self.language = language
@@ -111,17 +134,20 @@ class DataEntry(Frame):
                                command=self.getfile)
         self.lpbutton.grid(column=2, row=2)
 
-        label = Label(text=master.language.lgettext("Up/Down/Sync"), master=self)
-        label.grid(column=0, row=4)
-        self.sync_direction = Combobox(master=self)
-        self.sync_direction['values'] = ['up', 'down', 'sync']
-        self.sync_direction.grid(column=1, row=4)
-
         self.savebutton = Button(master=self, text=master.language.lgettext("save"), command=self.save)
         self.savebutton.grid(row=5, column=2)
-        self.authbutton = Button(master=self, text=master.language.lgettext("authenticeer"),
-                                 command=self.authenticate)
+        self.authbutton = Button(master=self, text=master.language.lgettext("delete"),
+                                 command=self.delete)
         self.authbutton.grid(row=5, column=1)
+
+    def delete(self):
+        self.configparser.remove_section(self.orig_name)
+        sitesini = SITESINI_PATH
+        if not exists(dirname(SITESINI_PATH)):
+            makedirs(dirname(SITESINI_PATH))
+        with open(SITESINI_PATH, 'wb') as configfile:
+            self.configparser.write(configfile)
+        self.master.update_window()
 
     def save(self):
         try:
@@ -131,9 +157,6 @@ class DataEntry(Frame):
                     raise ConfigError("There is already a site with that name")
             if not isdir(self.local_path.get()):
                 raise ConfigError("Share path needs to be a directory")
-            if not self.sync_direction.get() in ['up', 'down', 'sync']:
-                raise ConfigError("Direction needs to be up, down or sync")
-
             if self.site_name.get() != self.orig_name:
                 self.configparser.remove_section(self.orig_name)
                 self.configparser.add_section(self.site_name.get())
@@ -146,8 +169,6 @@ class DataEntry(Frame):
                                   self.localbox_url.get())
             self.configparser.set(self.site_name.get(), 'path',
                                   self.local_path.get())
-            self.configparser.set(self.site_name.get(), 'direction',
-                                  self.sync_direction.get())
             self.configparser.set(self.site_name.get(), 'passphrase',
                                   self.passphrase.get())
             sitesini = SITESINI_PATH
@@ -195,30 +216,15 @@ class DataEntry(Frame):
                 getLogger('auth').info("your credentials are invalid")
 
 
+
 def main():
     location = SITESINI_PATH
-
+    
     configparser = ConfigParser()
     configparser.read(location)
     gui = Gui(configparser=configparser)
+    gui.update_window()
     gui.title(gui.language.lgettext('settingstitle'))
-    sites = []
-    for section in configparser.sections():
-        try:
-            dictionary = {'name': section,
-                          'url': configparser.get(section, 'url'),
-                          'path': configparser.get(section, 'path'),
-                          'direction': configparser.get(section, 'direction')}
-            sites.append(dictionary)
-            passphrase = configparser.get(section, 'passphrase')
-            dataentry = DataEntry(gui, section, dictionary['url'],
-                                  dictionary['path'], dictionary['direction'],
-                                  configparser, passphrase=passphrase, language=gui.language)
-            gui.add_entries(dataentry)
-
-        except NoOptionError as error:
-            string = "Skipping LocalBox '%s' due to missing option '%s'" % (section, error.option)
-            getLogger('gui').debug(string)
     gui.mainloop()
 
 if __name__ == "__main__":

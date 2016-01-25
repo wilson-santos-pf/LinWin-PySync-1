@@ -108,11 +108,17 @@ class Authenticator(object):
         authdata = {'grant_type': 'password', 'username': username,
                     'password': password, 'client_id': self.client_id,
                     'client_secret': self.client_secret}
-        self._call_authentication_server(authdata)
-        if self.access_token != None:
-            getLogger('auth').debug("Authentication Succesful. Saving Client Data")
-            self.save_client_data()
-            return True
+        try:
+            self._call_authentication_server(authdata)
+            if self.access_token != None:
+                getLogger('auth').debug("Authentication Succesful. Saving Client Data")
+                self.save_client_data()
+                return True
+        except (URLError):
+            pass
+        # clear credentials on failure
+        self.client_id = None
+        self.client_secret = None
         return False
 
     def authenticate(self):
@@ -145,7 +151,7 @@ class Authenticator(object):
             self.refresh_token = json.get('refresh_token')
             self.scope = json.get('scope')
             self.expires = time() + json.get('expires_in', 0) - EXPIRATION_LEEWAY
-        except HTTPError as error:
+        except (HTTPError, URLError) as error:
             getLogger('auth').debug('HTTPError when calling the authentication server')
             if error.code == 400:
                 raise AuthenticationError()

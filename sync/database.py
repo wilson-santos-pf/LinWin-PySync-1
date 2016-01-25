@@ -178,20 +178,3 @@ def mysql_execute(command, params=None):
                 connection.close()
         except UnboundLocalError:
             pass
-
-
-def get_key_and_iv(localbox_path, user):
-    """
-    Fetches RSA encrypted key and IV from the database
-    @param localbox_path (localbox specific) path to the encrypted file
-    @param user name of whoes key to fetch
-    @return a tuple containing the key and iv for a certain file.
-    """
-    sql = "select key, iv from keys where path = ? and user = ?"
-    try:
-        result = database_execute(sql, (localbox_path, user))[0]
-    except IndexError:
-        extradict = {'ip': '', 'user': user, 'path': localbox_path}
-        getLogger("database").debug("cannot find key", extra=extradict)
-        result = None
-    return result

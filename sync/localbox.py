@@ -34,6 +34,8 @@ class LocalBox(object):
     object representing localbox
     """
     def __init__(self, url):
+        if url[-1] != '/':
+            url = url + "/"
         self.url = url
         self.authentication_url = None
         self.authenticator = None
@@ -134,12 +136,15 @@ class LocalBox(object):
         request = Request(url=self.url + 'lox_api/files/' + metapath, data=contents)
         return self._make_call(request)
 
-    def call_user(self):
+    def call_user(self, send_data=None):
         """
         do the user call
         """
         url = self.url + "lox_api/user"
-        request = Request(url)
+        if send_data is None:
+            request = Request(url)
+        else:
+            request = Request(url, data=send_data)
         return self._make_call(request)
 
     def call_keys(self, path):

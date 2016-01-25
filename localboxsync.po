@@ -128,7 +128,7 @@ msgstr "Ok"
 
 #: sync/wizard.py:159
 msgid "give passphrase"
-msgstr "Wachtwoodzin"
+msgstr "Wachtwoordzin"
 
 #: sync/wizard.py:163
 msgid "new passphrase"

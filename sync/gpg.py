@@ -49,7 +49,10 @@ class gpg(object):
         result1 = self.gpg.import_keys(public_key)
         result2 = self.gpg.import_keys(private_key)
         # make sure this is a key _pair_
-        assert result1.fingerprints[0] == result2.fingerprints[0]
+        try:
+            assert result1.fingerprints[0] == result2.fingerprints[0]
+        except (IndexError, AssertionError):
+            return None
         fingerprint = result1.fingerprints[0]
         sign = self.gpg.sign("test", keyid=fingerprint, passphrase=passphrase)
         if sign.data == '':

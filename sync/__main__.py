@@ -43,12 +43,16 @@ class SyncRunner(Thread):
         self.setDaemon(True)
         self.syncer = syncer
         self.lock = Lock()
+        print("SyncRunner started")
 
     def run(self):
-        self.lock.acquire()
-        # TODO: Direction
-        self.syncer.syncsync()
-        self.lock.release()
+        global KEEP_RUNNING
+        print("running \"run\"")
+        while(KEEP_RUNNING):
+            self.lock.acquire()
+            # TODO: Direction
+            self.syncer.syncsync()
+            self.lock.release()
 
 
 def stop_running():
@@ -59,6 +63,7 @@ def main():
     """
     temp test function
     """
+    print "running main"
     location = SITESINI_PATH
     configparser = ConfigParser()
     configparser.read(location)
@@ -93,13 +98,14 @@ def main():
         delay = 3600
     while KEEP_RUNNING:
         for syncer in sites:
-            #runner = SyncRunner(syncer=syncer)
-            if syncer.direction == 'up':
-                syncer.upsync()
-            if syncer.direction == 'down':
-                syncer.downsync()
-            if syncer.direction == 'sync':
-                syncer.syncsync()
+            runner = SyncRunner(syncer=syncer)
+            runner.run()
+            #if syncer.direction == 'up':
+            #    syncer.upsync()
+            #if syncer.direction == 'down':
+            #    syncer.downsync()
+            #if syncer.direction == 'sync':
+            #    syncer.syncsync()
         sleep(delay)
 
 if __name__ == '__main__':
@@ -115,5 +121,6 @@ if __name__ == '__main__':
 
     MAIN = Thread(target=main)
     MAIN.daemon = True
+    MAIN.start()
 
     taskbarmain()

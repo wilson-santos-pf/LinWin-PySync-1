@@ -11,7 +11,11 @@ from os import mkdir
 from itertools import chain
 from time import mktime
 from time import strptime
+from urllib2 import HTTPError
 from time import time
+from os.path import exists
+from os.path import dirname
+from os import makedirs
 try:
     from cPickle import dump, load
 except ImportError:
@@ -64,7 +68,7 @@ class MetaVFS(object):
         self.children.append(child)
         child.parent = self
 
-    def debug_print():
+    def debug_print(self):
         """
         do a debug pring of all paths
         """
@@ -140,11 +144,17 @@ class Syncer(object):
         splittime = node['modified_at'].split('.', 1)
         modtime = mktime(strptime(splittime[0], "%Y-%m-%dT%H:%M:%S")) + float("0."+splittime[1])
         vfsnode = MetaVFS(modtime, node['path'], node['is_dir'])
+        print "VFSNode Problematica"
+        vfsnode.debug_print()
+        print "END VFSNode Problematica"
         for child in node['children']:
+            print "recursing"
             self.populate_localbox_metadata(child['path'], parent=vfsnode)
         if parent is None:
+            print "parent is none"
             self.localbox_metadata = vfsnode
         else:
+            print "parent gets child"
             parent.add_child(vfsnode)
 
     def populate_filepath_metadata(self, path='./', parent=None):
@@ -259,7 +269,11 @@ class Syncer(object):
                     utime(localfilename, (time(), modtime))
                 elif remotefile is not None and localfile is None and \
                      remotefile.is_dir:
-                    mkdir(join(self.filepath, path[1:]))
+                    try:
+                        mkdir(join(self.filepath, path[1:]))
+                    # this may happen with precreated directories
+                    except OSError:
+                         pass
                 elif remotefile is None or \
                      (localfile.modified_at > remotefile.modified_at + 2):
                     if localfile.is_dir and remotefile is None:
@@ -272,13 +286,33 @@ class Syncer(object):
                            (abs(diff) < 2)
             elif oldfile is not None:
                 if localfile is None and remotefile is not None:
-                    self.localbox.delete(path)
+                    try:
+                        #self.localbox.delete(path)
+                        contents = self.localbox.get_file(path)
+                        localfilename = join(self.filepath, path[1:])
+                        # precreate folder if needed
+                        localdirname = dirname(localfilename)
+                        if not exists(localdirname):
+                            makedirs(localdirname)
+                        localfile = open(localfilename, 'w')
+                        localfile.write(contents)
+                        localfile.close()
+                        modtime = self.localbox_metadata.get_entry(path).modified_at
+                        utime(localfilename, (time(), modtime))
+                    except HTTPError:
+                        # happens when the containing directory has already
+                        # been deleted. Could do with more elegant syncing,
+                        # but is otherwise harmless.
+                        pass
                 if localfile is not None and remotefile is None:
-                    filepath = join(self.filepath, path[1:])
-                    if isdir(filepath):
-                        rmtree(filepath)
-                    else:
-                        remove(filepath)
+                    try:
+                        filepath = join(self.filepath, path[1:])
+                        if isdir(filepath):
+                            rmtree(filepath)
+                        else:
+                            remove(filepath)
+                    except HTTPError:
+                        pass
             else:
                 raise(Exception("unreachable"))
         self.filepath_metadata.save('localbox.pickle')

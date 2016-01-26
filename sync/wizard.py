@@ -74,7 +74,7 @@ class Wizard(Tk):
         self.label = Label(master=self, text=self.translate("urltext"))
         self.label.grid(row=0, column=0)
         self.entry = Entry(master=self)
-        self.entry.insert(0, "https://box.yourlocalbox.org")
+        self.entry.insert(0, "https://localhost:8001/")
         self.entry.grid(row=1, column=0)
         self.label2 = Label(master=self, text=self.translate("labeltext"))
         self.label2.grid(row=2, column=0)
@@ -153,7 +153,7 @@ class Wizard(Tk):
         result = loads(response.read())
         pprint(result)
         if self.username is None:
-            self.username = result['name']
+            self.username = result['user']
         self.clear()
         if result.has_key('private_key') and result.has_key('public_key'):
             self.label = Label(master=self, text=self.translate("give passphrase"))

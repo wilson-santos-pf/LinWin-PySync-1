@@ -57,6 +57,8 @@ class LocalBox(object):
                 non_verifying_context = SSLContext(PROTOCOL_TLSv1)
                 urlopen(self.url, context=non_verifying_context)
             except BadStatusLine as error:
+                from pprint import pprint
+                pprint(error)
                 raise error
             except HTTPError as error:
                 auth_header = error.headers['WWW-Authenticate'].split(' ')
@@ -85,8 +87,8 @@ class LocalBox(object):
         """
         do the meta call
         """
-        metapath = quote(path)
-        request = Request(url=self.url + "lox_api/meta" + metapath)
+        metapath = quote(path).strip('/')
+        request = Request(url=self.url + "lox_api/meta/" + metapath)
         json_text = self._make_call(request).read()
         return loads(json_text)
 
@@ -131,8 +133,12 @@ class LocalBox(object):
             path = path[1:]
         metapath = quote(path)
         contents = open(localpath).read()
-        if self.get_meta(path)['has_keys'] == True:
-            contents = self.encode_file(path, contents)
+        try:
+            if self.get_meta(path)['has_keys'] == True:
+                contents = self.encode_file(path, contents)
+        except BadStatusLine:
+            #TODO make sure files get encrypted
+            pass
         request = Request(url=self.url + 'lox_api/files/' + metapath, data=contents)
         return self._make_call(request)
 

@@ -44,15 +44,15 @@ class SyncRunner(Thread):
         self.setDaemon(True)
         self.syncer = syncer
         self.lock = Lock()
-        print("SyncRunner started")
+        getLogger('main').info("SyncRunner started")
 
     def run(self):
-        print("SyncRunner " + self.name + " started")
+        getLogger('main').info("SyncRunner " + self.name + " started")
         self.lock.acquire()
         # TODO: Direction
         self.syncer.syncsync()
         self.lock.release()
-        print("SyncRunner " + self.name + " finished")
+        getLogger('main').info("SyncRunner " + self.name + " finished")
 
 
 def stop_running():

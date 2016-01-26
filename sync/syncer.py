@@ -21,6 +21,8 @@ try:
 except ImportError:
     from pickle import dump, load
 
+from .defaults import OLD_SYNC_STATUS
+
 class MetaVFS(object):
     """
     virtual meta filesystem
@@ -197,7 +199,7 @@ class Syncer(object):
                 utime(localfilename, (time(), modtime))
             else:
                 getLogger('localbox').info("Already downloaded " + filename)
-        self.filepath_metadata.save('localbox.pickle')
+        self.filepath_metadata.save(OLD_SYNC_STATUS)
 
     def upsync(self):
         for vfsdirname in self.filepath_metadata.yield_directories():
@@ -220,14 +222,17 @@ class Syncer(object):
             else:
                 getLogger('localbox').info("Already uploaded " + filename)
 
-        self.filepath_metadata.save('localbox.pickle')
-        #self.filepath_metadata.load('localbox.pickle')
+        self.filepath_metadata.save(OLD_SYNC_STATUS)
+        #self.filepath_metadata.load(OLD_SYNC_STATUS)
         self.filepath_metadata.debug_getLogger('localbox').info()
 
     def syncsync(self):
+        getLogger('localbox').info("Starting syncsync")
         allpaths = set(self.filepath_metadata.get_paths() + self.localbox_metadata.get_paths())
+
+        getLogger('localbox').info(str(allpaths))
         try:
-            oldmetadata = self.filepath_metadata.load('localbox.pickle')
+            oldmetadata = self.filepath_metadata.load(OLD_SYNC_STATUS)
             allpaths = set(list(allpaths) + oldmetadata.get_paths())
         except IOError:
             getLogger('localbox').info("Old data unknown")
@@ -315,4 +320,4 @@ class Syncer(object):
                         pass
             else:
                 raise(Exception("unreachable"))
-        self.filepath_metadata.save('localbox.pickle')
+        self.filepath_metadata.save(OLD_SYNC_STATUS)

@@ -178,9 +178,9 @@ class Syncer(object):
 
     def downsync(self):
         for vfsdirname in self.localbox_metadata.yield_directories():
-            dirname = join(self.filepath, "." + vfsdirname.path)
-            if not isdir(dirname):
-                mkdir(dirname)
+            dirpath = join(self.filepath, "." + vfsdirname.path)
+            if not isdir(dirpath):
+                mkdir(dirpath)
         for vfsfilename in self.localbox_metadata.yield_files():
             filename = vfsfilename.path
             getLogger('localbox').info("processing file " + filename)
@@ -203,12 +203,12 @@ class Syncer(object):
 
     def upsync(self):
         for vfsdirname in self.filepath_metadata.yield_directories():
-            dirname = vfsdirname.path
-            getLogger('localbox').info("processing " + dirname)
-            #dirname = join(self.filepath, "." + dirname)
-            if not self.localbox_metadata.contains_directory(dirname):
-                getLogger('localbox').info("creating directory " + dirname)
-                self.localbox.create_directory(dirname)
+            dirpath = vfsdirname.path
+            getLogger('localbox').info("processing " + dirpath)
+            #dirname = join(self.filepath, "." + dirpath)
+            if not self.localbox_metadata.contains_directory(dirpath):
+                getLogger('localbox').info("creating directory " + dirpath)
+                self.localbox.create_directory(dirpath)
 
         for vfsfilename in self.filepath_metadata.yield_files():
             filename = vfsfilename.path
@@ -224,12 +224,13 @@ class Syncer(object):
 
         self.filepath_metadata.save(OLD_SYNC_STATUS)
         #self.filepath_metadata.load(OLD_SYNC_STATUS)
-        self.filepath_metadata.debug_getLogger('localbox').info()
+        self.filepath_metadata.debug_print()
 
     def syncsync(self):
         getLogger('localbox').info("Starting syncsync")
         allpaths = set(self.filepath_metadata.get_paths() + self.localbox_metadata.get_paths())
-
+        self.filepath_metadata.debug_print()
+        self.localbox_metadata.debug_print()
         getLogger('localbox').info(str(allpaths))
         try:
             oldmetadata = self.filepath_metadata.load(OLD_SYNC_STATUS)
@@ -260,6 +261,7 @@ class Syncer(object):
                     localfile.close()
                     modtime = self.localbox_metadata.get_entry(path).modified_at
                     utime(localfilename, (time(), modtime))
+                    continue
             if oldfile is None:
                 if remotefile is not None and \
                    (localfile is None or \
@@ -278,7 +280,7 @@ class Syncer(object):
                         mkdir(join(self.filepath, path[1:]))
                     # this may happen with precreated directories
                     except OSError:
-                         pass
+                        pass
                 elif remotefile is None or \
                      (localfile.modified_at > remotefile.modified_at + 2):
                     if localfile.is_dir and remotefile is None:

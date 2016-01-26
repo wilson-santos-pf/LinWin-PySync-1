@@ -4,7 +4,6 @@ from Tkinter import Label
 from Tkinter import Entry
 from Tkinter import Button
 import tkFileDialog
-from ttk import Combobox
 from Tkinter import END
 from ConfigParser import ConfigParser
 from ConfigParser import NoOptionError
@@ -28,16 +27,16 @@ from .wizard import ConfigError
 class UsernameAndPasswordAsker(Tk):
     def __init__(self, authenticator, translator, parent=None):
         Tk.__init__(self, parent)
-        self.title("Authentication Data")
+        self.title(translator.translate("Authentication Data"))
         self.authenticator = authenticator
 
-        Label(self, text="username").grid(row=0, column=0)
+        Label(self, text=translator.translate("username")).grid(row=0, column=0)
         self.username = Entry(self)
         self.username.grid(row=0, column=1)
-        Label(self, text="password").grid(row=1, column=0)
+        Label(self, text=translator.translate("password")).grid(row=1, column=0)
         self.password = Entry(self, show="*")
         self.password.grid(row=1, column=1)
-        self.button = Button(master=self, text="OK",
+        self.button = Button(master=self, text=translator.translate("OK"),
                              command=self.stop_window)
         self.button.grid(row=2)
         self.lock = Event()
@@ -63,6 +62,7 @@ class Gui(Tk):
         self.configs = []
         self.configparser = configparser
         self.lift()
+        self.button = None
 
     def localbox_button(self):
         self.button = Button(text=self.language.lgettext("add localbox"),
@@ -142,7 +142,6 @@ class DataEntry(Frame):
 
     def delete(self):
         self.configparser.remove_section(self.orig_name)
-        sitesini = SITESINI_PATH
         if not exists(dirname(SITESINI_PATH)):
             makedirs(dirname(SITESINI_PATH))
         with open(SITESINI_PATH, 'wb') as configfile:
@@ -171,10 +170,9 @@ class DataEntry(Frame):
                                   self.local_path.get())
             self.configparser.set(self.site_name.get(), 'passphrase',
                                   self.passphrase.get())
-            sitesini = SITESINI_PATH
-            if not exists(dirname(sitesini)):
-                makedirs(dirname(sitesini))
-            with open(sitesini, 'wb') as configfile:
+            if not exists(dirname(SITESINI_PATH)):
+                makedirs(dirname(SITESINI_PATH))
+            with open(SITESINI_PATH, 'wb') as configfile:
                 self.configparser.write(configfile)
             self.eventwindow = Tk()
             self.eventwindow.title(self.master.language.lgettext("successwindowtitle"))

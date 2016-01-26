@@ -13,11 +13,11 @@ try:
     from urllib import quote
     from httplib import BadStatusLine
 except ImportError:
-    from urllib.parse import quote
+    from urllib.parse import quote # pylint:disable=F0401,E0611
     from urllib.request import urlopen # pylint: disable=F0401,E0611
     from urllib.request import Request # pylint: disable=F0401,E0611
     from urllib.error import HTTPError # pylint: disable=F0401,E0611
-    from http.client import BadStatusLine
+    from http.client import BadStatusLine # pylint: disable=F0401
 
 from json import loads
 from ssl import SSLContext, PROTOCOL_TLSv1 #pylint: disable=E0611

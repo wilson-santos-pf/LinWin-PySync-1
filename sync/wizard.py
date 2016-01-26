@@ -16,13 +16,11 @@ from Tkinter import Button
 from Tkinter import END
 import tkFileDialog
 try:
-    from urllib2 import HTTPError
     from urllib2 import URLError
     from httplib import BadStatusLine
-except:
-    from urllib.error import HTTPError # pylint: disable=F0401,E0611
+except ImportError:
     from urllib.error import URLError # pylint: disable=F0401,E0611
-    from http.client import BadStatusLine
+    from http.client import BadStatusLine # pylint: disable=F0401,E0611
 
 from .localbox import LocalBox
 from .auth import Authenticator
@@ -91,7 +89,6 @@ class Wizard(Tk):
             self.server_url = server_url
             self.box_label = self.entry2.get()
         else:
-            #TODO: Error
             return Errorwindow("Error with input data", parent=self, language=self.translate)
         self.window1()
 
@@ -230,7 +227,6 @@ class Wizard(Tk):
             self.configparser.set(self.box_label, 'direction', 'sync')
             self.configparser.set(self.box_label, 'passphrase',
                                   self.passphrasestring)
-            sitesini = SITESINI_PATH
             if not exists(dirname(SITESINI_PATH)):
                 makedirs(dirname(SITESINI_PATH))
             with open(SITESINI_PATH, 'wb') as configfile:

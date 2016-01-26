@@ -8,8 +8,6 @@ from logging import StreamHandler
 from logging import FileHandler
 from threading import Thread
 from threading import Event
-from os.path import join
-from os.path import expandvars
 from os import makedirs
 from os.path import isdir
 from os.path import dirname
@@ -23,7 +21,6 @@ from .auth import Authenticator
 from .auth import AuthenticationError
 from .localbox import LocalBox
 from .syncer import Syncer
-from time import sleep
 from .taskbar import taskbarmain
 try:
     from ConfigParser import ConfigParser
@@ -84,7 +81,7 @@ def main(waitevent=None):
                 try:
                     authenticator.init_authenticate(username, password)
                 except AuthenticationError:
-                    getLogger.info("authentication data incorrect. Skipping entry.")
+                    getLogger('main').info("authentication data incorrect. Skipping entry.")
             else:
                 syncer = Syncer(localbox, path, direction)
                 sites.append(syncer)

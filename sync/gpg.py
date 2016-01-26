@@ -1,11 +1,9 @@
 from .database import database_execute
-from pprint import pprint
 from ConfigParser import ConfigParser
 from gnupg import GPG
 from StringIO import StringIO
 from os.path import join
 from os.path import isfile
-from os.path import expandvars
 
 from distutils.sysconfig import project_base
 from .defaults import SITESINI_PATH
@@ -55,7 +53,7 @@ class gpg(object):
             return None
         fingerprint = result1.fingerprints[0]
         sign = self.gpg.sign("test", keyid=fingerprint, passphrase=passphrase)
-        if sign.data == '':
+        if sign.data == '': # pylint disable=E1101
             return None
         else:
             sql = "INSERT INTO keys (site, user, fingerprint) VALUES (?, ?, ?);"

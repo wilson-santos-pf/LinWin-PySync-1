@@ -11,10 +11,12 @@ try:
     from urllib2 import urlopen
     from urllib import urlencode
     from urllib2 import HTTPError
+    from urllib2 import URLError
 except ImportError:
     from urllib.request import urlopen # pylint: disable=F0401,E0611
     from urllib.parse import urlencode # pylint: disable=F0401,E0611
     from urllib.error import HTTPError # pylint: disable=F0401,E0611
+    from urllib.error import URLError # pylint: disable=F0401,E0611
 from random import randint
 
 

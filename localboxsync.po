@@ -5,8 +5,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.1\n"
-"POT-Creation-Date: 2016-01-22 14:17+0100\n"
-"PO-Revision-Date: 2016-01-22 14:20+0100\n"
+"POT-Creation-Date: 2016-01-26 10:28+0100\n"
+"PO-Revision-Date: 2016-01-26 10:28+0100\n"
 "Last-Translator: Ivo Tamboer <ivo@letshare.com>\n"
 "Language-Team: Nederlands <ivo@letshare.com>\n"
 "Language: nl\n"
@@ -18,63 +18,59 @@ msgstr ""
 "X-Generator: Poedit 1.8.5\n"
 "X-Poedit-KeywordsList: translate;lgettext;language\n"
 
-#: sync/gui.py:64
+#: sync/gui.py:68
 msgid "add localbox"
 msgstr "Voeg LocalBox toe"
 
-#: sync/gui.py:106
+#: sync/gui.py:129
 msgid "name box"
 msgstr "Naam Localbox"
 
-#: sync/gui.py:107
+#: sync/gui.py:130
 msgid "localbox url"
 msgstr "LocalBox URL"
 
-#: sync/gui.py:108
+#: sync/gui.py:131
 msgid "local path"
 msgstr "Lokaal pad"
 
-#: sync/gui.py:109
+#: sync/gui.py:132
 msgid "passphrase"
 msgstr "Wachtwoordzin"
 
-#: sync/gui.py:110
+#: sync/gui.py:133
 msgid "folder select"
 msgstr "Selecteer folder"
 
-#: sync/gui.py:114
-msgid "Up/Down/Sync"
-msgstr "Up/Down/Sync"
-
-#: sync/gui.py:120
+#: sync/gui.py:137
 msgid "save"
 msgstr "Sla op"
 
-#: sync/gui.py:122
-msgid "authenticeer"
-msgstr "Authenticeer"
+#: sync/gui.py:139
+msgid "delete"
+msgstr ""
 
-#: sync/gui.py:159
+#: sync/gui.py:180
 msgid "successwindowtitle"
 msgstr "Success"
 
-#: sync/gui.py:160 sync/wizard.py:234
+#: sync/gui.py:181 sync/wizard.py:239
 msgid "config safe success text"
 msgstr "Opslag configuratie succesvol."
 
-#: sync/gui.py:162 sync/wizard.py:236
+#: sync/gui.py:183 sync/wizard.py:241 sync/wizard.py:247
 msgid "closebutton"
 msgstr "Sluit af"
 
-#: sync/gui.py:167
+#: sync/gui.py:188
 msgid "error"
 msgstr "誤"
 
-#: sync/gui.py:169 sync/wizard.py:241
+#: sync/gui.py:190
 msgid "close"
 msgstr "Sluit"
 
-#: sync/gui.py:204
+#: sync/gui.py:227
 msgid "settingstitle"
 msgstr "Instellingen"
 
@@ -137,3 +133,9 @@ msgstr "Nieuwe wachtwoordzin"
 #: sync/wizard.py:167
 msgid "passpharsebutton"
 msgstr "Ok"
+
+#~ msgid "Up/Down/Sync"
+#~ msgstr "Up/Down/Sync"
+
+#~ msgid "authenticeer"
+#~ msgstr "Authenticeer"

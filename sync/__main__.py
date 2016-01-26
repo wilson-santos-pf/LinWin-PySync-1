@@ -7,6 +7,7 @@ from logging import getLogger
 from logging import StreamHandler
 from logging import FileHandler
 from threading import Thread
+from threading import Event
 from os.path import join
 from os.path import expandvars
 from os import makedirs
@@ -46,20 +47,19 @@ class SyncRunner(Thread):
         print("SyncRunner started")
 
     def run(self):
-        global KEEP_RUNNING
-        print("running \"run\"")
-        while(KEEP_RUNNING):
-            self.lock.acquire()
-            # TODO: Direction
-            self.syncer.syncsync()
-            self.lock.release()
+        print("SyncRunner " + self.name + " started")
+        self.lock.acquire()
+        # TODO: Direction
+        self.syncer.syncsync()
+        self.lock.release()
+        print("SyncRunner " + self.name + " finished")
 
 
 def stop_running():
     global KEEP_RUNNING
     KEEP_RUNNING = False
 
-def main():
+def main(waitevent=None):
     """
     temp test function
     """
@@ -97,16 +97,20 @@ def main():
     except (NoSectionError, NoOptionError):
         delay = 3600
     while KEEP_RUNNING:
+        getLogger('localbox').debug("starting loop")
         for syncer in sites:
             runner = SyncRunner(syncer=syncer)
-            runner.run()
+            runner.start()
             #if syncer.direction == 'up':
             #    syncer.upsync()
             #if syncer.direction == 'down':
             #    syncer.downsync()
             #if syncer.direction == 'sync':
             #    syncer.syncsync()
-        sleep(delay)
+        getLogger('localbox').debug("waiting")
+        waitevent.wait(delay)
+        waitevent.clear()
+        getLogger('localbox').debug("done waiting")
 
 if __name__ == '__main__':
     if not isdir(dirname(LOG_PATH)):
@@ -119,8 +123,10 @@ if __name__ == '__main__':
         logger.setLevel(5)
         logger.info("Starting Localbox Sync logger " + name)
 
-    MAIN = Thread(target=main)
+    EVENT = Event()
+    EVENT.clear()
+    MAIN = Thread(target=main, args=[EVENT])
     MAIN.daemon = True
     MAIN.start()
 
-    taskbarmain()
+    taskbarmain(EVENT)

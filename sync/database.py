@@ -27,14 +27,15 @@ except ImportError:
     mysql_connect = None
 
 from sqlite3 import Error as SQLiteError
-
 from sqlite3 import connect as sqlite_connect
+
 
 class DatabaseError(Exception):
     """
     An error related to the database has occurred
     """
     pass
+
 
 def get_sql_log_dict():
     """
@@ -54,6 +55,7 @@ def get_sql_log_dict():
     else:
         ip_address = parser.get('database', 'hostname')
     return {'ip': ip_address, 'user': '', 'path': 'database/'}
+
 
 def database_execute(command, params=None):
     """
@@ -100,14 +102,13 @@ def sqlite_execute(command, params=None):
     try:
         parser = ConfigParser()
         parser.read(SYNCINI_PATH)
- 
         try:
             filename = parser.get('database', 'filename')
         except (NoSectionError, NoOptionError):
             filename = DATABASE_PATH
 
         init_db = not exists(expandvars(filename))
-        #make sure the folder in which the database is saved exists
+        # make sure the folder in which the database is saved exists
         if init_db and not exists(dirname(filename)):
             makedirs(dirname(filename))
         connection = sqlite_connect(filename)
@@ -170,7 +171,8 @@ def mysql_execute(command, params=None):
         connection.commit()
         return cursor.fetchall()
     except MySQLError as mysqlerror:
-        string = "MySQL Error: %d: %s" % (mysqlerror.args[0], mysqlerror.args[1])
+        string = "MySQL Error: %d: %s" % (mysqlerror.args[0],
+                                          mysqlerror.args[1])
         getLogger('database').debug(string, extra=get_sql_log_dict())
     finally:
         try:

@@ -4,7 +4,6 @@ listing of values/variables' default values.
 from os.path import exists
 from os.path import join
 from os.path import expandvars
-#from distutils.sysconfig import project_base
 from os.path import abspath
 from os.path import dirname
 

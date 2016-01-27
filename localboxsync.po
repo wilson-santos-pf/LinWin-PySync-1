@@ -55,7 +55,7 @@ msgid "successwindowtitle"
 msgstr "Success"
 
 #: sync/gui.py:181 sync/wizard.py:239
-msgid "config safe success text"
+msgid "config safe success"
 msgstr "Opslag configuratie succesvol."
 
 #: sync/gui.py:183 sync/wizard.py:241 sync/wizard.py:247

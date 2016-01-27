@@ -5,18 +5,18 @@ from json import loads
 from time import time
 from .database import database_execute
 from logging import getLogger
-from ssl import SSLContext, PROTOCOL_TLSv1 #pylint: disable=E0611
+from ssl import SSLContext, PROTOCOL_TLSv1  # pylint: disable=E0611
 
 try:
+    from urllib import urlencode  # pylint: disable=E0611
     from urllib2 import urlopen
-    from urllib import urlencode
     from urllib2 import HTTPError
     from urllib2 import URLError
 except ImportError:
-    from urllib.request import urlopen # pylint: disable=F0401,E0611
-    from urllib.parse import urlencode # pylint: disable=F0401,E0611
-    from urllib.error import HTTPError # pylint: disable=F0401,E0611
-    from urllib.error import URLError # pylint: disable=F0401,E0611
+    from urllib.request import urlopen  # pylint: disable=F0401,E0611
+    from urllib.parse import urlencode  # pylint: disable=F0401,E0611
+    from urllib.error import HTTPError  # pylint: disable=F0401,E0611
+    from urllib.error import URLError  # pylint: disable=F0401,E0611
 from random import randint
 
 
@@ -26,11 +26,13 @@ from random import randint
 # expiration
 EXPIRATION_LEEWAY = 5
 
+
 class AuthenticationError(Exception):
     """
     Custom error class to signify problems in authentication
     """
     pass
+
 
 def generate_client_id():
     """
@@ -44,6 +46,7 @@ def generate_client_secret():
     generate a client secret
     """
     return 'secret' + str(randint(1, 1000000000))
+
 
 class Authenticator(object):
     """
@@ -61,13 +64,13 @@ class Authenticator(object):
         self.refresh_token = None
         self.load_client_data()
 
-
     def save_client_data(self):
         """
         Save the client credentials for the localbox identified by the label in
-        the database 
+        the database
         """
-        sql = "insert into sites (site, client_id, client_secret) values (?, ?, ?);"
+        sql = "insert into sites (site, client_id, client_secret) " \
+            "values (?, ?, ?);"
         database_execute(sql, (self.label, self.client_id, self.client_secret))
 
     def load_client_data(self):
@@ -76,7 +79,7 @@ class Authenticator(object):
         """
         sql = "select client_id, client_secret from sites where site = ?;"
         result = database_execute(sql, (self.label,))
-        if result != [] and result != None:
+        if result != [] and result is not None:
             getLogger('auth').debug("loading data")
             self.client_id = str(result[0][0])
             self.client_secret = str(result[0][1])
@@ -87,11 +90,10 @@ class Authenticator(object):
         """
         check whether client credentials are available for this host
         """
-        if self.client_id != None and self.client_secret != None:
+        if self.client_id is not None and self.client_secret is not None:
             return True
         else:
             return False
-
 
     def init_authenticate(self, username, password):
         """
@@ -112,8 +114,9 @@ class Authenticator(object):
                     'client_secret': self.client_secret}
         try:
             self._call_authentication_server(authdata)
-            if self.access_token != None:
-                getLogger('auth').debug("Authentication Succesful. Saving Client Data")
+            if self.access_token is not None:
+                getLogger('auth').debug("Authentication Succesful. "
+                                        "Saving Client Data")
                 self.save_client_data()
                 return True
         except (URLError):
@@ -127,7 +130,7 @@ class Authenticator(object):
         """
         Do authentication with the client credentials.
         """
-        if (self.client_id == None) or (self.client_secret == None):
+        if (self.client_id is None) or (self.client_secret is None):
             raise AuthenticationError("Cannot authenticate on client c"
                                       "redentials without client_id an"
                                       "d client_secret")
@@ -135,7 +138,6 @@ class Authenticator(object):
                     'client_id': self.client_id,
                     'client_secret': self.client_secret}
         self._call_authentication_server(authdata)
-
 
     def _call_authentication_server(self, authdata):
         """
@@ -152,22 +154,25 @@ class Authenticator(object):
             self.access_token = json.get('access_token')
             self.refresh_token = json.get('refresh_token')
             self.scope = json.get('scope')
-            self.expires = time() + json.get('expires_in', 0) - EXPIRATION_LEEWAY
+            self.expires = time() + json.get('expires_in', 0) - \
+                EXPIRATION_LEEWAY
         except (HTTPError, URLError) as error:
-            getLogger('auth').debug('HTTPError when calling the authentication server')
+            getLogger('auth').debug('HTTPError when calling '
+                                    'the authentication server')
             if error.code == 400:
                 raise AuthenticationError()
             else:
                 raise error
-
 
     def get_authorization_header(self):
         """
         Returns the Authorization header for authorizing against the
         LocalBox server proper.
         """
-        if self.access_token is None and self.client_id is None and self.client_secret is None:
-            raise AuthenticationError("Please authenticate with resource owner credentials first")
+        if self.access_token is None and self.client_id is None and \
+           self.client_secret is None:
+            raise AuthenticationError("Please authenticate with "
+                                      "resource owner credentials first")
         if time() > self.expires:
             getLogger('auth').debug("Reauthenticating")
             self.authenticate()

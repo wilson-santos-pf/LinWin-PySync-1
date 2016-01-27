@@ -31,13 +31,14 @@ except ImportError:
     # pylint: disable=F0401
     from configparser import NoOptionError
     from configparser import NoSectionError
-    raw_input = input #pylint: disable=W0622,C0103
+    raw_input = input  # pylint: disable=W0622,C0103
+
 
 class SyncRunner(Thread):
-    def __init__(self, group=None, target=None, name=None, args=(), kwargs=None,
-                 verbose=None, syncer=None):
-        Thread.__init__(self, group=group, target=target, name=name, args=args,
-                        kwargs=kwargs, verbose=verbose)
+    def __init__(self, group=None, target=None, name=None, args=(),
+                 kwargs=None, verbose=None, syncer=None):
+        Thread.__init__(self, group=group, target=target, name=name,
+                        args=args, kwargs=kwargs, verbose=verbose)
         self.setDaemon(True)
         self.syncer = syncer
         self.lock = Lock()
@@ -56,11 +57,12 @@ def stop_running():
     global KEEP_RUNNING
     KEEP_RUNNING = False
 
+
 def main(waitevent=None):
     """
     temp test function
     """
-    print "running main"
+    print("running main")
     location = SITESINI_PATH
     configparser = ConfigParser()
     configparser.read(location)
@@ -71,22 +73,26 @@ def main(waitevent=None):
             path = configparser.get(section, 'path')
             direction = configparser.get(section, 'direction')
             localbox = LocalBox(url)
-            authenticator = Authenticator(localbox.get_authentication_url(), section)
+            authenticator = Authenticator(localbox.get_authentication_url(),
+                                          section)
             localbox.add_authenticator(authenticator)
             if not authenticator.has_client_credentials():
-                getLogger('main').info("Don't have client credentials for this host yet."
-                      " We need to log in with your data for once.")
+                getLogger('main').info("Don't have client credentials for "
+                                       "this host yet. We need to log in with"
+                                       " your data for once.")
                 username = raw_input("Username: ")
                 password = getpass("Password: ")
                 try:
                     authenticator.init_authenticate(username, password)
                 except AuthenticationError:
-                    getLogger('main').info("authentication data incorrect. Skipping entry.")
+                    getLogger('main').info("authentication data incorrect. "
+                                           "Skipping entry.")
             else:
                 syncer = Syncer(localbox, path, direction)
                 sites.append(syncer)
         except NoOptionError as error:
-            string = "Skipping '%s' due to missing option '%s'" % (section, error.option)
+            string = "Skipping '%s' due to missing option '%s'" % \
+                     (section, error.option)
             getLogger('main').info(string)
     configparser.read(SYNCINI_PATH)
     try:
@@ -98,12 +104,12 @@ def main(waitevent=None):
         for syncer in sites:
             runner = SyncRunner(syncer=syncer)
             runner.start()
-            #if syncer.direction == 'up':
-            #    syncer.upsync()
-            #if syncer.direction == 'down':
-            #    syncer.downsync()
-            #if syncer.direction == 'sync':
-            #    syncer.syncsync()
+            # if syncer.direction == 'up':
+            #     syncer.upsync()
+            # if syncer.direction == 'down':
+            #     syncer.downsync()
+            # if syncer.direction == 'sync':
+            #     syncer.syncsync()
         getLogger('localbox').debug("waiting")
         waitevent.wait(delay)
         waitevent.clear()

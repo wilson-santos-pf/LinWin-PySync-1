@@ -6,21 +6,23 @@ from Crypto.Cipher.AES import new as AES_Key
 from Crypto.Cipher.AES import MODE_CBC
 
 try:
-    from urllib2 import urlopen
     from urllib2 import HTTPError
     from urllib2 import Request
+    from urllib2 import urlopen
     from urllib import urlencode
     from urllib import quote
     from httplib import BadStatusLine
 except ImportError:
-    from urllib.parse import quote # pylint:disable=F0401,E0611
-    from urllib.request import urlopen # pylint: disable=F0401,E0611
-    from urllib.request import Request # pylint: disable=F0401,E0611
-    from urllib.error import HTTPError # pylint: disable=F0401,E0611
-    from http.client import BadStatusLine # pylint: disable=F0401
+    from urllib.error import HTTPError  # pylint: disable=F0401,E0611
+    from urllib.parse import quote  # pylint: disable=F0401,E0611
+    from urllib.parse import urlencode  # pylint: disable=F0401,E0611
+    from urllib.request import urlopen  # pylint: disable=F0401,E0611
+    from urllib.request import Request  # pylint: disable=F0401,E0611
+    from http.client import BadStatusLine  # pylint: disable=F0401,E0611
 
 from json import loads
-from ssl import SSLContext, PROTOCOL_TLSv1 #pylint: disable=E0611
+from ssl import SSLContext, PROTOCOL_TLSv1  # pylint: disable=E0611
+
 
 class AlreadyAuthenticatedError(Exception):
     """
@@ -50,7 +52,7 @@ class LocalBox(object):
         """
         return an authentication url belonging to a localbox instance.
         """
-        if self.authentication_url != None:
+        if self.authentication_url is not None:
             return self.authentication_url
         else:
             try:
@@ -79,7 +81,8 @@ class LocalBox(object):
         """
         do the actual call to the server with authentication data
         """
-        request.add_header('Authorization', self.authenticator.get_authorization_header())
+        request.add_header('Authorization',
+                           self.authenticator.get_authorization_header())
         non_verifying_context = SSLContext(PROTOCOL_TLSv1)
         return urlopen(request, context=non_verifying_context)
 
@@ -99,7 +102,7 @@ class LocalBox(object):
         metapath = quote(path)
         request = Request(url=self.url + 'lox_api/files' + metapath)
         data = self._make_call(request).read()
-        if self.get_meta(path)['has_keys'] == True:
+        if self.get_meta(path)['has_keys']:
             data = self.decode_file(path, data)
         return data
 
@@ -110,7 +113,8 @@ class LocalBox(object):
         if path[0] != '/':
             path = '/' + path
         metapath = urlencode({'path': path})
-        request = Request(url=self.url + 'lox_api/operations/create_folder/', data=metapath)
+        request = Request(url=self.url + 'lox_api/operations/create_folder/',
+                          data=metapath)
         return self._make_call(request)
 
     def delete(self, path):
@@ -120,7 +124,8 @@ class LocalBox(object):
         if path[0] != '/':
             path = '/' + path
         metapath = urlencode({'path': path})
-        request = Request(url=self.url + 'lox_api/operations/delete/', data=metapath)
+        request = Request(url=self.url + 'lox_api/operations/delete/',
+                          data=metapath)
         return self._make_call(request)
 
     def upload_file(self, path, localpath):
@@ -134,12 +139,13 @@ class LocalBox(object):
         metapath = quote(path)
         contents = open(localpath).read()
         try:
-            if self.get_meta(path)['has_keys'] == True:
+            if self.get_meta(path)['has_keys']:
                 contents = self.encode_file(path, contents)
         except BadStatusLine:
-            #TODO make sure files get encrypted
+            # TODO: make sure files get encrypted
             pass
-        request = Request(url=self.url + 'lox_api/files/' + metapath, data=contents)
+        request = Request(url=self.url + 'lox_api/files/' + metapath,
+                          data=contents)
         return self._make_call(request)
 
     def call_user(self, send_data=None):
@@ -186,4 +192,3 @@ class LocalBox(object):
         key = AES_Key(keydata['key'], MODE_CBC, keydata['iv'])
         key.encrypt(contents)
         return contents
-

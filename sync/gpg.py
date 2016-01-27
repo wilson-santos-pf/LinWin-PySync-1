@@ -1,19 +1,24 @@
 from .database import database_execute
-from ConfigParser import ConfigParser
 from gnupg import GPG
-from StringIO import StringIO
 from os.path import join
 from os.path import isfile
+try:
+    from ConfigParser import ConfigParser  # pylint: disable=F0401
+    from StringIO import StringIO  # pylint: disable=F0401
+except ImportError:
+    from configparser import ConfigParser
+    from io import StringIO
 
 from distutils.sysconfig import project_base
 from .defaults import SITESINI_PATH
+
 
 class gpg(object):
     """
     module to wrap the gnupg library and gpg binary
     """
     def __init__(self, folder_path=None, binary_path=None):
-        #ugly but working
+        # ugly but working
         if binary_path is None:
             binary_path = join(project_base, "gpg", "gpg.exe")
             if not isfile(binary_path):
@@ -23,9 +28,9 @@ class gpg(object):
         self.gpg = GPG(gpgbinary=binary_path, gnupghome=folder_path,
                        verbose=False, options="--allow-non-selfsigned-uid")
 
-    #def remove_passphrase(self, fingerprint):
+    # def remove_passphrase(self, fingerprint):
+    # def add_passphrase(self, fingerprint, passphrase):
 
-    #def add_passphrase(self, fingerprint, passphrase):
     def get_key(self, fingerprint, private):
         return self.gpg.export_keys(fingerprint, private, armor=False)
 
@@ -38,7 +43,6 @@ class gpg(object):
         sql = "INSERT INTO keys (site, user, fingerprint) VALUES (?, ?, ?);"
         database_execute(sql, (site, user, fingerprint))
         return fingerprint
-
 
     def add_keypair(self, public_key, private_key, site, user, passphrase):
         """
@@ -53,22 +57,20 @@ class gpg(object):
             return None
         fingerprint = result1.fingerprints[0]
         sign = self.gpg.sign("test", keyid=fingerprint, passphrase=passphrase)
-        if sign.data == '': # pylint disable=E1101
+        if sign.data == '':  # pylint: disable=E1101
             return None
         else:
-            sql = "INSERT INTO keys (site, user, fingerprint) VALUES (?, ?, ?);"
+            sql = "INSERT INTO keys (site, user, fingerprint) VALUES (?, ?, ?)"
             database_execute(sql, (site, user, fingerprint))
             return fingerprint
 
     def generate(self, passphrase, site, user):
-        data = self.gpg.gen_key_input(key_length = 2048, passphrase=passphrase)
+        data = self.gpg.gen_key_input(key_length=2048, passphrase=passphrase)
         dat = self.gpg.gen_key(data)
         fingerprint = dat.fingerprint
         sql = "INSERT INTO keys (site, user, fingerprint) VALUES (?, ?, ?);"
         database_execute(sql, (site, user, fingerprint))
         return fingerprint
-
-
 
     def encrypt(self, data, site, user):
         """
@@ -77,7 +79,7 @@ class gpg(object):
         sql = "select fingerprint from keys where site = ? and user = ?"
         result = database_execute(sql, (site, user))
         fingerprint = result[0][0]
-        print fingerprint
+        print(fingerprint)
         cryptdata = self.gpg.encrypt_file(StringIO(data), fingerprint,
                                           always_trust=True, armor=False)
         return cryptdata
@@ -89,5 +91,5 @@ class gpg(object):
         configparser = ConfigParser()
         configparser.read(SITESINI_PATH)
         passphrase = configparser.get(site, 'passphrase')
-        return str(self.gpg.decrypt_file(StringIO(data), passphrase=passphrase))
-
+        return str(self.gpg.decrypt_file(StringIO(data),
+                                         passphrase=passphrase))

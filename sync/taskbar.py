@@ -35,19 +35,16 @@ class LocalBoxIcon(wx.TaskBarIcon):
         self.Bind(wx.EVT_TASKBAR_LEFT_DOWN, self.OnTaskBarLeftClick)
         self.Bind(wx.EVT_TASKBAR_RIGHT_DOWN, self.OnTaskBarLeftClick)
 
-
     def iconpath(self):
         return join(get_path('data'), 'localbox', 'localbox.ico')
 
-
-    def start_gui(self, evt=None):
+    def start_gui(self, event):
         gui.main()
 
-    def start_sync(self, evt=None):
+    def start_sync(self):
         self.event.set()
 
-
-    def create_popup_menu(self, evt=None):
+    def create_popup_menu(self):
         """
         This method is called by the base class when it needs to popup
         the menu for the default EVT_RIGHT_DOWN event.  Just create
@@ -63,20 +60,18 @@ class LocalBoxIcon(wx.TaskBarIcon):
         menu.Append(self.TBMENU_CLOSE, "Afsluiten")
         return menu
 
-    def OnTaskBarActivate(self, evt):
+    def OnTaskBarActivate(self, event):
         """"""
         pass
 
-    #----------------------------------------------------------------------
-    def OnTaskBarClose(self, evt):
+    def OnTaskBarClose(self, event):
         """
         Destroy the taskbar icon and frame from the taskbar icon itself
         """
         self.frame.Close()
         exit(1)
 
-    #----------------------------------------------------------------------
-    def OnTaskBarLeftClick(self, evt):
+    def OnTaskBarLeftClick(self, event):
         """
         Create the taskbar-click menu
         """
@@ -84,8 +79,8 @@ class LocalBoxIcon(wx.TaskBarIcon):
         self.PopupMenu(menu)
         menu.Destroy()
 
+
 def taskbarmain(waitevent):
     app = wx.App(False)
-    icon = LocalBoxIcon(waitevent)
+    LocalBoxIcon(waitevent)
     app.MainLoop()
-

@@ -9,7 +9,7 @@ if system() == 'Windows' or system().startswith('CYGWIN'):
 
 setup(
     name = "LocalboxSync",
-    version = "0.1a002",
+    version = "0.1a006",
     packages = find_packages(),
     py_modules = ['gnupg'],
     author = "Letshare Holding B.V.",

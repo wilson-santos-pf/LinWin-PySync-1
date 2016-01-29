@@ -1,5 +1,9 @@
 RequestExecutionLevel admin
 
+LicenseData "LICENSE"
+Name "LocalBox"
+Icon "localbox.ico"
+
 
 !include LogicLib.nsh
 
@@ -14,6 +18,7 @@ ${EndIf}
 StrCpy $INSTDIR "$PROGRAMFILES\Localbox"
 FunctionEnd
 
+Page license
 Page directory
 Page instfiles
 
@@ -39,10 +44,19 @@ Section Install
   CreateDirectory $INSTDIR\Lib\site-packages\sync\locale\nl\LC_MESSAGES
   File "/oname=$INSTDIR\Lib\site-packages\sync\locale\nl\LC_MESSAGES\localboxsync.mo" sync/locale/nl/LC_MESSAGES/localboxsync.mo 
 
+  WriteUninstaller $INSTDIR\LocalBoxUninstaller.exe
+
   ExecWait 'msiexec.exe /i $TEMP\python.msi TARGETDIR="$INSTDIR" /quiet'
   ExecWait "$TEMP\wxpython.exe /silent"
   ExecWait "$TEMP\pycrypto.exe"
   ExecWait "$TEMP\LocalBoxSync.exe"
+SectionEnd
+
+Section "uninstall"
+    delete "$SMSTARTUP\localbox.lnk"
+    delete "$SMPROGRAMS\localbox\localbox sync.lnk"
+    delete "$SMPROGRAMS\localbox\localbox log.lnk"
+    rmDir "$INSTDIR"
 SectionEnd
 
 OutFile LocalBoxInstaller.exe

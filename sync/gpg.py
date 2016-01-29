@@ -1,4 +1,5 @@
 from .database import database_execute
+from logging import getLogger
 from gnupg import GPG
 from os.path import join
 from os.path import isfile
@@ -48,12 +49,20 @@ class gpg(object):
         """
         add a keypair into the gpg key database
         """
+        print public_key
+        print private_key 
+        print site
+        print user
+        print passphrase
         result1 = self.gpg.import_keys(public_key)
         result2 = self.gpg.import_keys(private_key)
         # make sure this is a key _pair_
         try:
             assert result1.fingerprints[0] == result2.fingerprints[0]
-        except (IndexError, AssertionError):
+        except (IndexError, AssertionError) as error:
+            getLogger('error').exception(error)
+            getLogger('gpg').debug(str(result1.fingerprints))
+            getLogger('gpg').debug(str(result2.fingerprints))
             return None
         fingerprint = result1.fingerprints[0]
         sign = self.gpg.sign("test", keyid=fingerprint, passphrase=passphrase)

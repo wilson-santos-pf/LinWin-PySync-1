@@ -2,6 +2,8 @@
 localbox client library
 """
 
+from logging import getLogger
+
 from Crypto.Cipher.AES import new as AES_Key
 from Crypto.Cipher.AES import MODE_CBC
 
@@ -59,10 +61,10 @@ class LocalBox(object):
                 non_verifying_context = SSLContext(PROTOCOL_TLSv1)
                 urlopen(self.url, context=non_verifying_context)
             except BadStatusLine as error:
-                from pprint import pprint
-                pprint(error)
+                getLogger('error').exception(error)
                 raise error
             except HTTPError as error:
+                getLogger('error').exception(error)
                 auth_header = error.headers['WWW-Authenticate'].split(' ')
                 bearer = False
                 for field in auth_header:
@@ -71,7 +73,8 @@ class LocalBox(object):
                             entry = field.split('=', 1)
                             if entry[0].lower() == "domain":
                                 return entry[1][1:-1]
-                        except ValueError:
+                        except ValueError as error:
+                            getLogger('error').exception(error)
                             bearer = False
                     if field.lower() == 'bearer':
                         bearer = True
@@ -141,9 +144,9 @@ class LocalBox(object):
         try:
             if self.get_meta(path)['has_keys']:
                 contents = self.encode_file(path, contents)
-        except BadStatusLine:
+        except BadStatusLine as error:
+            getLogger('error').exception(error)
             # TODO: make sure files get encrypted
-            pass
         request = Request(url=self.url + 'lox_api/files/' + metapath,
                           data=contents)
         return self._make_call(request)
@@ -170,7 +173,8 @@ class LocalBox(object):
         try:
             index = path.index('/')
             cryptopath = path[:index]
-        except ValueError:
+        except ValueError as error:
+            getLogger('error').exception(error)
             cryptopath = path
         request = Request(url=self.url + 'lox_api/key/' + cryptopath)
         return self._make_call(request)

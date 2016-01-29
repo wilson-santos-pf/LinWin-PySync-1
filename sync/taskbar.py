@@ -1,5 +1,6 @@
 import wx
 
+from threading import Thread
 from sysconfig import get_path
 from . import gui
 from os.path import join
@@ -39,7 +40,9 @@ class LocalBoxIcon(wx.TaskBarIcon):
         return join(get_path('data'), 'localbox', 'localbox.ico')
 
     def start_gui(self, event):
-        gui.main()
+        thread = Thread(target=gui.main)
+        thread.daemon = True
+        thread.start()
 
     def start_sync(self):
         self.event.set()

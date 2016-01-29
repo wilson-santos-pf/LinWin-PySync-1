@@ -103,6 +103,7 @@ class Gui(Tk):
                 self.add_entries(dataentry)
 
             except NoOptionError as error:
+                getLogger('error').exception(error)
                 string = "Skipping LocalBox '%s' due to missing option '%s'" %\
                          (section, error.option)
                 getLogger('gui').debug(string)
@@ -196,6 +197,7 @@ class DataEntry(Frame):
                                 command=self.close_exception_window)
             confbutton.grid(row=1, column=0)
         except ConfigError as error:
+            getLogger('error').exception(error)
             self.eventwindow = Tk()
             self.eventwindow.title(smll("error"))
             Label(text=error.message, master=self.eventwindow).grid(row=0,
@@ -226,7 +228,8 @@ class DataEntry(Frame):
             try:
                 authenticator.authenticate()
                 getLogger('auth').info("credentials seem valid")
-            except AuthenticationError:
+            except AuthenticationError as error:
+                getLogger('error').exception(error)
                 getLogger('auth').info("your credentials are invalid")
 
 

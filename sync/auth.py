@@ -119,8 +119,9 @@ class Authenticator(object):
                                         "Saving Client Data")
                 self.save_client_data()
                 return True
-        except (URLError):
-            pass
+        except (URLError) as error:
+            getLogger('error').exception(error)
+            raise(error)
         # clear credentials on failure
         self.client_id = None
         self.client_secret = None
@@ -148,7 +149,7 @@ class Authenticator(object):
         try:
             non_verifying_context = SSLContext(PROTOCOL_TLSv1)
             http_request = urlopen(self.authentication_url, request_data,
-                                   context=non_verifying_context)
+                                   context=non_verifying_context, timeout=5)
             json_text = http_request.read().decode('utf-8')
             json = loads(json_text)
             self.access_token = json.get('access_token')
@@ -157,11 +158,15 @@ class Authenticator(object):
             self.expires = time() + json.get('expires_in', 0) - \
                 EXPIRATION_LEEWAY
         except (HTTPError, URLError) as error:
+            getLogger('error').exception(error)
             getLogger('auth').debug('HTTPError when calling '
                                     'the authentication server')
-            if error.code == 400:
+            getLogger('auth').debug(error.message)
+            if hasattr(error, 'code') and error.code == 400:
+                getLogger('auth').debug('Authentication Problem')
                 raise AuthenticationError()
             else:
+                getLogger('auth').debug('Other (connection) Problem')
                 raise error
 
     def get_authorization_header(self):

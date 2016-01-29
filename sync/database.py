@@ -45,12 +45,14 @@ def get_sql_log_dict():
     parser.read(SYNCINI_PATH)
     try:
         dbtype = parser.get('database', 'type')
-    except (NoSectionError, NoOptionError):
+    except (NoSectionError, NoOptionError) as error:
+        getLogger('error').exception(error)
         dbtype = "sqlite"
     if dbtype in ['sqlite', 'sqlite3']:
         try:
             ip_address = parser.get('database', 'filename')
-        except (NoSectionError, NoOptionError):
+        except (NoSectionError, NoOptionError) as error:
+            getLogger('error').exception(error)
             ip_address = DATABASE_PATH
     else:
         ip_address = parser.get('database', 'hostname')
@@ -72,7 +74,8 @@ def database_execute(command, params=None):
     parser.read(SYNCINI_PATH)
     try:
         dbtype = parser.get('database', 'type')
-    except (NoSectionError, NoOptionError):
+    except (NoSectionError, NoOptionError) as error:
+        getLogger('error').exception(error)
         dbtype = 'sqlite'
 
     if dbtype == "mysql":
@@ -104,7 +107,8 @@ def sqlite_execute(command, params=None):
         parser.read(SYNCINI_PATH)
         try:
             filename = parser.get('database', 'filename')
-        except (NoSectionError, NoOptionError):
+        except (NoSectionError, NoOptionError) as error:
+            getLogger('error').exception(error)
             filename = DATABASE_PATH
 
         init_db = not exists(expandvars(filename))
@@ -129,19 +133,23 @@ def sqlite_execute(command, params=None):
         connection.commit()
         return cursor.fetchall()
     except SQLiteError as sqlerror:
+        getLogger('error').exception(sqlerror)
         raise DatabaseError("SQLite Error: %d: %s" % (sqlerror.args[0],
                                                       sqlerror.args[1]))
-    except (NoSectionError, NoOptionError):
+    except (NoSectionError, NoOptionError) as error:
+        getLogger('error').exception(error)
         raise DatabaseError("Please configure the database section"
                             " in the ini file")
-    except TypeError:
+    except TypeError as error:
+        getLogger('error').exception(error)
         raise DatabaseError("Please configure the 'filename' parameter"
                             " in the [database] section in the ini file")
     finally:
         try:
             if connection:
                 connection.close()
-        except UnboundLocalError:
+        except UnboundLocalError as error:
+            getLogger('error').exception(error)
             pass
 
 
@@ -178,5 +186,5 @@ def mysql_execute(command, params=None):
         try:
             if connection:
                 connection.close()
-        except UnboundLocalError:
-            pass
+        except UnboundLocalError as error:
+            getLogger('error').exception(error)

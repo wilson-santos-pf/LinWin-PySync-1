@@ -243,8 +243,9 @@ class Syncer(object):
         try:
             oldmetadata = self.filepath_metadata.load(OLD_SYNC_STATUS)
             allpaths = set(list(allpaths) + oldmetadata.get_paths())
-        except IOError:
+        except IOError as error:
             getLogger('localbox').info("Old data unknown")
+            getLogger('localbox').exception(error)
             oldmetadata = MetaVFS(path='/', modified_at=0)
         deleted_folders = []
         for path in sorted(allpaths):
@@ -291,8 +292,8 @@ class Syncer(object):
                     try:
                         mkdir(join(self.filepath, path[1:]))
                     # this may happen with precreated directories
-                    except OSError:
-                        pass
+                    except OSError as error:
+                        getLogger('localbox').exception(error)
                 elif (remotefile is None or
                       (localfile.modified_at > remotefile.modified_at + 2)):
                     if localfile.is_dir and remotefile is None:
@@ -320,11 +321,11 @@ class Syncer(object):
                         localfilepath = self.localbox_metadata.get_entry(path)
                         modtime = localfilepath.modified_at
                         utime(localfilename, (time(), modtime))
-                    except HTTPError:
+                    except HTTPError as error:
                         # happens when the containing directory has already
                         # been deleted. Could do with more elegant syncing,
                         # but is otherwise harmless.
-                        pass
+                        getLogger('localbox').exception(error)
                 if localfile is not None and remotefile is None:
                     try:
                         filepath = join(self.filepath, path[1:])
@@ -332,8 +333,8 @@ class Syncer(object):
                             rmtree(filepath)
                         else:
                             remove(filepath)
-                    except HTTPError:
-                        pass
+                    except HTTPError as error:
+                        getLogger('localbox').exception(error)
             else:
                 raise(Exception("unreachable"))
         self.filepath_metadata.save(OLD_SYNC_STATUS)

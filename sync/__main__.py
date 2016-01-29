@@ -59,9 +59,10 @@ def stop_running():
 
 
 def main(waitevent=None):
-    """
-    temp test function
-    """
+  """
+  temp test function
+  """
+  try:
     print("running main")
     location = SITESINI_PATH
     configparser = ConfigParser()
@@ -84,20 +85,23 @@ def main(waitevent=None):
                 password = getpass("Password: ")
                 try:
                     authenticator.init_authenticate(username, password)
-                except AuthenticationError:
+                except AuthenticationError as error:
+                    getLogger('error').exception(error)
                     getLogger('main').info("authentication data incorrect. "
                                            "Skipping entry.")
             else:
                 syncer = Syncer(localbox, path, direction)
                 sites.append(syncer)
         except NoOptionError as error:
+            getLogger('error').exception(error)
             string = "Skipping '%s' due to missing option '%s'" % \
                      (section, error.option)
             getLogger('main').info(string)
     configparser.read(SYNCINI_PATH)
     try:
         delay = int(configparser.get('sync', 'delay'))
-    except (NoSectionError, NoOptionError):
+    except (NoSectionError, NoOptionError) as error:
+        getLogger('error').exception(error)
         delay = 3600
     while KEEP_RUNNING:
         getLogger('localbox').debug("starting loop")
@@ -114,12 +118,15 @@ def main(waitevent=None):
         waitevent.wait(delay)
         waitevent.clear()
         getLogger('localbox').debug("done waiting")
+  except Exception as error:
+    getLogger('error').exception(error)
 
 if __name__ == '__main__':
+  try:
     if not isdir(dirname(LOG_PATH)):
         makedirs(dirname(LOG_PATH))
     handlers = [StreamHandler(stdout), FileHandler(LOG_PATH)]
-    for name in 'main', 'database', 'auth', 'localbox':
+    for name in 'main', 'database', 'auth', 'localbox', 'wizard', 'error', 'gpg':
         logger = getLogger(name)
         for handler in handlers:
             logger.addHandler(handler)
@@ -133,3 +140,5 @@ if __name__ == '__main__':
     MAIN.start()
 
     taskbarmain(EVENT)
+  except Exception as error:
+    getLogger('error').exception(error)

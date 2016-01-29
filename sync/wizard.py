@@ -30,6 +30,7 @@ from .auth import Authenticator
 from .localbox import AlreadyAuthenticatedError
 from .gpg import gpg
 from .defaults import SITESINI_PATH
+from .syncer import Syncer
 
 
 class ConfigError(Exception):
@@ -37,7 +38,7 @@ class ConfigError(Exception):
 
 
 class Errorwindow(Tk):
-    def __init__(self, message, parent=None, language=None):
+    def __init__(self, message, parent=None, language=None, siteslist=[]):
         Tk.__init__(self)
         self.parent = parent
         self.translate = language
@@ -56,8 +57,9 @@ class Errorwindow(Tk):
 
 class Wizard(Tk):
     def __init__(self, parent=None, language=None, configparser=None,
-                 topwindow=None):
+                 topwindow=None, siteslist=[]):
         Tk.__init__(self)
+        self.sites = siteslist
         getLogger('wizard').debug("initializing wizard")
         self.parent = parent
         self.language = language
@@ -314,3 +316,4 @@ class Wizard(Tk):
         getLogger('wizard').debug("wizard endwizard")
         self.topwindow.update_window()
         self.destroy()
+        self.sites.append(Syncer(self.localbox, self.filepath, 'sync'))

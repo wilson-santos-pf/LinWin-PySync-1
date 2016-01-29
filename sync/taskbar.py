@@ -16,8 +16,9 @@ class LocalBoxIcon(wx.TaskBarIcon):
     TBMENU_SYNC = wx.NewId()
     icon_path = None
 
-    def __init__(self, waitevent=None):
+    def __init__(self, waitevent=None, sites=[]):
         wx.TaskBarIcon.__init__(self)
+        self.sites = sites
         # The purpose of this 'frame' is to keep the mainloop of wx alive
         # (which checks for living wx thingies)
         self.frame = wx.Frame(parent=None)
@@ -40,7 +41,7 @@ class LocalBoxIcon(wx.TaskBarIcon):
         return join(get_path('data'), 'localbox', 'localbox.ico')
 
     def start_gui(self, event):
-        thread = Thread(target=gui.main)
+        thread = Thread(target=gui.main, args=[self.sites])
         thread.daemon = True
         thread.start()
 
@@ -83,7 +84,7 @@ class LocalBoxIcon(wx.TaskBarIcon):
         menu.Destroy()
 
 
-def taskbarmain(waitevent):
+def taskbarmain(waitevent = None, sites = []):
     app = wx.App(False)
-    LocalBoxIcon(waitevent)
+    LocalBoxIcon(waitevent, sites = sites)
     app.MainLoop()

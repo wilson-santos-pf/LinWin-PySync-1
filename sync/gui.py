@@ -58,8 +58,9 @@ class UsernameAndPasswordAsker(Tk):
 
 
 class Gui(Tk):
-    def __init__(self, parent=None, configparser=None):
+    def __init__(self, parent=None, configparser=None, siteslist = []):
         Tk.__init__(self, parent)
+        self.siteslist = siteslist
         # TODO: more languages stuff
         self.language = translation('localboxsync', localedir=LOCALE_PATH,
                                     languages=['nl'], fallback=True)
@@ -79,7 +80,7 @@ class Gui(Tk):
         dataentryframe.grid(row=position, column=0)
 
     def add_new(self):
-        wizard = Wizard(None, self.language, self.configparser, self)
+        wizard = Wizard(None, self.language, self.configparser, self, siteslist = self.siteslist)
         wizard.mainloop()
 
     def update_window(self):
@@ -233,11 +234,11 @@ class DataEntry(Frame):
                 getLogger('auth').info("your credentials are invalid")
 
 
-def main():
+def main(sites=[]):
     location = SITESINI_PATH
     configparser = ConfigParser()
     configparser.read(location)
-    gui = Gui(configparser=configparser)
+    gui = Gui(configparser=configparser, siteslist=sites)
     gui.update_window()
     gui.title(gui.language.lgettext('settingstitle'))
     gui.mainloop()

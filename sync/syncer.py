@@ -19,7 +19,7 @@ try:
     from urllib2 import HTTPError
     from cPickle import dump, load
 except ImportError:
-    from urllib.error import HTTPError
+    from urllib.error import HTTPError # pylint: disable=E0611,F0401
     from pickle import dump, load
 
 from .defaults import OLD_SYNC_STATUS

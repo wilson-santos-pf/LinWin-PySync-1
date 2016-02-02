@@ -2,7 +2,6 @@
 Add Localbox Wizard
 """
 from logging import getLogger
-from pprint import pprint
 from os.path import isdir
 from os.path import exists
 from os.path import dirname
@@ -38,7 +37,7 @@ class ConfigError(Exception):
 
 
 class Errorwindow(Tk):
-    def __init__(self, message, parent=None, language=None, siteslist=[]):
+    def __init__(self, message, parent=None, language=None):
         Tk.__init__(self)
         self.parent = parent
         self.translate = language
@@ -57,9 +56,12 @@ class Errorwindow(Tk):
 
 class Wizard(Tk):
     def __init__(self, parent=None, language=None, configparser=None,
-                 topwindow=None, siteslist=[]):
+                 topwindow=None, siteslist=None):
         Tk.__init__(self)
-        self.sites = siteslist
+        if siteslist is None:
+            self.siteslist = []
+        else:
+            self.sites = siteslist
         getLogger('wizard').debug("initializing wizard")
         self.parent = parent
         self.language = language

@@ -7,7 +7,7 @@ try:
     from ConfigParser import ConfigParser  # pylint: disable=F0401
     from StringIO import StringIO  # pylint: disable=F0401
 except ImportError:
-    from configparser import ConfigParser
+    from configparser import ConfigParser #pylint: disable=F0401
     from io import StringIO
 
 from distutils.sysconfig import project_base

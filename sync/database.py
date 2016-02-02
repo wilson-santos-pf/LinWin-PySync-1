@@ -150,7 +150,6 @@ def sqlite_execute(command, params=None):
                 connection.close()
         except UnboundLocalError as error:
             getLogger('error').exception(error)
-            pass
 
 
 def mysql_execute(command, params=None):

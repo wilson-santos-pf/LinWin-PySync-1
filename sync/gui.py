@@ -58,9 +58,12 @@ class UsernameAndPasswordAsker(Tk):
 
 
 class Gui(Tk):
-    def __init__(self, parent=None, configparser=None, siteslist = []):
+    def __init__(self, parent=None, configparser=None, siteslist = None):
         Tk.__init__(self, parent)
-        self.siteslist = siteslist
+        if siteslist is None:
+            self.siteslist = []
+        else:
+            self.siteslist = siteslist
         # TODO: more languages stuff
         self.language = translation('localboxsync', localedir=LOCALE_PATH,
                                     languages=['nl'], fallback=True)

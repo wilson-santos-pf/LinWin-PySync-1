@@ -37,6 +37,7 @@ class ConfigError(Exception):
 
 
 class Errorwindow(Tk):
+
     def __init__(self, message, parent=None, language=None):
         Tk.__init__(self)
         self.parent = parent
@@ -55,6 +56,7 @@ class Errorwindow(Tk):
 
 
 class Wizard(Tk):
+
     def __init__(self, parent=None, language=None, configparser=None,
                  topwindow=None, siteslist=None):
         Tk.__init__(self)
@@ -103,11 +105,13 @@ class Wizard(Tk):
         server = self.validate_server(server_url)
         if server is not None and self.entry2.get() not in \
            self.configparser.sections():
-            getLogger('wizard').debug("server is not not and entry not in sections = true")
+            getLogger('wizard').debug(
+                "server is not not and entry not in sections = true")
             self.server_url = server_url
             self.box_label = self.entry2.get()
         else:
-            getLogger('wizard').debug("server is not not and entry not in sections = false")
+            getLogger('wizard').debug(
+                "server is not not and entry not in sections = false")
             return Errorwindow("Error with input data", parent=self,
                                language=self.translate)
         self.window1()
@@ -181,14 +185,18 @@ class Wizard(Tk):
                 return Errorwindow("Username/Password incorrect", parent=self,
                                    language=self.translate)
         except AlreadyAuthenticatedError as error:
-            getLogger('wizard').debug("ini authenticate = AlreadyAuthenticatedError")
+            getLogger('wizard').debug(
+                "ini authenticate = AlreadyAuthenticatedError")
             getLogger('error').exception(error)
             print("already authenticated")
-            Errorwindow("Already authenticated. Please send localbox-sync.log to show us how you did this. You might want to clear the AppData folder as well", language=self.translate, parent=self)
+            Errorwindow("Already authenticated. Please send localbox-sync.log to show us how you did this. You might want to clear the AppData folder as well",
+                        language=self.translate, parent=self)
         except (HTTPError, URLError) as error:
-            getLogger('wizard').debug("Problem connecting to the authentication server")
+            getLogger('wizard').debug(
+                "Problem connecting to the authentication server")
             getLogger('error').exception(error)
-            Errorwindow("Authentication Problem: " + error.message, language=self.translate, parent=self)
+            Errorwindow("Authentication Problem: " + error.message,
+                        language=self.translate, parent=self)
         getLogger('wizard').debug("launching window3")
         self.window3()
 
@@ -225,7 +233,7 @@ class Wizard(Tk):
         self.passphrasestring = self.passphrase.get()
         if self.pubkey is not None and self.privkey is not None:
             getLogger('wizard').debug("private key found and public key found")
-            
+
             result = keys.add_keypair(self.pubkey[0], self.privkey[0],
                                       self.box_label, self.username,
                                       self.passphrasestring)

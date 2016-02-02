@@ -19,13 +19,14 @@ try:
     from urllib2 import HTTPError
     from cPickle import dump, load
 except ImportError:
-    from urllib.error import HTTPError # pylint: disable=E0611,F0401
+    from urllib.error import HTTPError  # pylint: disable=E0611,F0401
     from pickle import dump, load
 
 from .defaults import OLD_SYNC_STATUS
 
 
 class MetaVFS(object):
+
     """
     virtual meta filesystem
     """
@@ -132,6 +133,7 @@ class MetaVFS(object):
 
 
 class Syncer(object):
+
     def __init__(self, localbox_instance, file_root_path, direction):
         self.localbox = localbox_instance
         self.filepath = file_root_path
@@ -147,7 +149,7 @@ class Syncer(object):
         node = self.localbox.get_meta(path)
         splittime = node['modified_at'].split('.', 1)
         modtime = mktime(strptime(splittime[0], "%Y-%m-%dT%H:%M:%S")) + \
-            float("0."+splittime[1])
+            float("0." + splittime[1])
         vfsnode = MetaVFS(modtime, node['path'], node['is_dir'])
         print("VFSNode Problematica")
         vfsnode.debug_print()

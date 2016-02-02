@@ -43,7 +43,7 @@ class LocalBoxIcon(wx.TaskBarIcon):
     def iconpath(self):
         return join(get_path('data'), 'localbox', 'localbox.ico')
 
-    def start_gui(self, event): #pylint: disable=W0613
+    def start_gui(self, event):  # pylint: disable=W0613
         thread = Thread(target=gui.main, args=[self.sites])
         thread.daemon = True
         thread.start()
@@ -67,18 +67,18 @@ class LocalBoxIcon(wx.TaskBarIcon):
         menu.Append(self.TBMENU_CLOSE, "Afsluiten")
         return menu
 
-    def OnTaskBarActivate(self, event):  #pylint: disable=W0613
+    def OnTaskBarActivate(self, event):  # pylint: disable=W0613
         """"""
         pass
 
-    def OnTaskBarClose(self, event): #pylint: disable=W0613
+    def OnTaskBarClose(self, event):  # pylint: disable=W0613
         """
         Destroy the taskbar icon and frame from the taskbar icon itself
         """
         self.frame.Close()
         exit(1)
 
-    def OnTaskBarLeftClick(self, event): #pylint: disable=W0613
+    def OnTaskBarLeftClick(self, event):  # pylint: disable=W0613
         """
         Create the taskbar-click menu
         """
@@ -87,7 +87,7 @@ class LocalBoxIcon(wx.TaskBarIcon):
         menu.Destroy()
 
 
-def taskbarmain(waitevent = None, sites = None):
+def taskbarmain(waitevent=None, sites=None):
     app = wx.App(False)
-    LocalBoxIcon(waitevent, sites = sites)
+    LocalBoxIcon(waitevent, sites=sites)
     app.MainLoop()

@@ -27,6 +27,7 @@ from ssl import SSLContext, PROTOCOL_TLSv1  # pylint: disable=E0611
 
 
 class AlreadyAuthenticatedError(Exception):
+
     """
     authentication has already been done error.
     """
@@ -34,9 +35,11 @@ class AlreadyAuthenticatedError(Exception):
 
 
 class LocalBox(object):
+
     """
     object representing localbox
     """
+
     def __init__(self, url):
         if url[-1] != '/':
             url = url + "/"

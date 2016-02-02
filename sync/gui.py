@@ -26,6 +26,7 @@ from .wizard import ConfigError
 
 
 class UsernameAndPasswordAsker(Tk):
+
     def __init__(self, authenticator, translator, parent=None):
         Tk.__init__(self, parent)
         self.title(translator.translate("Authentication Data"))
@@ -58,7 +59,8 @@ class UsernameAndPasswordAsker(Tk):
 
 
 class Gui(Tk):
-    def __init__(self, parent=None, configparser=None, siteslist = None):
+
+    def __init__(self, parent=None, configparser=None, siteslist=None):
         Tk.__init__(self, parent)
         if siteslist is None:
             self.siteslist = []
@@ -83,7 +85,8 @@ class Gui(Tk):
         dataentryframe.grid(row=position, column=0)
 
     def add_new(self):
-        wizard = Wizard(None, self.language, self.configparser, self, siteslist = self.siteslist)
+        wizard = Wizard(
+            None, self.language, self.configparser, self, siteslist=self.siteslist)
         wizard.mainloop()
 
     def update_window(self):
@@ -123,6 +126,7 @@ def get_entry_fields(parent, text, value, row):
 
 
 class DataEntry(Frame):
+
     def getfile(self):
         result = tkFileDialog.askdirectory()
         self.local_path.delete(0, END)
@@ -237,10 +241,12 @@ class DataEntry(Frame):
                 getLogger('auth').info("your credentials are invalid")
 
 
-def main(sites=[]):
+def main(sites=None):
     location = SITESINI_PATH
     configparser = ConfigParser()
     configparser.read(location)
+    if sites is None:
+        sites = []
     gui = Gui(configparser=configparser, siteslist=sites)
     gui.update_window()
     gui.title(gui.language.lgettext('settingstitle'))

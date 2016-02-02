@@ -35,6 +35,7 @@ except ImportError:
 
 
 class SyncRunner(Thread):
+
     def __init__(self, group=None, target=None, name=None, args=(),
                  kwargs=None, verbose=None, syncer=None):
         Thread.__init__(self, group=group, target=target, name=name,
@@ -59,86 +60,86 @@ def stop_running():
 
 
 def main(waitevent=None):
-  """
-  temp test function
-  """
-  try:
-    print("running main")
-    location = SITESINI_PATH
-    configparser = ConfigParser()
-    configparser.read(location)
-    sites = []
-    for section in configparser.sections():
-        try:
-            url = configparser.get(section, 'url')
-            path = configparser.get(section, 'path')
-            direction = configparser.get(section, 'direction')
-            localbox = LocalBox(url)
-            authenticator = Authenticator(localbox.get_authentication_url(),
-                                          section)
-            localbox.add_authenticator(authenticator)
-            if not authenticator.has_client_credentials():
-                getLogger('main').info("Don't have client credentials for "
-                                       "this host yet. We need to log in with"
-                                       " your data for once.")
-                username = raw_input("Username: ")
-                password = getpass("Password: ")
-                try:
-                    authenticator.init_authenticate(username, password)
-                except AuthenticationError as error:
-                    getLogger('error').exception(error)
-                    getLogger('main').info("authentication data incorrect. "
-                                           "Skipping entry.")
-            else:
-                syncer = Syncer(localbox, path, direction)
-                sites.append(syncer)
-        except NoOptionError as error:
-            getLogger('error').exception(error)
-            string = "Skipping '%s' due to missing option '%s'" % \
-                     (section, error.option)
-            getLogger('main').info(string)
-    configparser.read(SYNCINI_PATH)
+    """
+    temp test function
+    """
     try:
-        delay = int(configparser.get('sync', 'delay'))
-    except (NoSectionError, NoOptionError) as error:
+        print("running main")
+        location = SITESINI_PATH
+        configparser = ConfigParser()
+        configparser.read(location)
+        sites = []
+        for section in configparser.sections():
+            try:
+                url = configparser.get(section, 'url')
+                path = configparser.get(section, 'path')
+                direction = configparser.get(section, 'direction')
+                localbox = LocalBox(url)
+                authenticator = Authenticator(localbox.get_authentication_url(),
+                                              section)
+                localbox.add_authenticator(authenticator)
+                if not authenticator.has_client_credentials():
+                    getLogger('main').info("Don't have client credentials for "
+                                           "this host yet. We need to log in with"
+                                           " your data for once.")
+                    username = raw_input("Username: ")
+                    password = getpass("Password: ")
+                    try:
+                        authenticator.init_authenticate(username, password)
+                    except AuthenticationError as error:
+                        getLogger('error').exception(error)
+                        getLogger('main').info("authentication data incorrect. "
+                                               "Skipping entry.")
+                else:
+                    syncer = Syncer(localbox, path, direction)
+                    sites.append(syncer)
+            except NoOptionError as error:
+                getLogger('error').exception(error)
+                string = "Skipping '%s' due to missing option '%s'" % \
+                         (section, error.option)
+                getLogger('main').info(string)
+        configparser.read(SYNCINI_PATH)
+        try:
+            delay = int(configparser.get('sync', 'delay'))
+        except (NoSectionError, NoOptionError) as error:
+            getLogger('error').exception(error)
+            delay = 3600
+        while KEEP_RUNNING:
+            getLogger('localbox').debug("starting loop")
+            for syncer in sites:
+                runner = SyncRunner(syncer=syncer)
+                runner.start()
+                # if syncer.direction == 'up':
+                #     syncer.upsync()
+                # if syncer.direction == 'down':
+                #     syncer.downsync()
+                # if syncer.direction == 'sync':
+                #     syncer.syncsync()
+            getLogger('localbox').debug("waiting")
+            waitevent.wait(delay)
+            waitevent.clear()
+            getLogger('localbox').debug("done waiting")
+    except Exception as error: # pylint: disable=W0703
         getLogger('error').exception(error)
-        delay = 3600
-    while KEEP_RUNNING:
-        getLogger('localbox').debug("starting loop")
-        for syncer in sites:
-            runner = SyncRunner(syncer=syncer)
-            runner.start()
-            # if syncer.direction == 'up':
-            #     syncer.upsync()
-            # if syncer.direction == 'down':
-            #     syncer.downsync()
-            # if syncer.direction == 'sync':
-            #     syncer.syncsync()
-        getLogger('localbox').debug("waiting")
-        waitevent.wait(delay)
-        waitevent.clear()
-        getLogger('localbox').debug("done waiting")
-  except Exception as error:
-    getLogger('error').exception(error)
 
 if __name__ == '__main__':
-  try:
-    if not isdir(dirname(LOG_PATH)):
-        makedirs(dirname(LOG_PATH))
-    handlers = [StreamHandler(stdout), FileHandler(LOG_PATH)]
-    for name in 'main', 'database', 'auth', 'localbox', 'wizard', 'error', 'gpg':
-        logger = getLogger(name)
-        for handler in handlers:
-            logger.addHandler(handler)
-        logger.setLevel(5)
-        logger.info("Starting Localbox Sync logger " + name)
+    try:
+        if not isdir(dirname(LOG_PATH)):
+            makedirs(dirname(LOG_PATH))
+        handlers = [StreamHandler(stdout), FileHandler(LOG_PATH)]
+        for name in 'main', 'database', 'auth', 'localbox', 'wizard', 'error', 'gpg':
+            logger = getLogger(name)
+            for handler in handlers:
+                logger.addHandler(handler)
+            logger.setLevel(5)
+            logger.info("Starting Localbox Sync logger " + name)
 
-    EVENT = Event()
-    EVENT.clear()
-    MAIN = Thread(target=main, args=[EVENT])
-    MAIN.daemon = True
-    MAIN.start()
+        EVENT = Event()
+        EVENT.clear()
+        MAIN = Thread(target=main, args=[EVENT])
+        MAIN.daemon = True
+        MAIN.start()
 
-    taskbarmain(EVENT)
-  except Exception as error:
-    getLogger('error').exception(error)
+        taskbarmain(EVENT)
+    except Exception as error:
+        getLogger('error').exception(error)

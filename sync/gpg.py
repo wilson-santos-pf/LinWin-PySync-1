@@ -7,7 +7,7 @@ try:
     from ConfigParser import ConfigParser  # pylint: disable=F0401
     from StringIO import StringIO  # pylint: disable=F0401
 except ImportError:
-    from configparser import ConfigParser #pylint: disable=F0401
+    from configparser import ConfigParser  # pylint: disable=F0401
     from io import StringIO
 
 from distutils.sysconfig import project_base
@@ -15,9 +15,11 @@ from .defaults import SITESINI_PATH
 
 
 class gpg(object):
+
     """
     module to wrap the gnupg library and gpg binary
     """
+
     def __init__(self, folder_path=None, binary_path=None):
         # ugly but working
         if binary_path is None:
@@ -50,7 +52,7 @@ class gpg(object):
         add a keypair into the gpg key database
         """
         print public_key
-        print private_key 
+        print private_key
         print site
         print user
         print passphrase

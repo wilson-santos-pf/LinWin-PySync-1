@@ -6,7 +6,7 @@ clean:
 winstall: clean  installer
 
 installer: exe
-	makensis winstall.nsis
+	makensis winstall.nsh
 
 exe:
 	wine python.exe setup.py bdist_wininst

@@ -141,5 +141,5 @@ if __name__ == '__main__':
         MAIN.start()
 
         taskbarmain(EVENT)
-    except Exception as error:
+    except Exception as error: # pylint: disable=W0703
         getLogger('error').exception(error)

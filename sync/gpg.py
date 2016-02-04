@@ -3,6 +3,7 @@ from logging import getLogger
 from gnupg import GPG
 from os.path import join
 from os.path import isfile
+from base64 import b64encode
 try:
     from ConfigParser import ConfigParser  # pylint: disable=F0401
     from StringIO import StringIO  # pylint: disable=F0401
@@ -35,7 +36,8 @@ class gpg(object):
     # def add_passphrase(self, fingerprint, passphrase):
 
     def get_key(self, fingerprint, private):
-        return self.gpg.export_keys(fingerprint, private, armor=False)
+        key = self.gpg.export_keys(fingerprint, private, armor=False)
+        return b64encode(key.encode('ISO8859-1'))
 
     def add_pubkey(self, public_key, site, user):
         """

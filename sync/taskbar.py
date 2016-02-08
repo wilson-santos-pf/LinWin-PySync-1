@@ -2,8 +2,12 @@ import wx
 
 from threading import Thread
 from sysconfig import get_path
-from . import gui
 from os.path import join
+from logging import getLogger
+from threading import Event
+
+from . import gui
+from .gui import main
 
 
 class LocalBoxIcon(wx.TaskBarIcon):
@@ -17,6 +21,15 @@ class LocalBoxIcon(wx.TaskBarIcon):
     icon_path = None
 
     def __init__(self, waitevent=None, sites=None):
+        location = SITESINI_PATH
+        configparser = ConfigParser()
+        configparser.read(location)
+        gui = Gui(configparser=configparser, siteslist=sites)
+
+        self.guievent = Event()
+        self.guithread = Thread(target=gui.main, args=[gui, self.guievent, sites])
+        self.guithread.daemon = True
+        self.started = False
         wx.TaskBarIcon.__init__(self)
         if sites != None:
             self.sites = sites
@@ -44,9 +57,16 @@ class LocalBoxIcon(wx.TaskBarIcon):
         return join(get_path('data'), 'localbox', 'localbox.ico')
 
     def start_gui(self, event):  # pylint: disable=W0613
-        thread = Thread(target=gui.main, args=[self.sites])
-        thread.daemon = True
-        thread.start()
+        getLogger('taskbar').debug("Starting GUI")
+        getLogger('taskbar').debug("GUI thread defined, starting it")
+        if not self.started:
+            self.guithread.start()
+        getLogger('taskbar').debug("Setting event for gui to start")
+        self.guievent.set()
+        getLogger('taskbar').debug("GUI thread should be running")
+        self.gui.deiconify()
+        getLogger('taskbar').debug("GUI should be shown")
+
 
     def start_sync(self):
         self.event.set()
@@ -76,6 +96,7 @@ class LocalBoxIcon(wx.TaskBarIcon):
         Destroy the taskbar icon and frame from the taskbar icon itself
         """
         self.frame.Close()
+        self.started = False
         exit(1)
 
     def OnTaskBarLeftClick(self, event):  # pylint: disable=W0613

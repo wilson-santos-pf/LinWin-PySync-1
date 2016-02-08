@@ -1,4 +1,5 @@
 from Tkinter import Tk
+# from Tkinter import Toplevel as Tk
 from Tkinter import Frame
 from Tkinter import Label
 from Tkinter import Entry
@@ -34,11 +35,11 @@ class UsernameAndPasswordAsker(Tk):
 
         Label(self, text=translator.translate("username")).grid(row=0,
                                                                 column=0)
-        self.username = Entry(self)
+        self.username = Entry(self, width=30)
         self.username.grid(row=0, column=1)
         Label(self, text=translator.translate("password")).grid(row=1,
                                                                 column=0)
-        self.password = Entry(self, show="*")
+        self.password = Entry(self, show="*", width=30)
         self.password.grid(row=1, column=1)
         self.button = Button(master=self, text=translator.translate("OK"),
                              command=self.stop_window)
@@ -49,7 +50,8 @@ class UsernameAndPasswordAsker(Tk):
         if self.authenticator.init_authenticate(self.username.get(),
                                                 self.password.get()):
             self.lock.set()
-            self.destroy()
+            #self.destroy()
+            self.visible = False
         else:
             # TODO: window saying authentication failed
             pass
@@ -61,7 +63,10 @@ class UsernameAndPasswordAsker(Tk):
 class Gui(Tk):
 
     def __init__(self, parent=None, configparser=None, siteslist=None):
+        print "GUi IniTing"
         Tk.__init__(self, parent)
+        print "tk Inited"
+        self.protocol("WM_DELETE_WINDOW", self.cleanup)
         if siteslist is None:
             self.siteslist = []
         else:
@@ -73,6 +78,11 @@ class Gui(Tk):
         self.configparser = configparser
         self.lift()
         self.button = None
+
+    def cleanup(self):
+        getLogger('gui').debug('starting cleanup destruction')
+        self.iconify()
+        getLogger('gui').debug('completed cleanup destruction')
 
     def localbox_button(self):
         self.button = Button(text=self.language.lgettext("add localbox"),
@@ -119,7 +129,7 @@ class Gui(Tk):
 def get_entry_fields(parent, text, value, row):
     label = Label(text=text, master=parent, justify="left")
     label.grid(column=0, row=row)
-    entry = Entry(master=parent)
+    entry = Entry(master=parent, width=30)
     entry.insert(0, value)
     entry.grid(column=1, row=row)
     return entry
@@ -240,17 +250,31 @@ class DataEntry(Frame):
                 getLogger('error').exception(error)
                 getLogger('auth').info("your credentials are invalid")
 
+    def show(self):
+        self.deiconify()
 
-def main(sites=None):
+def main(gui=None, event=None, sites=None):
+    getLogger('gui').debug("Gui Main Started")
     location = SITESINI_PATH
     configparser = ConfigParser()
     configparser.read(location)
-    if sites is None:
-        sites = []
     gui = Gui(configparser=configparser, siteslist=sites)
-    gui.update_window()
-    gui.title(gui.language.lgettext('settingstitle'))
-    gui.mainloop()
+    while True:
+        getLogger('gui').debug("While loop start")
+        event.wait()
+        getLogger('gui').debug("Waiting done")
+        event.clear()
+        getLogger('gui').debug("Clearing done")
+        if sites is None:
+            sites = []
+        getLogger('gui').debug("Launching GUI class")
+        gui.deiconify()
+        getLogger('gui').debug("Launched GUI class")
+        gui.update_window()
+        gui.title(gui.language.lgettext('settingstitle'))
+        getLogger('gui').debug("Launching GUI main loop")
+        gui.mainloop()
+        getLogger('gui').debug("done with GUI mainloop")
 
 if __name__ == "__main__":
     main()

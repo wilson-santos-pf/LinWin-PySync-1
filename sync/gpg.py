@@ -4,6 +4,7 @@ from gnupg import GPG
 from os.path import join
 from os.path import isfile
 from base64 import b64encode
+from base64 import b64decode
 try:
     from ConfigParser import ConfigParser  # pylint: disable=F0401
     from StringIO import StringIO  # pylint: disable=F0401
@@ -58,8 +59,13 @@ class gpg(object):
         print site
         print user
         print passphrase
-        result1 = self.gpg.import_keys(public_key)
-        result2 = self.gpg.import_keys(private_key)
+        try:
+            result1 = self.gpg.import_keys(b64decode(public_key))
+            result2 = self.gpg.import_keys(b64decode(private_key))
+        except TypeError as error:
+            print error
+            print public_key
+            print private_key 
         # make sure this is a key _pair_
         try:
             assert result1.fingerprints[0] == result2.fingerprints[0]

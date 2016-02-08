@@ -86,12 +86,12 @@ class Wizard(Tk):
 
         self.label = Label(master=self, text=self.translate("urltext"))
         self.label.grid(row=0, column=0)
-        self.entry = Entry(master=self)
+        self.entry = Entry(master=self, width=30)
         self.entry.insert(0, "https://localhost:8001/")
         self.entry.grid(row=1, column=0)
         self.label2 = Label(master=self, text=self.translate("labeltext"))
         self.label2.grid(row=2, column=0)
-        self.entry2 = Entry(master=self)
+        self.entry2 = Entry(master=self, width=30)
         self.entry2.insert(0, "label")
         self.entry2.grid(row=3, column=0)
         self.button = Button(master=self, text=self.translate("buttontext"),
@@ -122,7 +122,7 @@ class Wizard(Tk):
         # folder
         self.label = Label(master=self, text=self.translate("label2text"))
         self.label.grid(row=0, column=0)
-        self.entry = Entry(master=self)
+        self.entry = Entry(master=self, width=30)
         self.entry.grid(row=1, column=0)
         self.chooser = Button(master=self, text=self.translate("choosertext"),
                               command=self.get_file)
@@ -158,11 +158,11 @@ class Wizard(Tk):
         self.label = Label(master=self,
                            text=self.translate("label3textusername"))
         self.label.grid(row=0, column=0)
-        self.entry = Entry(master=self)
+        self.entry = Entry(master=self, width=30)
         self.entry.grid(row=1, column=0)
         self.label2 = Label(master=self, text=self.translate("label3textpass"))
         self.label2.grid(row=2, column=0)
-        self.password = Entry(master=self, show="*")
+        self.password = Entry(master=self, show="*", width=30)
         self.password.grid(row=3, column=0)
         self.button = Button(master=self, text=self.translate("button3text"),
                              command=self.next_3)
@@ -216,10 +216,11 @@ class Wizard(Tk):
             self.pubkey = result['public_key']
         else:
             getLogger('wizard').debug("private key or public key not found")
+            getLogger('wizard').debug(str(result))
             self.label = Label(master=self,
                                text=self.translate("new passphrase"))
         self.label.grid(row=0, column=0)
-        self.passphrase = Entry(master=self)
+        self.passphrase = Entry(master=self, width=30)
         self.passphrase.grid(row=1, column=0)
         self.button = Button(master=self,
                              text=self.translate("passpharsebutton"),
@@ -234,7 +235,7 @@ class Wizard(Tk):
         if self.pubkey is not None and self.privkey is not None:
             getLogger('wizard').debug("private key found and public key found")
 
-            result = keys.add_keypair(self.pubkey[0], self.privkey[0],
+            result = keys.add_keypair(self.pubkey, self.privkey,
                                       self.box_label, self.username,
                                       self.passphrasestring)
             if result is None:

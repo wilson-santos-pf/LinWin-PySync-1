@@ -127,7 +127,7 @@ if __name__ == '__main__':
         if not isdir(dirname(LOG_PATH)):
             makedirs(dirname(LOG_PATH))
         handlers = [StreamHandler(stdout), FileHandler(LOG_PATH)]
-        for name in 'main', 'database', 'auth', 'localbox', 'wizard', 'error', 'gpg':
+        for name in 'main', 'database', 'auth', 'localbox', 'wizard', 'error', 'gpg', 'taskbar', 'gui':
             logger = getLogger(name)
             for handler in handlers:
                 logger.addHandler(handler)

@@ -59,45 +59,52 @@ def stop_running():
     KEEP_RUNNING = False
 
 
+def get_site_list():
+    location = SITESINI_PATH
+    configparser = ConfigParser()
+    configparser.read(location)
+    sites = []
+    for section in configparser.sections():
+        try:
+            url = configparser.get(section, 'url')
+            path = configparser.get(section, 'path')
+            direction = configparser.get(section, 'direction')
+            localbox = LocalBox(url)
+            authenticator = Authenticator(localbox.get_authentication_url(),
+                                          section)
+            localbox.add_authenticator(authenticator)
+            if not authenticator.has_client_credentials():
+                getLogger('main').info("Don't have client credentials for "
+                                       "this host yet. We need to log in with"
+                                       " your data for once.")
+                username = raw_input("Username: ")
+                password = getpass("Password: ")
+                try:
+                    authenticator.init_authenticate(username, password)
+                except AuthenticationError as error:
+                    getLogger('error').exception(error)
+                    getLogger('main').info("authentication data incorrect. "
+                                           "Skipping entry.")
+            else:
+                syncer = Syncer(localbox, path, direction)
+                sites.append(syncer)
+        except NoOptionError as error:
+            getLogger('error').exception(error)
+            string = "Skipping '%s' due to missing option '%s'" % \
+                     (section, error.option)
+            getLogger('main').info(string)
+    return sites
+
+
 def main(waitevent=None):
     """
     temp test function
     """
+    sites = get_site_list()
+    location = SITESINI_PATH
+    configparser = ConfigParser()
+    configparser.read(location)
     try:
-        print("running main")
-        location = SITESINI_PATH
-        configparser = ConfigParser()
-        configparser.read(location)
-        sites = []
-        for section in configparser.sections():
-            try:
-                url = configparser.get(section, 'url')
-                path = configparser.get(section, 'path')
-                direction = configparser.get(section, 'direction')
-                localbox = LocalBox(url)
-                authenticator = Authenticator(localbox.get_authentication_url(),
-                                              section)
-                localbox.add_authenticator(authenticator)
-                if not authenticator.has_client_credentials():
-                    getLogger('main').info("Don't have client credentials for "
-                                           "this host yet. We need to log in with"
-                                           " your data for once.")
-                    username = raw_input("Username: ")
-                    password = getpass("Password: ")
-                    try:
-                        authenticator.init_authenticate(username, password)
-                    except AuthenticationError as error:
-                        getLogger('error').exception(error)
-                        getLogger('main').info("authentication data incorrect. "
-                                               "Skipping entry.")
-                else:
-                    syncer = Syncer(localbox, path, direction)
-                    sites.append(syncer)
-            except NoOptionError as error:
-                getLogger('error').exception(error)
-                string = "Skipping '%s' due to missing option '%s'" % \
-                         (section, error.option)
-                getLogger('main').info(string)
         configparser.read(SYNCINI_PATH)
         try:
             delay = int(configparser.get('sync', 'delay'))
@@ -116,11 +123,15 @@ def main(waitevent=None):
                 # if syncer.direction == 'sync':
                 #     syncer.syncsync()
             getLogger('localbox').debug("waiting")
-            waitevent.wait(delay)
-            waitevent.clear()
-            getLogger('localbox').debug("done waiting")
+            if waitevent.wait(delay):
+                getLogger('localbox').debug("stopped waiting")
+                waitevent.clear()
+            else:
+                getLogger('localbox').debug("done waiting")
+                
     except Exception as error: # pylint: disable=W0703
         getLogger('error').exception(error)
+
 
 if __name__ == '__main__':
     try:

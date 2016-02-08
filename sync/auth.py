@@ -124,7 +124,7 @@ class Authenticator(object):
                 return True
         except (URLError) as error:
             getLogger('error').exception(error)
-            raise(error)
+            raise error
         # clear credentials on failure
         self.client_id = None
         self.client_secret = None

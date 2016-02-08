@@ -14,7 +14,6 @@ from os.path import dirname
 from os import makedirs
 from logging import getLogger
 from gettext import translation
-from threading import Event
 
 from .auth import Authenticator
 from .auth import AuthenticationError
@@ -44,13 +43,12 @@ class UsernameAndPasswordAsker(Tk):
         self.button = Button(master=self, text=translator.translate("OK"),
                              command=self.stop_window)
         self.button.grid(row=2)
-        self.lock = Event()
 
     def stop_window(self):
         if self.authenticator.init_authenticate(self.username.get(),
                                                 self.password.get()):
             self.lock.set()
-            #self.destroy()
+            self.destroy()
             self.visible = False
         else:
             # TODO: window saying authentication failed
@@ -66,7 +64,6 @@ class Gui(Tk):
         print "GUi IniTing"
         Tk.__init__(self, parent)
         print "tk Inited"
-        self.protocol("WM_DELETE_WINDOW", self.cleanup)
         if siteslist is None:
             self.siteslist = []
         else:
@@ -78,11 +75,7 @@ class Gui(Tk):
         self.configparser = configparser
         self.lift()
         self.button = None
-
-    def cleanup(self):
-        getLogger('gui').debug('starting cleanup destruction')
-        self.iconify()
-        getLogger('gui').debug('completed cleanup destruction')
+        self.update_window()
 
     def localbox_button(self):
         self.button = Button(text=self.language.lgettext("add localbox"),
@@ -250,31 +243,22 @@ class DataEntry(Frame):
                 getLogger('error').exception(error)
                 getLogger('auth').info("your credentials are invalid")
 
-    def show(self):
-        self.deiconify()
-
 def main(gui=None, event=None, sites=None):
     getLogger('gui').debug("Gui Main Started")
     location = SITESINI_PATH
     configparser = ConfigParser()
     configparser.read(location)
-    gui = Gui(configparser=configparser, siteslist=sites)
-    while True:
-        getLogger('gui').debug("While loop start")
-        event.wait()
-        getLogger('gui').debug("Waiting done")
-        event.clear()
-        getLogger('gui').debug("Clearing done")
-        if sites is None:
-            sites = []
-        getLogger('gui').debug("Launching GUI class")
-        gui.deiconify()
-        getLogger('gui').debug("Launched GUI class")
-        gui.update_window()
-        gui.title(gui.language.lgettext('settingstitle'))
-        getLogger('gui').debug("Launching GUI main loop")
-        gui.mainloop()
-        getLogger('gui').debug("done with GUI mainloop")
+    if gui is None:
+        getLogger('gui').debug("Started a new gui")
+        gui = Gui(configparser=configparser, siteslist=sites)
+
+    getLogger('gui').debug("While loop start")
+    if sites is None:
+        sites = []
+    gui.title(gui.language.lgettext('settingstitle'))
+    getLogger('gui').debug("Launching GUI main loop")
+    gui.mainloop()
+    getLogger('gui').debug("done with GUI mainloop")
 
 if __name__ == "__main__":
     main()

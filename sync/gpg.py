@@ -65,7 +65,7 @@ class gpg(object):
         except TypeError as error:
             print error
             print public_key
-            print private_key 
+            print private_key
         # make sure this is a key _pair_
         try:
             assert result1.fingerprints[0] == result2.fingerprints[0]

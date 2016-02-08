@@ -1,13 +1,19 @@
+from sys import executable
+from subprocess import call
+
 import wx
 
+try:
+    from ConfigParser import ConfigParser
+except ImportError:
+    from configparser import ConfigParser
 from threading import Thread
 from sysconfig import get_path
 from os.path import join
 from logging import getLogger
 from threading import Event
 
-from . import gui
-from .gui import main
+from .defaults import SITESINI_PATH
 
 
 class LocalBoxIcon(wx.TaskBarIcon):
@@ -24,12 +30,12 @@ class LocalBoxIcon(wx.TaskBarIcon):
         location = SITESINI_PATH
         configparser = ConfigParser()
         configparser.read(location)
-        gui = Gui(configparser=configparser, siteslist=sites)
+        #gui = Gui(configparser=configparser, siteslist=sites)
 
-        self.guievent = Event()
-        self.guithread = Thread(target=gui.main, args=[gui, self.guievent, sites])
-        self.guithread.daemon = True
-        self.started = False
+        #self.guievent = Event()
+        #self.guithread = Thread(target=gui.main, args=[gui, self.guievent, sites])
+        #self.guithread.daemon = True
+        #self.started = False
         wx.TaskBarIcon.__init__(self)
         if sites != None:
             self.sites = sites
@@ -50,25 +56,18 @@ class LocalBoxIcon(wx.TaskBarIcon):
         self.Bind(wx.EVT_MENU, self.OnTaskBarClose, id=self.TBMENU_CLOSE)
         self.Bind(wx.EVT_MENU, self.start_gui, id=self.TBMENU_GUI)
         self.Bind(wx.EVT_MENU, self.start_sync, id=self.TBMENU_SYNC)
-        self.Bind(wx.EVT_TASKBAR_LEFT_DOWN, self.OnTaskBarLeftClick)
-        self.Bind(wx.EVT_TASKBAR_RIGHT_DOWN, self.OnTaskBarLeftClick)
+        self.Bind(wx.EVT_TASKBAR_LEFT_DOWN, self.OnTaskBarClick)
+        self.Bind(wx.EVT_TASKBAR_RIGHT_DOWN, self.OnTaskBarClick)
 
     def iconpath(self):
         return join(get_path('data'), 'localbox', 'localbox.ico')
 
     def start_gui(self, event):  # pylint: disable=W0613
         getLogger('taskbar').debug("Starting GUI")
-        getLogger('taskbar').debug("GUI thread defined, starting it")
-        if not self.started:
-            self.guithread.start()
-        getLogger('taskbar').debug("Setting event for gui to start")
-        self.guievent.set()
-        getLogger('taskbar').debug("GUI thread should be running")
-        self.gui.deiconify()
-        getLogger('taskbar').debug("GUI should be shown")
+        #self.guithread = Thread(target=gui.main, args=[gui, self.guievent, sites])
+        Thread(target=call, args=[[executable, '-m', 'sync.gui']]).start()
 
-
-    def start_sync(self):
+    def start_sync(self, wx_event):
         self.event.set()
 
     def create_popup_menu(self):
@@ -99,7 +98,7 @@ class LocalBoxIcon(wx.TaskBarIcon):
         self.started = False
         exit(1)
 
-    def OnTaskBarLeftClick(self, event):  # pylint: disable=W0613
+    def OnTaskBarClick(self, event):  # pylint: disable=W0613
         """
         Create the taskbar-click menu
         """

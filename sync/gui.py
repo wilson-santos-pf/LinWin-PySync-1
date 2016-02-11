@@ -243,6 +243,7 @@ class DataEntry(Frame):
                 getLogger('error').exception(error)
                 getLogger('auth').info("your credentials are invalid")
 
+
 def main(gui=None, event=None, sites=None):
     getLogger('gui').debug("Gui Main Started")
     location = SITESINI_PATH

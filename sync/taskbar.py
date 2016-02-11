@@ -11,7 +11,6 @@ from threading import Thread
 from sysconfig import get_path
 from os.path import join
 from logging import getLogger
-from threading import Event
 
 from .defaults import SITESINI_PATH
 
@@ -30,14 +29,8 @@ class LocalBoxIcon(wx.TaskBarIcon):
         location = SITESINI_PATH
         configparser = ConfigParser()
         configparser.read(location)
-        #gui = Gui(configparser=configparser, siteslist=sites)
-
-        #self.guievent = Event()
-        #self.guithread = Thread(target=gui.main, args=[gui, self.guievent, sites])
-        #self.guithread.daemon = True
-        #self.started = False
         wx.TaskBarIcon.__init__(self)
-        if sites != None:
+        if sites is not None:
             self.sites = sites
         else:
             self.sites = []
@@ -64,7 +57,6 @@ class LocalBoxIcon(wx.TaskBarIcon):
 
     def start_gui(self, event):  # pylint: disable=W0613
         getLogger('taskbar').debug("Starting GUI")
-        #self.guithread = Thread(target=gui.main, args=[gui, self.guievent, sites])
         Thread(target=call, args=[[executable, '-m', 'sync.gui']]).start()
 
     def start_sync(self, wx_event):

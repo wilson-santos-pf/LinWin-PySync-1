@@ -128,8 +128,7 @@ def main(waitevent=None):
                 waitevent.clear()
             else:
                 getLogger('localbox').debug("done waiting")
-                
-    except Exception as error: # pylint: disable=W0703
+    except Exception as error:  # pylint: disable=W0703
         getLogger('error').exception(error)
 
 
@@ -138,7 +137,8 @@ if __name__ == '__main__':
         if not isdir(dirname(LOG_PATH)):
             makedirs(dirname(LOG_PATH))
         handlers = [StreamHandler(stdout), FileHandler(LOG_PATH)]
-        for name in 'main', 'database', 'auth', 'localbox', 'wizard', 'error', 'gpg', 'taskbar', 'gui':
+        for name in 'main', 'database', 'auth', 'localbox', 'wizard', 'error', \
+                'gpg', 'taskbar', 'gui':
             logger = getLogger(name)
             for handler in handlers:
                 logger.addHandler(handler)
@@ -152,5 +152,5 @@ if __name__ == '__main__':
         MAIN.start()
 
         taskbarmain(EVENT)
-    except Exception as error: # pylint: disable=W0703
+    except Exception as error:  # pylint: disable=W0703
         getLogger('error').exception(error)

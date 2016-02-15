@@ -1,4 +1,4 @@
-# Localbox Sync Dutch Translation File.
+# LocalBox Sync Dutch Translation File.
 # Copyright (C) 2016 Libbit
 # Ivo Tamboer <ivo@letshare.com>, 2016
 #
@@ -24,7 +24,7 @@ msgstr "Voeg LocalBox toe"
 
 #: sync/gui.py:129
 msgid "name box"
-msgstr "Naam Localbox"
+msgstr "Naam LocalBox"
 
 #: sync/gui.py:130
 msgid "localbox url"

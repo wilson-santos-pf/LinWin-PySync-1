@@ -41,13 +41,6 @@ InstallDir "$PROGRAMFILES\Localbox"
 InstallDirRegKey HKLM "Software\Python\PythonCore\2.7\InstallPath" ""
 
 Function .onInit
-  UserInfo::GetAccountType
-  pop $0
-  ${If} $0 != "admin" ;Require admin rights on NT4+
-      MessageBox mb_iconstop "Administrator rights required!"
-      SetErrorLevel 740 ;ERROR_ELEVATION_REQUIRED
-     Quit
-  ${EndIf}
   ;StrCpy $INSTDIR "$PROGRAMFILES\Localbox"
   # using the first python install we can find as install dir
   EnumRegKey $0 HKLM "Software\Python\PythonCore" 0
@@ -61,9 +54,17 @@ Function .onInit
       StrCpy $INSTDIR "$1"
     ${EndIf}
   ${EndIf}
-
-  ${LogSetFileName} "install.log"
+  ${LogSetFileName} "$INSTDIR\install.log"
   ${LogSetOn}
+  UserInfo::GetAccountType
+  pop $0
+  ${If} $0 != "admin" ;Require admin rights on NT4+
+      MessageBox mb_iconstop "Administrator rights required!"
+      SetErrorLevel 740 ;ERROR_ELEVATION_REQUIRED
+      ${LogText} "Tried instalation without being administrator."
+      Quit
+  ${EndIf}
+
 FunctionEnd
 
 Function .onVerifyInstDir

@@ -143,7 +143,7 @@ if __name__ == '__main__':
             for handler in handlers:
                 logger.addHandler(handler)
             logger.setLevel(5)
-            logger.info("Starting Localbox Sync logger " + name)
+            logger.info("Starting LocalBox Sync logger " + name)
 
         EVENT = Event()
         EVENT.clear()

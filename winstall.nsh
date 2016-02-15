@@ -36,12 +36,11 @@ Done:
 FunctionEnd
 
 # Where we want the files installed on a 'clean' system
-InstallDir "$PROGRAMFILES\Localbox"
+InstallDir "$PROGRAMFILES\LocalBox"
 # Using the python location for a python interpreter installed by us
 InstallDirRegKey HKLM "Software\Python\PythonCore\2.7\InstallPath" ""
 
 Function .onInit
-  ;StrCpy $INSTDIR "$PROGRAMFILES\Localbox"
   # using the first python install we can find as install dir
   EnumRegKey $0 HKLM "Software\Python\PythonCore" 0
   ReadRegStr $1 HKLM "Software\Python\PythonCore\$0\InstallPath" ""
@@ -54,7 +53,7 @@ Function .onInit
       StrCpy $INSTDIR "$1"
     ${EndIf}
   ${EndIf}
-  ${LogSetFileName} "$INSTDIR\install.log"
+  ${LogSetFileName} "install.log"
   ${LogSetOn}
   UserInfo::GetAccountType
   pop $0
@@ -79,7 +78,7 @@ Function .onVerifyInstDir
     ReadRegStr $1 HKCU "Software\Python\PythonCore\$0\InstallPath" ""
     ${Trim} "$2" "$1"
     ${LogText} "HKCU: $2"
-    StrCmp "$2" "" aborting compare
+    StrCmp "$2" "" finishing compare
   compare:
     ${LogText} "comparing $INSTDIR to $2"
     StrCmp "$2" "$INSTDIR" finishing aborting
@@ -111,21 +110,21 @@ Section Install
   File /oname=$TEMP\python.msi win/python-2.7.11.msi
   File /oname=$TEMP\wxpython.exe win/wxPython3.0-win32-3.0.2.0-py27.exe
   File /oname=$TEMP\pycrypto.exe win/pycrypto-2.6.win32-py2.7.exe
-  File /oname=$TEMP\localBoxSync.exe LocalboxSync-0.1a*.win32.exe
+  File /oname=$TEMP\localBoxSync.exe LocalBoxSync-0.1a*.win32.exe
 
-  CreateShortcut "$SMSTARTUP\localbox.lnk" "$INSTDIR\pythonw.exe" "-m sync" "$INSTDIR\localbox\localbox.ico"
+  CreateShortcut "$SMSTARTUP\LocalBox.lnk" "$INSTDIR\pythonw.exe" "-m sync" "$INSTDIR\localbox\localbox.ico"
 
-  CreateDirectory "$SMPROGRAMS\localbox\"
+  CreateDirectory "$SMPROGRAMS\LocalBox\"
   CreateDirectory "$APPDATA\localbox\"
-  CreateShortcut "$SMPROGRAMS\localbox\localbox sync.lnk" "$INSTDIR\pythonw.exe" "-m sync" "$INSTDIR\localbox\localbox.ico"
-  CreateShortcut "$SMPROGRAMS\localbox\localbox log.lnk" "$APPDATA\localbox\localbox-sync.log"
+  CreateShortcut "$SMPROGRAMS\LocalBox\LocalBox sync.lnk" "$INSTDIR\pythonw.exe" "-m sync" "$INSTDIR\localbox\localbox.ico"
+  CreateShortcut "$SMPROGRAMS\LocalBox\LocalBox log.lnk" "$APPDATA\localbox\localbox-sync.log"
 
   CreateDirectory $INSTDIR\Lib\site-packages\sync\locale\nl\LC_MESSAGES
   File "/oname=$INSTDIR\Lib\site-packages\sync\locale\nl\LC_MESSAGES\localboxsync.mo" sync/locale/nl/LC_MESSAGES/localboxsync.mo 
 
   WriteUninstaller $INSTDIR\LocalBoxUninstaller.exe
 
-  ExecWait 'msiexec.exe /i $TEMP\python.msi TARGETDIR="$INSTDIR" /quiet /fams /jm'
+  ExecWait 'msiexec.exe /i $TEMP\python.msi TARGETDIR="$INSTDIR" ALLUSERS=1 ADDLOCAL=DefaultFeature,Extensions,TclTk,Tools /quiet'
   ExecWait "$TEMP\wxpython.exe /silent"
   ExecWait "$TEMP\pycrypto.exe"
   ExecWait "$TEMP\LocalBoxSync.exe"
@@ -133,9 +132,9 @@ SectionEnd
 
 SectionGroup "un.uninstall"
 Section "un.Start Menu"
-    delete "$SMSTARTUP\localbox.lnk"
-    delete "$SMPROGRAMS\localbox\localbox sync.lnk"
-    delete "$SMPROGRAMS\localbox\localbox log.lnk"
+    delete "$SMSTARTUP\LocalBox.lnk"
+    delete "$SMPROGRAMS\LocalBox\LocalBox sync.lnk"
+    delete "$SMPROGRAMS\LocalBox\LocalBox log.lnk"
 SectionEnd
 
 Section "un.Program Files"

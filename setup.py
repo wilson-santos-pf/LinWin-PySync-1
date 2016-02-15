@@ -8,7 +8,7 @@ if system() == 'Windows' or system().startswith('CYGWIN'):
     data_files += [('gpg', ['libs/iconv.dll', 'libs/gpg.exe'])]
 
 setup(
-    name = "LocalboxSync",
+    name = "LocalBoxSync",
     version = "0.1a006",
     packages = find_packages(),
     py_modules = ['gnupg'],

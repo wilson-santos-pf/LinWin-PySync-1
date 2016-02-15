@@ -1,5 +1,5 @@
 """
-Add Localbox Wizard
+Add LocalBox Wizard
 """
 from logging import getLogger
 from os.path import isdir

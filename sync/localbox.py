@@ -156,7 +156,7 @@ class LocalBox(object):
             # TODO: make sure files get encrypted
         except HTTPError as error:
             getLogger('error').exception(error)
-        
+
         request = Request(url=self.url + 'lox_api/files/' + metapath,
                           data=contents)
         return self._make_call(request)
@@ -202,9 +202,9 @@ class LocalBox(object):
             cryptopath = path
 
         data = urlencode({'key': key, 'iv': iv})
-        request = Request(url=self.url + 'lox_api/key/' + cryptopath, data=data)
+        request = Request(
+            url=self.url + 'lox_api/key/' + cryptopath, data=data)
         return self._make_call(request)
-        
 
     def decode_file(self, path, contents):
         """

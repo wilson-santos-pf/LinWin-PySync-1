@@ -19,6 +19,7 @@ from .defaults import SITESINI_PATH
 
 
 class LocalBoxIcon(wx.TaskBarIcon):
+
     """
     Class for managing a Windows taskbar icon
     """

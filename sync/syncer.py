@@ -2,7 +2,7 @@ from os import listdir
 from os import remove
 from logging import getLogger
 from os import utime
-#from shutil import rmtree #TODO: remove directories
+# from shutil import rmtree #TODO: remove directories
 from os.path import isdir
 from os import stat
 from os.path import join
@@ -24,6 +24,7 @@ from .defaults import OLD_SYNC_STATUS
 
 
 class MetaVFS(object):
+
     """
     virtual meta filesystem
     """
@@ -50,7 +51,7 @@ class MetaVFS(object):
     def __ge__(self, other):  # >=
         return self.modified_at >= other.modified_at
 
-    def __eq__(self, other): # ==
+    def __eq__(self, other):  # ==
         """
         Equality check. Due to the fact FAT has a 2 second resolution on
         writing, and NTFS seems to have followed this, two files are considered
@@ -88,7 +89,7 @@ class MetaVFS(object):
             return current
         else:
             return None
-        
+
     def get_paths(self):
         """
         return all paths contained in this filesystem
@@ -109,7 +110,6 @@ class MetaVFS(object):
         for child in self.children:
             paths += child.get_files()
         return paths
-
 
     def save(self, filename):
         """
@@ -194,6 +194,7 @@ class MetaVFS(object):
 
 
 class Syncer(object):
+
     def __init__(self, localbox_instance, file_root_path, direction):
         self.localbox = localbox_instance
         self.filepath = file_root_path
@@ -289,7 +290,6 @@ class Syncer(object):
         # self.filepath_metadata.load(OLD_SYNC_STATUS)
         self.filepath_metadata.debug_print()
 
-
     def delete(self, path):
         localfilename = join(self.filepath, path[1:])
         remove(localfilename)
@@ -329,18 +329,19 @@ class Syncer(object):
             remotefile = self.localbox_metadata.get_entry(path)
 
             if remotefile == oldfile and localfile is None:
-	        self.localbox.delete(path)
+                self.localbox.delete(path)
                 continue
             if localfile == oldfile and remotefile is None:
                 print path
                 self.delete(path)
                 continue
-        
+
             newest = MetaVFS.newest(oldfile, localfile, remotefile)
             print "====Newest %s, Local %s, Remote %s, Old %s ====" % (newest, localfile, remotefile, oldfile)
 
             if newest == oldfile and newest is not None:
-                getLogger('localbox').info("Skipping %s because all files are older then the previous file" % newest.path)
+                getLogger('localbox').info(
+                    "Skipping %s because all files are older then the previous file" % newest.path)
                 continue
 
             newest = MetaVFS.newest(localfile, remotefile)
@@ -351,7 +352,7 @@ class Syncer(object):
                 if dirname(path) not in self.localbox_metadata.get_paths():
                     self.localbox.create_directory(dirname(path))
                 self.localbox.upload_file(path, join(self.filepath,
-                                                         path[1:]))
+                                                     path[1:]))
                 continue
             if newest == remotefile:
                 getLogger('localbox').info("Downloading %s" % newest.path)

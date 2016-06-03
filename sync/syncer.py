@@ -2,7 +2,7 @@ from os import listdir
 from os import remove
 from logging import getLogger
 from os import utime
-from shutil import rmtree
+#from shutil import rmtree #TODO: remove directories
 from os.path import isdir
 from os import stat
 from os.path import join
@@ -16,17 +16,14 @@ from os.path import exists
 from os.path import dirname
 from os import makedirs
 try:
-    from urllib2 import HTTPError
     from cPickle import dump, load
 except ImportError:
-    from urllib.error import HTTPError  # pylint: disable=E0611,F0401
     from pickle import dump, load
 
 from .defaults import OLD_SYNC_STATUS
 
 
 class MetaVFS(object):
-
     """
     virtual meta filesystem
     """
@@ -41,6 +38,57 @@ class MetaVFS(object):
             self.children = []
         self.parent = None
 
+    def __lt__(self, other):  # <
+        return self.modified_at < other.modified_at
+
+    def __le__(self, other):  # <=
+        return self.modified_at <= other.modified_at
+
+    def __gt__(self, other):  # >
+        return self.modified_at > other.modified_at
+
+    def __ge__(self, other):  # >=
+        return self.modified_at >= other.modified_at
+
+    def __eq__(self, other): # ==
+        """
+        Equality check. Due to the fact FAT has a 2 second resolution on
+        writing, and NTFS seems to have followed this, two files are considered
+        'equal' in that respect if their modified times are at most two seconds
+        apart. See
+        https://msdn.microsoft.com/en-us/library/windows/desktop/ms724290%28v=vs.85%29.aspx
+        """
+        if other == None:
+            return False
+        return abs(self.modified_at - other.modified_at) <= 2
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    @staticmethod
+    def newest(*arguments):
+        """
+        Returns the one single MetaVFS entry of the three with the highest
+        modified time. Returns None otherwise, including when two are tied for
+        highest modification time.
+        """
+        args = [item for item in arguments if item is not None]
+        unique = True
+        current = args[0]
+        print current
+        for entry in args[1:]:
+            if entry is None:
+                continue
+            if entry == current:
+                unique = False
+            elif entry > current:
+                current = entry
+                unique = True
+        if unique:
+            return current
+        else:
+            return None
+        
     def get_paths(self):
         """
         return all paths contained in this filesystem
@@ -49,6 +97,19 @@ class MetaVFS(object):
         for child in self.children:
             paths += child.get_paths()
         return paths
+
+    def get_files(self):
+        """
+        return all paths to files (not directories) contained in this filesystem
+        """
+        if not self.is_dir:
+            paths = [self.path]
+        else:
+            paths = []
+        for child in self.children:
+            paths += child.get_files()
+        return paths
+
 
     def save(self, filename):
         """
@@ -133,7 +194,6 @@ class MetaVFS(object):
 
 
 class Syncer(object):
-
     def __init__(self, localbox_instance, file_root_path, direction):
         self.localbox = localbox_instance
         self.filepath = file_root_path
@@ -197,14 +257,7 @@ class Syncer(object):
                                      localfile.modified_at <
                                      remotefile.modified_at + 2):
                 getLogger('localbox').info("downloading " + filename)
-                contents = self.localbox.get_file(filename)
-                localfilename = join(self.filepath, filename[1:])
-                localfile = open(localfilename, 'w')
-                localfile.write(contents)
-                localfile.close()
-                localfilepath = self.localbox_metadata.get_entry(filename)
-                modtime = localfilepath.modified_at
-                utime(localfilename, (time(), modtime))
+                self.download(filename)
             else:
                 getLogger('localbox').info("Already downloaded " + filename)
         self.filepath_metadata.save(OLD_SYNC_STATUS)
@@ -226,6 +279,7 @@ class Syncer(object):
             localtime = self.filepath_metadata.get_entry(filename).modified_at
             if remote is None or localtime + 2 > remotetime:
                 getLogger('localbox').info("uploading " + filename)
+                self.localbox.create_directory(dirname(filename))
                 self.localbox.upload_file(filename, join(self.filepath,
                                                          filename[1:]))
             else:
@@ -235,108 +289,73 @@ class Syncer(object):
         # self.filepath_metadata.load(OLD_SYNC_STATUS)
         self.filepath_metadata.debug_print()
 
+
+    def delete(self, path):
+        localfilename = join(self.filepath, path[1:])
+        remove(localfilename)
+
+    def download(self, path):
+        contents = self.localbox.get_file(path)
+        localfilename = join(self.filepath, path[1:])
+        # precreate folder if needed
+        localdirname = dirname(localfilename)
+        if not exists(localdirname):
+            makedirs(localdirname)
+        localfile = open(localfilename, 'w')
+        localfile.write(contents)
+        localfile.close()
+        localfilepath = self.localbox_metadata.get_entry(path)
+        modtime = localfilepath.modified_at
+        utime(localfilename, (time(), modtime))
+
     def syncsync(self):
         getLogger('localbox').info("Starting syncsync")
-        allpaths = set(self.filepath_metadata.get_paths() +
-                       self.localbox_metadata.get_paths())
+        allpaths = set(self.filepath_metadata.get_files() +
+                       self.localbox_metadata.get_files())
         self.filepath_metadata.debug_print()
         self.localbox_metadata.debug_print()
-        getLogger('localbox').info(str(allpaths))
         try:
             oldmetadata = self.filepath_metadata.load(OLD_SYNC_STATUS)
-            allpaths = set(list(allpaths) + oldmetadata.get_paths())
+            allpaths = set(list(allpaths) + oldmetadata.get_files())
         except IOError as error:
             getLogger('localbox').info("Old data unknown")
             getLogger('localbox').exception(error)
             oldmetadata = MetaVFS(path='/', modified_at=0)
-        deleted_folders = []
+        getLogger('localbox').info(str(allpaths))
+
         for path in sorted(allpaths):
-            skip = False
-            for entry in deleted_folders:
-                if path.startswith(entry):
-                    skip = True
-            if skip:
-                continue
             oldfile = oldmetadata.get_entry(path)
             localfile = self.filepath_metadata.get_entry(path)
             remotefile = self.localbox_metadata.get_entry(path)
 
-            if localfile is not None and remotefile is not None:
-                if not localfile.is_dir and (localfile.modified_at -
-                                             remotefile.modified_at) > 2:
-                    self.localbox.upload_file(path, join(self.filepath,
+            if remotefile == oldfile and localfile is None:
+	        self.localbox.delete(path)
+                continue
+            if localfile == oldfile and remotefile is None:
+                print path
+                self.delete(path)
+                continue
+        
+            newest = MetaVFS.newest(oldfile, localfile, remotefile)
+            print "====Newest %s, Local %s, Remote %s, Old %s ====" % (newest, localfile, remotefile, oldfile)
+
+            if newest == oldfile and newest is not None:
+                getLogger('localbox').info("Skipping %s because all files are older then the previous file" % newest.path)
+                continue
+
+            newest = MetaVFS.newest(localfile, remotefile)
+
+            if newest == localfile:
+                getLogger('localbox').info("Uploading %s" % newest.path)
+                # TODO: Only do this when needed, preferably not.
+                if dirname(path) not in self.localbox_metadata.get_paths():
+                    self.localbox.create_directory(dirname(path))
+                self.localbox.upload_file(path, join(self.filepath,
                                                          path[1:]))
-                if (not localfile.is_dir and (remotefile.modified_at -
-                                              localfile.modified_at) > 2):
-                    contents = self.localbox.get_file(path)
-                    localfilename = join(self.filepath, path[1:])
-                    localfile = open(localfilename, 'w')
-                    localfile.write(contents)
-                    localfile.close()
-                    localfilepath = self.localbox_metadata.get_entry(path)
-                    modtime = localfilepath.modified_at
-                    utime(localfilename, (time(), modtime))
-                    continue
-            if oldfile is None:
-                if (remotefile is not None and
-                    (localfile is None or localfile.modified_at + 2 <
-                     remotefile.modified_at) and not remotefile.is_dir):
-                    contents = self.localbox.get_file(path)
-                    localfilename = join(self.filepath, path[1:])
-                    localfile = open(localfilename, 'w')
-                    localfile.write(contents)
-                    localfile.close()
-                    localfilepath = self.localbox_metadata.get_entry(path)
-                    modtime = localfilepath.modified_at
-                    utime(localfilename, (time(), modtime))
-                elif (remotefile is not None and localfile is None and
-                      remotefile.is_dir):
-                    try:
-                        mkdir(join(self.filepath, path[1:]))
-                    # this may happen with precreated directories
-                    except OSError as error:
-                        getLogger('localbox').exception(error)
-                elif (remotefile is None or
-                      (localfile.modified_at > remotefile.modified_at + 2)):
-                    if localfile.is_dir and remotefile is None:
-                        self.localbox.create_directory(path)
-                    elif not localfile.is_dir:
-                        self.localbox.upload_file(path, join(self.filepath,
-                                                             path[1:]))
-                else:
-                    diff = localfile.modified_at - remotefile.modified_at
-                    assert (localfile.is_dir or remotefile.is_dir or
-                            (abs(diff) < 2))
-            elif oldfile is not None:
-                if localfile is None and remotefile is not None:
-                    try:
-                        # self.localbox.delete(path)
-                        contents = self.localbox.get_file(path)
-                        localfilename = join(self.filepath, path[1:])
-                        # precreate folder if needed
-                        localdirname = dirname(localfilename)
-                        if not exists(localdirname):
-                            makedirs(localdirname)
-                        localfile = open(localfilename, 'w')
-                        localfile.write(contents)
-                        localfile.close()
-                        localfilepath = self.localbox_metadata.get_entry(path)
-                        modtime = localfilepath.modified_at
-                        utime(localfilename, (time(), modtime))
-                    except HTTPError as error:
-                        # happens when the containing directory has already
-                        # been deleted. Could do with more elegant syncing,
-                        # but is otherwise harmless.
-                        getLogger('localbox').exception(error)
-                if localfile is not None and remotefile is None:
-                    try:
-                        filepath = join(self.filepath, path[1:])
-                        if isdir(filepath):
-                            rmtree(filepath)
-                        else:
-                            remove(filepath)
-                    except HTTPError as error:
-                        getLogger('localbox').exception(error)
-            else:
-                raise(Exception("unreachable"))
+                continue
+            if newest == remotefile:
+                getLogger('localbox').info("Downloading %s" % newest.path)
+                self.download(path)
+                continue
+
         self.filepath_metadata.save(OLD_SYNC_STATUS)

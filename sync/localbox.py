@@ -23,6 +23,7 @@ except ImportError:
     from http.client import BadStatusLine  # pylint: disable=F0401,E0611
 
 from json import loads
+from json import dumps
 from ssl import SSLContext, PROTOCOL_TLSv1  # pylint: disable=E0611
 
 
@@ -64,10 +65,11 @@ class LocalBox(object):
                 non_verifying_context = SSLContext(PROTOCOL_TLSv1)
                 urlopen(self.url, context=non_verifying_context)
             except BadStatusLine as error:
-                getLogger('error').exception(error)
+                getLogger('error').exception(error.description)
                 raise error
             except HTTPError as error:
-                getLogger('error').exception(error)
+                if error.code != 401:
+                    raise error
                 auth_header = error.headers['WWW-Authenticate'].split(' ')
                 bearer = False
                 for field in auth_header:
@@ -105,8 +107,6 @@ class LocalBox(object):
         """
         do the file call
         """
-        metapath = quote(path)
-        request = Request(url=self.url + 'lox_api/files' + metapath)
         data = self._make_call(request).read()
         if self.get_meta(path)['has_keys']:
             data = self.decode_file(path, data)
@@ -121,7 +121,11 @@ class LocalBox(object):
         metapath = urlencode({'path': path})
         request = Request(url=self.url + 'lox_api/operations/create_folder/',
                           data=metapath)
-        return self._make_call(request)
+        try:
+            return self._make_call(request)
+        except HTTPError as error:
+            print "Problem creating directory"
+        # TODO: make directory encrypted
 
     def delete(self, path):
         """
@@ -150,6 +154,9 @@ class LocalBox(object):
         except BadStatusLine as error:
             getLogger('error').exception(error)
             # TODO: make sure files get encrypted
+        except HTTPError as error:
+            getLogger('error').exception(error)
+        
         request = Request(url=self.url + 'lox_api/files/' + metapath,
                           data=contents)
         return self._make_call(request)
@@ -181,6 +188,23 @@ class LocalBox(object):
             cryptopath = path
         request = Request(url=self.url + 'lox_api/key/' + cryptopath)
         return self._make_call(request)
+
+    def save_key(self, path, key, iv):
+        if path[0] == '.':
+            path = path[1:]
+        if len(path) > 0 and path[0] == '/':
+            path = path[1:]
+        try:
+            index = path.index('/')
+            cryptopath = path[:index]
+        except ValueError as error:
+            getLogger('error').exception(error)
+            cryptopath = path
+
+        data = urlencode({'key': key, 'iv': iv})
+        request = Request(url=self.url + 'lox_api/key/' + cryptopath, data=data)
+        return self._make_call(request)
+        
 
     def decode_file(self, path, contents):
         """

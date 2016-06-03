@@ -1,3 +1,6 @@
+"""
+Modulemanaging a Windows Taskbar icon
+"""
 from sys import executable
 from subprocess import call
 
@@ -16,7 +19,9 @@ from .defaults import SITESINI_PATH
 
 
 class LocalBoxIcon(wx.TaskBarIcon):
-
+    """
+    Class for managing a Windows taskbar icon
+    """
     TBMENU_RESTORE = wx.NewId()
     TBMENU_CLOSE = wx.NewId()
     TBMENU_CHANGE = wx.NewId()
@@ -53,13 +58,22 @@ class LocalBoxIcon(wx.TaskBarIcon):
         self.Bind(wx.EVT_TASKBAR_RIGHT_DOWN, self.OnTaskBarClick)
 
     def iconpath(self):
+        """
+        returns the path for the icon related to this widget
+        """
         return join(get_path('data'), 'localbox', 'localbox.ico')
 
     def start_gui(self, event):  # pylint: disable=W0613
+        """
+        start the graphical user interface for configuring localbox
+        """
         getLogger('taskbar').debug("Starting GUI")
         Thread(target=call, args=[[executable, '-m', 'sync.gui']]).start()
 
     def start_sync(self, wx_event):
+        """
+        tell the syncer the system is ready to sync
+        """
         self.event.set()
 
     def create_popup_menu(self):
@@ -79,7 +93,7 @@ class LocalBoxIcon(wx.TaskBarIcon):
         return menu
 
     def OnTaskBarActivate(self, event):  # pylint: disable=W0613
-        """"""
+        """required function for wxwidgets doing nothing"""
         pass
 
     def OnTaskBarClose(self, event):  # pylint: disable=W0613
@@ -100,6 +114,9 @@ class LocalBoxIcon(wx.TaskBarIcon):
 
 
 def taskbarmain(waitevent=None, sites=None):
+    """
+    main function to run to get the taskbar started
+    """
     app = wx.App(False)
     LocalBoxIcon(waitevent, sites=sites)
     app.MainLoop()

@@ -49,9 +49,8 @@ class UsernameAndPasswordAsker(Tk):
                                                 self.password.get()):
             self.lock.set()
             self.destroy()
-            self.visible = False
         else:
-            # TODO: window saying authentication failed
+            #  TODO: window saying authentication failed
             pass
 
     def __call__(self):
@@ -61,9 +60,9 @@ class UsernameAndPasswordAsker(Tk):
 class Gui(Tk):
 
     def __init__(self, parent=None, configparser=None, siteslist=None):
-        print "GUi IniTing"
+        print("GUi Initing")
         Tk.__init__(self, parent)
-        print "tk Inited"
+        print("tk Inited")
         if siteslist is None:
             self.siteslist = []
         else:
@@ -244,7 +243,7 @@ class DataEntry(Frame):
                 getLogger('auth').info("your credentials are invalid")
 
 
-def main(gui=None, event=None, sites=None):
+def main(gui=None, sites=None):
     getLogger('gui').debug("Gui Main Started")
     location = SITESINI_PATH
     configparser = ConfigParser()

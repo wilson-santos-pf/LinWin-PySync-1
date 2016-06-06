@@ -76,7 +76,7 @@ class MetaVFS(object):
         args = [item for item in arguments if item is not None]
         unique = True
         current = args[0]
-        print current
+        print(current)
         for entry in args[1:]:
             if entry is None:
                 continue
@@ -332,22 +332,22 @@ class Syncer(object):
                 self.localbox.delete(path)
                 continue
             if localfile == oldfile and remotefile is None:
-                print path
+                print(path)
                 self.delete(path)
                 continue
 
             newest = MetaVFS.newest(oldfile, localfile, remotefile)
-            print "====Newest %s, Local %s, Remote %s, Old %s ====" % (newest, localfile, remotefile, oldfile)
+            print("====Newest %s, Local %s, Remote %s, Old %s ====" % (newest, localfile, remotefile, oldfile))
 
             if newest == oldfile and newest is not None:
                 getLogger('localbox').info(
-                    "Skipping %s because all files are older then the previous file" % newest.path)
+                    "Skipping %s because all files are older then the previous file", newest.path)
                 continue
 
             newest = MetaVFS.newest(localfile, remotefile)
 
             if newest == localfile:
-                getLogger('localbox').info("Uploading %s" % newest.path)
+                getLogger('localbox').info("Uploading %s", newest.path)
                 # TODO: Only do this when needed, preferably not.
                 if dirname(path) not in self.localbox_metadata.get_paths():
                     self.localbox.create_directory(dirname(path))
@@ -355,7 +355,7 @@ class Syncer(object):
                                                      path[1:]))
                 continue
             if newest == remotefile:
-                getLogger('localbox').info("Downloading %s" % newest.path)
+                getLogger('localbox').info("Downloading %s", newest.path)
                 self.download(path)
                 continue
 

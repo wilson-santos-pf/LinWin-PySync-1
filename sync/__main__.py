@@ -35,6 +35,9 @@ except ImportError:
 
 
 class SyncRunner(Thread):
+    """
+    Thread responsible for synchronizing between the client and one server.
+    """
 
     def __init__(self, group=None, target=None, name=None, args=(),
                  kwargs=None, verbose=None, syncer=None):
@@ -46,6 +49,9 @@ class SyncRunner(Thread):
         getLogger('main').info("SyncRunner started")
 
     def run(self):
+        """
+        Function that runs one iteration of the synhronization
+        """
         getLogger('main').info("SyncRunner " + self.name + " started")
         self.lock.acquire()
         # TODO: Direction
@@ -55,6 +61,9 @@ class SyncRunner(Thread):
 
 
 def stop_running():
+    """
+    Tell the syncers that it is time to quit by setting a global variable
+    """
     global KEEP_RUNNING
     KEEP_RUNNING = False
 
@@ -137,13 +146,13 @@ if __name__ == '__main__':
         if not isdir(dirname(LOG_PATH)):
             makedirs(dirname(LOG_PATH))
         handlers = [StreamHandler(stdout), FileHandler(LOG_PATH)]
-        for name in 'main', 'database', 'auth', 'localbox', 'wizard', 'error', \
+        for logger_name in 'main', 'database', 'auth', 'localbox', 'wizard', 'error', \
                 'gpg', 'taskbar', 'gui':
-            logger = getLogger(name)
+            logger = getLogger(logger_name)
             for handler in handlers:
                 logger.addHandler(handler)
             logger.setLevel(5)
-            logger.info("Starting LocalBox Sync logger " + name)
+            logger.info("Starting LocalBox Sync logger " + logger_name)
 
         EVENT = Event()
         EVENT.clear()

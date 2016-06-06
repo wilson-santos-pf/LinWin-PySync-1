@@ -1,4 +1,4 @@
 """
 sync module
 """
-from __main__ import main
+from sync.__main__ import main

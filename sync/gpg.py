@@ -54,18 +54,18 @@ class gpg(object):
         """
         add a keypair into the gpg key database
         """
-        print public_key
-        print private_key
-        print site
-        print user
-        print passphrase
+        print(public_key)
+        print(private_key)
+        print(site)
+        print(user)
+        print(passphrase)
         try:
             result1 = self.gpg.import_keys(b64decode(public_key))
             result2 = self.gpg.import_keys(b64decode(private_key))
         except TypeError as error:
-            print error
-            print public_key
-            print private_key
+            print(error)
+            print(public_key)
+            print(private_key)
         # make sure this is a key _pair_
         try:
             assert result1.fingerprints[0] == result2.fingerprints[0]

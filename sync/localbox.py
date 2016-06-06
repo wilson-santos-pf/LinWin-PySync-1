@@ -23,7 +23,7 @@ except ImportError:
     from http.client import BadStatusLine  # pylint: disable=F0401,E0611
 
 from json import loads
-from json import dumps
+# from json import dumps
 from ssl import SSLContext, PROTOCOL_TLSv1  # pylint: disable=E0611
 
 
@@ -107,6 +107,8 @@ class LocalBox(object):
         """
         do the file call
         """
+        metapath = quote(path).strip('/')
+        request = Request(url=self.url + "lox_api/files/" + metapath)
         data = self._make_call(request).read()
         if self.get_meta(path)['has_keys']:
             data = self.decode_file(path, data)
@@ -124,7 +126,8 @@ class LocalBox(object):
         try:
             return self._make_call(request)
         except HTTPError as error:
-            print "Problem creating directory"
+            print("HTTPError creating directory")
+            print(error)
         # TODO: make directory encrypted
 
     def delete(self, path):

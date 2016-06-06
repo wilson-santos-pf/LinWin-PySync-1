@@ -7,9 +7,9 @@ from subprocess import call
 import wx
 
 try:
-    from ConfigParser import ConfigParser
+    from ConfigParser import ConfigParser  # pylint: disable=F0401,E0611
 except ImportError:
-    from configparser import ConfigParser
+    from configparser import ConfigParser  # pylint: disable=F0401,E0611
 from threading import Thread
 from sysconfig import get_path
 from os.path import join
@@ -71,7 +71,7 @@ class LocalBoxIcon(wx.TaskBarIcon):
         getLogger('taskbar').debug("Starting GUI")
         Thread(target=call, args=[[executable, '-m', 'sync.gui']]).start()
 
-    def start_sync(self, wx_event):
+    def start_sync(self, wx_event):  # pylint: disable=W0613
         """
         tell the syncer the system is ready to sync
         """
@@ -102,7 +102,7 @@ class LocalBoxIcon(wx.TaskBarIcon):
         Destroy the taskbar icon and frame from the taskbar icon itself
         """
         self.frame.Close()
-        self.started = False
+        # TODO: This seems the wrong kind of action to perform here
         exit(1)
 
     def OnTaskBarClick(self, event):  # pylint: disable=W0613

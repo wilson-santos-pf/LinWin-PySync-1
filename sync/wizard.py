@@ -143,13 +143,16 @@ class Wizard(Tk):
                         language=self.language)
         authenticator = Authenticator(self.localbox.get_authentication_url(),
                                       self.box_label)
-        self.localbox.add_authenticator(authenticator)
-        if authenticator.has_client_credentials():
-            getLogger('wizard').debug("has_client_credentials = false")
+        try:
+            self.localbox.add_authenticator(authenticator)
+            if authenticator.has_client_credentials():
+                getLogger('wizard').debug("has_client_credentials = false")
+                self.window3()
+            else:
+                getLogger('wizard').debug("has_client_credentials = true")
+                self.window2()
+        except AlreadyAuthenticatedError():
             self.window3()
-        else:
-            getLogger('wizard').debug("has_client_credentials = true")
-            self.window2()
 
     def window2(self):
         getLogger('wizard').debug("wizard window2")

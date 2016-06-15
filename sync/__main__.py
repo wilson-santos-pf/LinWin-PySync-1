@@ -26,11 +26,14 @@ try:
     from ConfigParser import ConfigParser
     from ConfigParser import NoOptionError
     from ConfigParser import NoSectionError
+    from urllib2 import URLError
 except ImportError:
     from configparser import ConfigParser  # pylint: disable=F0401,W0611
     # pylint: disable=F0401
     from configparser import NoOptionError
     from configparser import NoSectionError
+    from urllib.error import URLError
+
     raw_input = input  # pylint: disable=W0622,C0103
 
 
@@ -102,6 +105,12 @@ def get_site_list():
             string = "Skipping '%s' due to missing option '%s'" % \
                      (section, error.option)
             getLogger('main').info(string)
+        except URLError as error:
+            getLogger('error').exception(error)
+            string = "Skipping '%s' because it cannot be reached" % \
+                     (section)
+            getLogger('main').info(string)
+   
     return sites
 
 
@@ -118,7 +127,7 @@ def main(waitevent=None):
         try:
             delay = int(configparser.get('sync', 'delay'))
         except (NoSectionError, NoOptionError) as error:
-            getLogger('error').exception(error)
+            getLogger('error').warning("%s in '%s'" % (error.message, SYNCINI_PATH))
             delay = 3600
         while KEEP_RUNNING:
             getLogger('localbox').debug("starting loop")
@@ -151,7 +160,7 @@ if __name__ == '__main__':
             logger = getLogger(logger_name)
             for handler in handlers:
                 logger.addHandler(handler)
-            logger.setLevel(5)
+            logger.setLevel(0)
             logger.info("Starting LocalBox Sync logger " + logger_name)
 
         EVENT = Event()

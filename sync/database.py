@@ -47,13 +47,14 @@ def get_sql_log_dict():
     try:
         dbtype = parser.get('database', 'type')
     except (NoSectionError, NoOptionError) as error:
-        getLogger('error').exception(error)
+        getLogger('database').warning("%s in '%s'" % (error.message, SYNCINI_PATH))
+
         dbtype = "sqlite"
     if dbtype in ['sqlite', 'sqlite3']:
         try:
             ip_address = parser.get('database', 'filename')
         except (NoSectionError, NoOptionError) as error:
-            getLogger('error').exception(error)
+            getLogger('database').warning("%s in '%s'" % (error.message, SYNCINI_PATH))
             ip_address = DATABASE_PATH
     else:
         ip_address = parser.get('database', 'hostname')
@@ -76,7 +77,7 @@ def database_execute(command, params=None):
     try:
         dbtype = parser.get('database', 'type')
     except (NoSectionError, NoOptionError) as error:
-        getLogger('error').exception(error)
+        getLogger('database').warning("%s in '%s'" % (error.message, SYNCINI_PATH))
         dbtype = 'sqlite'
 
     if dbtype == "mysql":
@@ -109,7 +110,7 @@ def sqlite_execute(command, params=None):
         try:
             filename = parser.get('database', 'filename')
         except (NoSectionError, NoOptionError) as error:
-            getLogger('error').exception(error)
+            getLogger('database').warning("%s in '%s'" % (error.message, SYNCINI_PATH))
             filename = DATABASE_PATH
 
         init_db = not exists(expandvars(filename))
@@ -121,7 +122,7 @@ def sqlite_execute(command, params=None):
         cursor = connection.cursor()
         if init_db:
             for sql in ('CREATE TABLE sites (site char(255), client_id'
-                        ' char(255), client_secret char(255));',
+                        ' char(255), client_secret char(255), user char(255));',
                         'CREATE TABLE keys (site char(255), user char(255),'
                         ' fingerprint char(40));'):
                 if sql != "" and sql is not None:
@@ -134,15 +135,14 @@ def sqlite_execute(command, params=None):
         connection.commit()
         return cursor.fetchall()
     except SQLiteError as sqlerror:
-        getLogger('error').exception(sqlerror)
-        raise DatabaseError("SQLite Error: %d: %s" % (sqlerror.args[0],
-                                                      sqlerror.args[1]))
+        getLogger('database').exception(sqlerror)
+        raise DatabaseError("SQLite Error: %s" % (sqlerror.args[0]))
     except (NoSectionError, NoOptionError) as error:
-        getLogger('error').exception(error)
+        getLogger('database').exception(error)
         raise DatabaseError("Please configure the database section"
                             " in the ini file")
     except TypeError as error:
-        getLogger('error').exception(error)
+        getLogger('database').exception(error)
         raise DatabaseError("Please configure the 'filename' parameter"
                             " in the [database] section in the ini file")
     finally:
@@ -150,7 +150,7 @@ def sqlite_execute(command, params=None):
             if connection:
                 connection.close()
         except UnboundLocalError as error:
-            getLogger('error').exception(error)
+            getLogger('database').exception(error)
 
 
 def mysql_execute(command, params=None):
@@ -187,4 +187,4 @@ def mysql_execute(command, params=None):
             if connection:
                 connection.close()
         except UnboundLocalError as error:
-            getLogger('error').exception(error)
+            getLogger('database').exception(error)

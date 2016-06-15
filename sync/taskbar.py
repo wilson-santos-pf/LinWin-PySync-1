@@ -48,6 +48,7 @@ class LocalBoxIcon(wx.TaskBarIcon):
 
         # Set the image
         self.taskbar_icon = wx.Icon(self.iconpath())
+        print self.iconpath()
 
         self.SetIcon(self.taskbar_icon, "Test")
 

@@ -4,8 +4,15 @@ localbox client library
 
 from logging import getLogger
 
+from base64 import b64encode
+from base64 import b64decode
 from Crypto.Cipher.AES import new as AES_Key
-from Crypto.Cipher.AES import MODE_CBC
+#from Crypto.Cipher.AES import MODE_CBC
+from Crypto.Cipher.AES import MODE_CFB
+from Crypto.Random import new as CryptoRandom
+
+from .gpg import gpg
+from .defaults import SITESINI_PATH
 
 try:
     from urllib2 import HTTPError
@@ -14,6 +21,7 @@ try:
     from urllib import urlencode
     from urllib import quote
     from httplib import BadStatusLine
+    from ConfigParser import ConfigParser 
 except ImportError:
     from urllib.error import HTTPError  # pylint: disable=F0401,E0611
     from urllib.parse import quote  # pylint: disable=F0401,E0611
@@ -21,9 +29,10 @@ except ImportError:
     from urllib.request import urlopen  # pylint: disable=F0401,E0611
     from urllib.request import Request  # pylint: disable=F0401,E0611
     from http.client import BadStatusLine  # pylint: disable=F0401,E0611
+    from configparser import ConfigParser 
 
 from json import loads
-# from json import dumps
+from json import dumps
 from ssl import SSLContext, PROTOCOL_TLSv1  # pylint: disable=E0611
 
 
@@ -120,11 +129,18 @@ class LocalBox(object):
         """
         if path[0] != '/':
             path = '/' + path
+        if path[-1] == '/':
+            path = path[:-1]
         metapath = urlencode({'path': path})
         request = Request(url=self.url + 'lox_api/operations/create_folder/',
                           data=metapath)
         try:
-            return self._make_call(request)
+            call_result = self._make_call(request)
+            if path.count('/') == 1:
+                print "Creating a key for folder " + path
+                key = CryptoRandom().read(16)
+                iv = CryptoRandom().read(16)
+                self.save_key(path, key, iv)
         except HTTPError as error:
             print("HTTPError creating directory")
             print(error)
@@ -152,8 +168,7 @@ class LocalBox(object):
         metapath = quote(path)
         contents = open(localpath).read()
         try:
-            if self.get_meta(path)['has_keys']:
-                contents = self.encode_file(path, contents)
+            contents = self.encode_file(path, contents)
         except BadStatusLine as error:
             getLogger('error').exception(error)
             # TODO: make sure files get encrypted
@@ -192,6 +207,11 @@ class LocalBox(object):
         request = Request(url=self.url + 'lox_api/key/' + cryptopath)
         return self._make_call(request)
 
+    def get_all_users(self):
+        request = Request(url=self.url + 'lox_api/identities')
+        result = self._make_call(request).read()
+        return loads(result)
+
     def save_key(self, path, key, iv):
         if path[0] == '.':
             path = path[1:]
@@ -200,29 +220,52 @@ class LocalBox(object):
         try:
             index = path.index('/')
             cryptopath = path[:index]
+            
         except ValueError as error:
-            getLogger('error').exception(error)
+            # TODO: make more clear this is not an 'error' per se
+            getLogger('error').warning("The path argument to save_key contained no '/' components (which is not a problem)")
             cryptopath = path
 
-        data = urlencode({'key': key, 'iv': iv})
+        site = self.authenticator.label
+        location = SITESINI_PATH
+        configparser = ConfigParser()
+        configparser.read(location)
+        user = configparser.get(site, 'user')
+        pgpclient = gpg()
+        encodedata = {'key': b64encode(pgpclient.encrypt(key, site, user)), 'iv': b64encode(pgpclient.encrypt(iv, site, user)), 'user': user}
+        data = dumps(encodedata)
         request = Request(
-            url=self.url + 'lox_api/key/' + cryptopath, data=data)
-        return self._make_call(request)
+                url=self.url + 'lox_api/key/' + cryptopath, data=data)
+        result = self._make_call(request)
+        # NOTE: this is just the result of the last call, not all of them. should be more robust then this
+        return result
 
     def decode_file(self, path, contents):
         """
         decode a file
         """
-        keydata = loads(self.call_keys(path))
-        key = AES_Key(keydata['key'], MODE_CBC, keydata['iv'])
-        key.decrypt(contents)
-        return contents
+        pgpclient = gpg()
+        keydata = loads(self.call_keys(path).read())
+        site = self.authenticator.label
+        pgpdkeystring = b64decode(keydata['key'])
+        pgpdivstring = b64decode(keydata['iv'])
+        keystring = pgpclient.decrypt(pgpdkeystring, site)
+        ivstring = pgpclient.decrypt(pgpdivstring, site)
+
+        key = AES_Key(keystring, MODE_CFB, ivstring)
+        result = key.decrypt(contents)
+        print key
+        return result
 
     def encode_file(self, path, contents):
         """
         encode a file
         """
-        keydata = loads(self.call_keys(path))
-        key = AES_Key(keydata['key'], MODE_CBC, keydata['iv'])
-        key.encrypt(contents)
-        return contents
+        print "encodin' file"
+        pgpclient = gpg()
+        site = self.authenticator.label
+        keydata = loads(self.call_keys(path).read())
+        key = AES_Key(pgpclient.decrypt(b64decode(keydata['key']), site), MODE_CFB, pgpclient.decrypt(b64decode(keydata['iv']), site))
+        result = key.encrypt(contents)
+        print result
+        return result

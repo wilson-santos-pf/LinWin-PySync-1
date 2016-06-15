@@ -63,6 +63,7 @@ class Authenticator(object):
         self.access_token = None
         self.expires = 0
         self.scope = None
+        self.username = None
         # todo:
         self.refresh_token = None
         self.load_client_data()
@@ -72,20 +73,21 @@ class Authenticator(object):
         Save the client credentials for the localbox identified by the label in
         the database
         """
-        sql = "insert into sites (site, client_id, client_secret) " \
-            "values (?, ?, ?);"
-        database_execute(sql, (self.label, self.client_id, self.client_secret))
+        sql = "insert into sites (site, user, client_id, client_secret) " \
+            "values (?, ?, ?, ?);"
+        database_execute(sql, (self.label, self.username, self.client_id, self.client_secret))
 
     def load_client_data(self):
         """
         Get client data belonging to the localbox identified by label
         """
-        sql = "select client_id, client_secret from sites where site = ?;"
+        sql = "select client_id, client_secret, user from sites where site = ?;"
         result = database_execute(sql, (self.label,))
         if result != [] and result is not None:
             getLogger('auth').debug("loading data")
             self.client_id = str(result[0][0])
             self.client_secret = str(result[0][1])
+            self.username = str(result[0][2])
             return True
         return False
 

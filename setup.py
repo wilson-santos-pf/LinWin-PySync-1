@@ -15,7 +15,7 @@ try:
         versionno = "0.1a" + str(git_number)
 except WindowsError:
     print "Sorry; git executable needed for a version number"
-        versionno = "0.1a.nogit"
+    versionno = "0.1a.nogit"
 
 
 setup(

@@ -104,9 +104,7 @@ class gpg(object):
         """
         sql = "select fingerprint from keys where site = ? and user = ?"
         result = database_execute(sql, (site, user))
-        print result
         fingerprint = result[0][0]
-        print(fingerprint)
         cryptdata = self.gpg.encrypt_file(StringIO(data), fingerprint,
                                           always_trust=True, armor=armor)
         return str(cryptdata)
@@ -115,18 +113,10 @@ class gpg(object):
         """
         decrypt data received from site.
         """
-        #print "=begin========================================================"
-        #print self.gpg.list_keys()
-        #print self.gpg.list_keys(True)
-        #print "=end========================================================"
         configparser = ConfigParser()
         configparser.read(SITESINI_PATH)
         passphrase = configparser.get(site, 'passphrase')
         datafile= StringIO(data)
         outfile = StringIO()
         result = self.gpg.decrypt_file(datafile, passphrase=passphrase, always_trust=True)
-        print "=begin========================================================"
-        print result.__dict__
-        print result.data
-        print "=end  ========================================================"
         return str(result)

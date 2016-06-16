@@ -11,7 +11,7 @@ KEEP_RUNNING = True
 
 PACKAGEDIR = dirname(abspath(__file__))
 
-// assuming 'c:' only exists on 'Windows' machines and adjust path accordingly
+# assuming 'c:' only exists on 'Windows' machines and adjust path accordingly
 if exists("c:"):
     APPDIR = join(expandvars("%APPDATA%"), 'LocalBox')
 else:

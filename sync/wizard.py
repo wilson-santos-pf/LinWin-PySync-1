@@ -304,6 +304,8 @@ class Wizard(Tk):
             self.configparser.set(self.box_label, 'direction', 'sync')
             self.configparser.set(self.box_label, 'passphrase',
                                   self.passphrasestring)
+            self.configparser.set(self.box_label, 'user', self.username)
+
             if not exists(dirname(SITESINI_PATH)):
                 getLogger('wizard').debug("not exists dirname sitesini")
                 makedirs(dirname(SITESINI_PATH))

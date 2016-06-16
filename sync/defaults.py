@@ -11,10 +11,11 @@ KEEP_RUNNING = True
 
 PACKAGEDIR = dirname(abspath(__file__))
 
+// assuming 'c:' only exists on 'Windows' machines and adjust path accordingly
 if exists("c:"):
     APPDIR = join(expandvars("%APPDATA%"), 'LocalBox')
 else:
-    # We assume anything nonwindows is POSIX-like enough
+    # We assume anything nonwindows is POSIX-like
     APPDIR = join(expandvars("$HOME"), '.config', 'localbox')
 
 SYNCINI_PATH = join(APPDIR, 'sync.ini')

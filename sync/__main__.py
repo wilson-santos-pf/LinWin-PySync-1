@@ -2,10 +2,12 @@
 main module for localbox sync
 """
 from threading import Lock
+from logging import basicConfig
 from getpass import getpass
 from logging import getLogger
 from logging import StreamHandler
 from logging import FileHandler
+from logging import Formatter
 from threading import Thread
 from threading import Event
 from os import makedirs
@@ -49,18 +51,18 @@ class SyncRunner(Thread):
         self.setDaemon(True)
         self.syncer = syncer
         self.lock = Lock()
-        getLogger('main').info("SyncRunner started")
+        getLogger(__name__).info("SyncRunner started")
 
     def run(self):
         """
         Function that runs one iteration of the synhronization
         """
-        getLogger('main').info("SyncRunner " + self.name + " started")
+        getLogger(__name__).info("SyncRunner " + self.name + " started")
         self.lock.acquire()
         # TODO: Direction
         self.syncer.syncsync()
         self.lock.release()
-        getLogger('main').info("SyncRunner " + self.name + " finished")
+        getLogger(__name__).info("SyncRunner " + self.name + " finished")
 
 
 def stop_running():
@@ -86,7 +88,7 @@ def get_site_list():
                                           section)
             localbox.add_authenticator(authenticator)
             if not authenticator.has_client_credentials():
-                getLogger('main').info("Don't have client credentials for "
+                getLogger(__name__).info("Don't have client credentials for "
                                        "this host yet. We need to log in with"
                                        " your data for once.")
                 username = raw_input("Username: ")
@@ -94,22 +96,22 @@ def get_site_list():
                 try:
                     authenticator.init_authenticate(username, password)
                 except AuthenticationError as error:
-                    getLogger('error').exception(error)
-                    getLogger('main').info("authentication data incorrect. "
+                    getLogger(__name__).exception(error)
+                    getLogger(__name__).info("authentication data incorrect. "
                                            "Skipping entry.")
             else:
                 syncer = Syncer(localbox, path, direction)
                 sites.append(syncer)
         except NoOptionError as error:
-            getLogger('error').exception(error)
+            getLogger(__name__).exception(error)
             string = "Skipping '%s' due to missing option '%s'" % \
                      (section, error.option)
-            getLogger('main').info(string)
+            getLogger(__name__).info(string)
         except URLError as error:
-            getLogger('error').exception(error)
+            getLogger(__name__).exception(error)
             string = "Skipping '%s' because it cannot be reached" % \
                      (section)
-            getLogger('main').info(string)
+            getLogger(__name__).info(string)
    
     return sites
 
@@ -127,10 +129,10 @@ def main(waitevent=None):
         try:
             delay = int(configparser.get('sync', 'delay'))
         except (NoSectionError, NoOptionError) as error:
-            getLogger('error').warning("%s in '%s'" % (error.message, SYNCINI_PATH))
+            getLogger(__name__).warning("%s in '%s'" % (error.message, SYNCINI_PATH))
             delay = 3600
         while KEEP_RUNNING:
-            getLogger('localbox').debug("starting loop")
+            getLogger(__name__).debug("starting loop")
             for syncer in sites:
                 runner = SyncRunner(syncer=syncer)
                 runner.start()
@@ -140,29 +142,30 @@ def main(waitevent=None):
                 #     syncer.downsync()
                 # if syncer.direction == 'sync':
                 #     syncer.syncsync()
-            getLogger('localbox').debug("waiting")
+            getLogger(__name__).debug("waiting")
             if waitevent.wait(delay):
-                getLogger('localbox').debug("stopped waiting")
+                getLogger(__name__).debug("stopped waiting")
                 waitevent.clear()
             else:
-                getLogger('localbox').debug("done waiting")
+                getLogger(__name__).debug("done waiting")
     except Exception as error:  # pylint: disable=W0703
-        getLogger('error').exception(error)
+        getLogger(__name__).exception(error)
 
+def prepare_logging():
+        handlers = [StreamHandler(stdout), FileHandler(LOG_PATH)]
+        log_text_format = Formatter("%(asctime)s - %(module)s - %(lineno)s - %(thread)d - %(message)s")
+        logger = getLogger() # Root logger
+        for handler in handlers:
+            handler.setFormatter(log_text_format)
+            logger.addHandler(handler)
+            logger.setLevel(0)
+            logger.info("Starting LocalBox Sync logger ")
 
 if __name__ == '__main__':
+    prepare_logging()
     try:
         if not isdir(dirname(LOG_PATH)):
             makedirs(dirname(LOG_PATH))
-        handlers = [StreamHandler(stdout), FileHandler(LOG_PATH)]
-        for logger_name in 'main', 'database', 'auth', 'localbox', 'wizard', 'error', \
-                'gpg', 'taskbar', 'gui':
-            logger = getLogger(logger_name)
-            for handler in handlers:
-                logger.addHandler(handler)
-            logger.setLevel(0)
-            logger.info("Starting LocalBox Sync logger " + logger_name)
-
         EVENT = Event()
         EVENT.clear()
         MAIN = Thread(target=main, args=[EVENT])
@@ -171,4 +174,4 @@ if __name__ == '__main__':
 
         taskbarmain(EVENT)
     except Exception as error:  # pylint: disable=W0703
-        getLogger('error').exception(error)
+        getLogger(__name__).exception(error)

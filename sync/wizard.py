@@ -6,6 +6,7 @@ from os.path import isdir
 from os.path import exists
 from os.path import dirname
 from os import makedirs
+from base64 import b64decode
 from json import loads
 from json import dumps
 
@@ -64,7 +65,7 @@ class Wizard(Tk):
             self.siteslist = []
         else:
             self.sites = siteslist
-        getLogger('wizard').debug("initializing wizard")
+        getLogger(__name__).debug("initializing wizard")
         self.parent = parent
         self.language = language
         self.topwindow = topwindow
@@ -97,27 +98,27 @@ class Wizard(Tk):
         self.button = Button(master=self, text=self.translate("buttontext"),
                              command=self.next_1)
         self.button.grid(row=4, column=0)
-        getLogger('wizard').debug("wizard initialized")
+        getLogger(__name__).debug("wizard initialized")
 
     def next_1(self):
-        getLogger('wizard').debug("wizard next_1")
+        getLogger(__name__).debug("wizard next_1")
         server_url = self.entry.get()
         server = self.validate_server(server_url)
         if server is not None and self.entry2.get() not in \
            self.configparser.sections():
-            getLogger('wizard').debug(
+            getLogger(__name__).debug(
                 "server is not not and entry not in sections = true")
             self.server_url = server_url
             self.box_label = self.entry2.get()
         else:
-            getLogger('wizard').debug(
+            getLogger(__name__).debug(
                 "server is not not and entry not in sections = false")
             return Errorwindow("Error with input data", parent=self,
                                language=self.translate)
         self.window1()
 
     def window1(self):
-        getLogger('wizard').debug("wizard window_1")
+        getLogger(__name__).debug("wizard window_1")
         self.clear()
         # folder
         self.label = Label(master=self, text=self.translate("label2text"))
@@ -132,13 +133,13 @@ class Wizard(Tk):
         self.button.grid(row=2, column=0)
 
     def next_2(self):
-        getLogger('wizard').debug("wizard next_2")
+        getLogger(__name__).debug("wizard next_2")
         filepath = self.entry.get()
         if isdir(filepath):
-            getLogger('wizard').debug("isdir filepath = true")
+            getLogger(__name__).debug("isdir filepath = true")
             self.filepath = filepath
         else:
-            getLogger('wizard').debug("isdir filepath = false")
+            getLogger(__name__).debug("isdir filepath = false")
             Errorwindow("Need valid directory", parent=self,
                         language=self.language)
         authenticator = Authenticator(self.localbox.get_authentication_url(),
@@ -146,16 +147,16 @@ class Wizard(Tk):
         try:
             self.localbox.add_authenticator(authenticator)
             if authenticator.has_client_credentials():
-                getLogger('wizard').debug("has_client_credentials = false")
+                getLogger(__name__).debug("has_client_credentials = false")
                 self.window3()
             else:
-                getLogger('wizard').debug("has_client_credentials = true")
+                getLogger(__name__).debug("has_client_credentials = true")
                 self.window2()
         except AlreadyAuthenticatedError():
             self.window3()
 
     def window2(self):
-        getLogger('wizard').debug("wizard window2")
+        getLogger(__name__).debug("wizard window2")
         self.clear()
         # authentication
         self.label = Label(master=self,
@@ -172,7 +173,7 @@ class Wizard(Tk):
         self.button.grid(row=4, column=0)
 
     def next_3(self):
-        getLogger('wizard').debug("wizard next_3")
+        getLogger(__name__).debug("wizard next_3")
         self.username = self.entry.get()
         password = self.password.get()
         authurl = self.localbox.get_authentication_url()
@@ -180,50 +181,51 @@ class Wizard(Tk):
         try:
             if self.localbox.authenticator.init_authenticate(self.username,
                                                              password):
-                getLogger('wizard').debug("ini authenticate = true")
+                getLogger(__name__).debug("ini authenticate = true")
                 print("done")
             else:
-                getLogger('wizard').debug("ini authenticate = false")
+                getLogger(__name__).debug("ini authenticate = false")
                 print("password error")
                 return Errorwindow("Username/Password incorrect", parent=self,
                                    language=self.translate)
         except AlreadyAuthenticatedError as error:
-            getLogger('wizard').debug(
+            getLogger(__name__).debug(
                 "ini authenticate = AlreadyAuthenticatedError")
-            getLogger('error').exception(error)
+            getLogger(__name__).exception(error)
             print("already authenticated")
             Errorwindow("Already authenticated. Please send localbox-sync.log to show us how you did this. You might want to clear the AppData folder as well",
                         language=self.translate, parent=self)
         except (HTTPError, URLError) as error:
-            getLogger('wizard').debug(
+            getLogger(__name__).debug(
                 "Problem connecting to the authentication server")
-            getLogger('error').exception(error)
+            getLogger(__name__).exception(error)
             Errorwindow("Authentication Problem: " + error.message,
                         language=self.translate, parent=self)
-        getLogger('wizard').debug("launching window3")
+        getLogger(__name__).debug("launching window3")
         self.window3()
 
     def window3(self):
-        getLogger('wizard').debug("wizard window3")
+        getLogger(__name__).debug("wizard window3")
         response = self.localbox.call_user()
         result = loads(response.read())
+        print result
         if self.username is None:
-            getLogger('wizard').debug("username is None")
+            getLogger(__name__).debug("username is None")
             self.username = result['user']
         self.clear()
         if 'private_key' in result and 'public_key' in result:
-            getLogger('wizard').debug("private key and public key found")
+            getLogger(__name__).debug("private key and public key found")
             self.label = Label(master=self,
                                text=self.translate("give passphrase"))
             self.privkey = result['private_key']
             self.pubkey = result['public_key']
         else:
-            getLogger('wizard').debug("private key or public key not found")
-            getLogger('wizard').debug(str(result))
+            getLogger(__name__).debug("private key or public key not found")
+            getLogger(__name__).debug(str(result))
             self.label = Label(master=self,
                                text=self.translate("new passphrase"))
         self.label.grid(row=0, column=0)
-        self.passphrase = Entry(master=self, width=30)
+        self.passphrase = Entry(master=self, show="*", width=30)
         self.passphrase.grid(row=1, column=0)
         self.button = Button(master=self,
                              text=self.translate("passpharsebutton"),
@@ -231,22 +233,22 @@ class Wizard(Tk):
         self.button.grid(row=2, column=0)
 
     def next_4(self):
-        getLogger('wizard').debug("wizard next_4")
+        getLogger(__name__).debug("wizard next_4")
         # set up gpg
         keys = gpg()
         self.passphrasestring = self.passphrase.get()
         if self.pubkey is not None and self.privkey is not None:
-            getLogger('wizard').debug("private key found and public key found")
+            getLogger(__name__).debug("private key found and public key found")
 
             result = keys.add_keypair(self.pubkey, self.privkey,
                                       self.box_label, self.username,
                                       self.passphrasestring)
             if result is None:
-                getLogger('wizard').debug("could not add keypair")
+                getLogger(__name__).debug("could not add keypair")
                 return Errorwindow("Wrong passphase", parent=self,
                                    language=self.translate)
         else:
-            getLogger('wizard').debug("public keys not found")
+            getLogger(__name__).debug("public keys not found")
             fingerprint = keys.generate(self.passphrasestring,
                                         self.box_label, self.username)
             data = {'private_key': keys.get_key(fingerprint, True),
@@ -257,19 +259,19 @@ class Wizard(Tk):
         self.save()
 
     def exit_button(self):
-        getLogger('wizard').debug("wizard exit_button")
+        getLogger(__name__).debug("wizard exit_button")
         self.topwindow.update()
         self.destroy()
 
     def get_file(self):
-        getLogger('wizard').debug("wizard get_file")
+        getLogger(__name__).debug("wizard get_file")
         result = tkFileDialog.askdirectory()
         if len(result) != 0:
             self.entry.delete(0, END)
             self.entry.insert(0, result)
 
     def validate_server(self, server_url):
-        getLogger('wizard').debug("wizard validate_server")
+        getLogger(__name__).debug("wizard validate_server")
         self.localbox = LocalBox(server_url)
         try:
             self.localbox.get_authentication_url()
@@ -277,26 +279,26 @@ class Wizard(Tk):
             return self.localbox
         except (URLError, BadStatusLine, ValueError,
                 AlreadyAuthenticatedError) as error:
-            getLogger('wizard').debug("error with uthentication url thingie")
-            getLogger('error').exception(error)
+            getLogger(__name__).debug("error with uthentication url thingie")
+            getLogger(__name__).exception(error)
             print("failed")
             return None
 
     def clear(self):
-        getLogger('wizard').debug("wizard clear")
+        getLogger(__name__).debug("wizard clear")
         for widget in self.winfo_children():
             widget.destroy()
 
     def translate(self, string):
-        getLogger('wizard').debug("wizard translate")
+        getLogger(__name__).debug("wizard translate")
         if self.language is None:
-            getLogger('wizard').debug("language is none")
+            getLogger(__name__).debug("language is none")
             print("Warning: Translation not loaded")
             return string
         return self.language.lgettext(string)
 
     def save(self):
-        getLogger('wizard').debug("wizard save")
+        getLogger(__name__).debug("wizard save")
         try:
             self.configparser.add_section(self.box_label)
             self.configparser.set(self.box_label, 'url', self.server_url)
@@ -307,7 +309,7 @@ class Wizard(Tk):
             self.configparser.set(self.box_label, 'user', self.username)
 
             if not exists(dirname(SITESINI_PATH)):
-                getLogger('wizard').debug("not exists dirname sitesini")
+                getLogger(__name__).debug("not exists dirname sitesini")
                 makedirs(dirname(SITESINI_PATH))
             with open(SITESINI_PATH, 'wb') as configfile:
                 self.configparser.write(configfile)
@@ -319,8 +321,8 @@ class Wizard(Tk):
                                 command=self.endwizard)
             confbutton.grid(row=1, column=0)
         except ConfigError as error:
-            getLogger('wizard').debug("configerror")
-            getLogger('error').exception(error)
+            getLogger(__name__).debug("configerror")
+            getLogger(__name__).exception(error)
             self.clear()
             Label(text=error.message, master=self).grid(row=0, column=0)
             errorbutton = Button(master=self,
@@ -329,7 +331,7 @@ class Wizard(Tk):
             errorbutton.grid(row=1, column=0)
 
     def endwizard(self):
-        getLogger('wizard').debug("wizard endwizard")
+        getLogger(__name__).debug("wizard endwizard")
         self.topwindow.update_window()
         self.destroy()
         self.sites.append(Syncer(self.localbox, self.filepath, 'sync'))

@@ -15,6 +15,7 @@ from os import makedirs
 from logging import getLogger
 from gettext import translation
 
+from .__main__ import prepare_logging
 from .auth import Authenticator
 from .auth import AuthenticationError
 from .database import database_execute
@@ -112,10 +113,10 @@ class Gui(Tk):
                 self.add_entries(dataentry)
 
             except NoOptionError as error:
-                getLogger('error').exception(error)
+                getLogger(__name__).exception(error)
                 string = "Skipping LocalBox '%s' due to missing option '%s'" %\
                          (section, error.option)
-                getLogger('gui').debug(string)
+                getLogger(__name__).debug(string)
 
 
 def get_entry_fields(parent, text, value, row):
@@ -207,7 +208,7 @@ class DataEntry(Frame):
                                 command=self.close_exception_window)
             confbutton.grid(row=1, column=0)
         except ConfigError as error:
-            getLogger('error').exception(error)
+            getLogger(__name__).exception(error)
             self.eventwindow = Tk()
             self.eventwindow.title(smll("error"))
             Label(text=error.message, master=self.eventwindow).grid(row=0,
@@ -231,34 +232,35 @@ class DataEntry(Frame):
             # Show username/password field
             if authenticator.init_authenticate(credentials.username.get(),
                                                credentials.password.get()):
-                getLogger('auth').info("succes")
+                getLogger(__name__).info("succes")
             else:
-                getLogger('auth').info("failure")
+                getLogger(__name__).info("failure")
         else:
             try:
                 authenticator.authenticate()
-                getLogger('auth').info("credentials seem valid")
+                getLogger(__name__).info("credentials seem valid")
             except AuthenticationError as error:
-                getLogger('error').exception(error)
-                getLogger('auth').info("your credentials are invalid")
+                getLogger(__name__).exception(error)
+                getLogger(__name__).info("your credentials are invalid")
 
 
 def main(gui=None, sites=None):
-    getLogger('gui').debug("Gui Main Started")
+    getLogger(__name__).debug("Gui Main Started")
     location = SITESINI_PATH
     configparser = ConfigParser()
     configparser.read(location)
     if gui is None:
-        getLogger('gui').debug("Started a new gui")
+        getLogger(__name__).debug("Started a new gui")
         gui = Gui(configparser=configparser, siteslist=sites)
 
-    getLogger('gui').debug("While loop start")
+    getLogger(__name__).debug("While loop start")
     if sites is None:
         sites = []
     gui.title(gui.language.lgettext('settingstitle'))
-    getLogger('gui').debug("Launching GUI main loop")
+    getLogger(__name__).debug("Launching GUI main loop")
     gui.mainloop()
-    getLogger('gui').debug("done with GUI mainloop")
+    getLogger(__name__).debug("done with GUI mainloop")
 
 if __name__ == "__main__":
+    prepare_logging()
     main()

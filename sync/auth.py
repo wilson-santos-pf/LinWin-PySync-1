@@ -84,7 +84,7 @@ class Authenticator(object):
         sql = "select client_id, client_secret, user from sites where site = ?;"
         result = database_execute(sql, (self.label,))
         if result != [] and result is not None:
-            getLogger('auth').debug("loading data")
+            getLogger(__name__).debug("loading data")
             self.client_id = str(result[0][0])
             self.client_secret = str(result[0][1])
             self.username = str(result[0][2])
@@ -105,10 +105,10 @@ class Authenticator(object):
         Do initial authentication with the resource owner password credentials
         """
         if (self.client_id is not None) or (self.client_secret is not None):
-            getLogger('auth').info("init authenticate data")
-            getLogger('auth').info(self.client_id)
-            getLogger('auth').info(self.client_secret)
-            getLogger('auth').info("end init authenticate data")
+            getLogger(__name__).info("init authenticate data")
+            getLogger(__name__).info(self.client_id)
+            getLogger(__name__).info(self.client_secret)
+            getLogger(__name__).info("end init authenticate data")
             raise AuthenticationError("Do not call init_authenticate w"
                                       "hen client_id and client_secret"
                                       " are already set")
@@ -120,12 +120,12 @@ class Authenticator(object):
         try:
             self._call_authentication_server(authdata)
             if self.access_token is not None:
-                getLogger('auth').debug("Authentication Succesful. "
+                getLogger(__name__).debug("Authentication Succesful. "
                                         "Saving Client Data")
                 self.save_client_data()
                 return True
         except (URLError) as error:
-            getLogger('error').exception(error)
+            getLogger(__name__).exception(error)
             raise error
         # clear credentials on failure
         self.client_id = None
@@ -163,15 +163,15 @@ class Authenticator(object):
             self.expires = time() + json.get('expires_in', 0) - \
                 EXPIRATION_LEEWAY
         except (HTTPError, URLError) as error:
-            getLogger('error').exception(error)
-            getLogger('auth').debug('HTTPError when calling '
+            getLogger(__name__).exception(error)
+            getLogger(__name__).debug('HTTPError when calling '
                                     'the authentication server')
-            getLogger('auth').debug(error.message)
+            getLogger(__name__).debug(error.message)
             if hasattr(error, 'code') and error.code == 400:
-                getLogger('auth').debug('Authentication Problem')
+                getLogger(__name__).debug('Authentication Problem')
                 raise AuthenticationError()
             else:
-                getLogger('auth').debug('Other (connection) Problem')
+                getLogger(__name__).debug('Other (connection) Problem')
                 raise error
 
     def get_authorization_header(self):
@@ -184,6 +184,6 @@ class Authenticator(object):
             raise AuthenticationError("Please authenticate with "
                                       "resource owner credentials first")
         if time() > self.expires:
-            getLogger('auth').debug("Reauthenticating")
+            getLogger(__name__).debug("Reauthenticating")
             self.authenticate()
         return 'Bearer ' + self.access_token

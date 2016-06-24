@@ -54,25 +54,22 @@ class gpg(object):
         """
         add a keypair into the gpg key database
         """
-        print(public_key)
-        print(private_key)
-        print(site)
-        print(user)
-        print(passphrase)
         try:
+            print public_key
+            print private_key
             result1 = self.gpg.import_keys(b64decode(public_key))
             result2 = self.gpg.import_keys(b64decode(private_key))
+            getLogger(__name__).debug(str(result1.fingerprints))
+            getLogger(__name__).debug(str(result2.fingerprints))
+            print result1
+            print result2
         except TypeError as error:
-            print(error)
-            print(public_key)
-            print(private_key)
+            print("add_keypair TypeError " + str(error))
         # make sure this is a key _pair_
         try:
             assert result1.fingerprints[0] == result2.fingerprints[0]
         except (IndexError, AssertionError) as error:
-            getLogger('error').exception(error)
-            getLogger('gpg').debug(str(result1.fingerprints))
-            getLogger('gpg').debug(str(result2.fingerprints))
+            getLogger(__name__).exception('add_keypair IndexError/AssertionError: ' + str(error))
             return None
         fingerprint = result1.fingerprints[0]
         sign = self.gpg.sign("test", keyid=fingerprint, passphrase=passphrase)

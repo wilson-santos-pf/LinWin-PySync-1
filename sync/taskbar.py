@@ -69,7 +69,7 @@ class LocalBoxIcon(wx.TaskBarIcon):
         """
         start the graphical user interface for configuring localbox
         """
-        getLogger('taskbar').debug("Starting GUI")
+        getLogger(__name__).debug("Starting GUI")
         Thread(target=call, args=[[executable, '-m', 'sync.gui']]).start()
 
     def start_sync(self, wx_event):  # pylint: disable=W0613

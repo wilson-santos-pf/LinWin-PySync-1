@@ -16,6 +16,7 @@ from time import time
 from os.path import exists
 from os.path import dirname
 from os import makedirs
+from os.path import sep
 try:
     from cPickle import dump, load
 except ImportError:
@@ -146,7 +147,7 @@ class MetaVFS(object):
         """
         do a debug pring of all paths
         """
-        getLogger('localbox').info(self.path)
+        getLogger(__name__).info(self.path)
         for child in self.children:
             child.debug_print()
 
@@ -184,16 +185,16 @@ class MetaVFS(object):
         is a certain path in this vfs directory structure?
         """
         if len(filepath) > 0 and filepath[0] == '.':
-            getLogger('localbox').info("removing superfluous '.'")
+            getLogger(__name__).info("removing superfluous '.'")
             filepath = filepath[1:]
         if len(filepath) == 0 or filepath[0] != '/':
-            getLogger('localbox').info("adding root '/' to path")
+            getLogger(__name__).info("adding root '/' to path")
             filepath = '/' + filepath
         result = False
-        getLogger('localbox').info("MATCHING: " + filepath)
+        getLogger(__name__).info("MATCHING: " + filepath)
         for vfsdirectory in self.yield_directories():
             directory = vfsdirectory.path
-            getLogger('localbox').info("TO      : " + directory)
+            getLogger(__name__).info("TO      : " + directory)
             if directory == filepath:
                 result = True
                 break
@@ -208,9 +209,9 @@ class Syncer(object):
         self.localbox_metadata = None
         self.filepath_metadata = None
         self.direction = direction
-        getLogger('localbox').info("LocalBox:")
+        getLogger(__name__).info("LocalBox:")
         self.populate_localbox_metadata(path='/', parent=None)
-        getLogger('localbox').info("Local FS:")
+        getLogger(__name__).info("Local FS:")
         self.populate_filepath_metadata(path='./', parent=None)
 
     def populate_localbox_metadata(self, path='/', parent=None):
@@ -236,7 +237,7 @@ class Syncer(object):
         if path == '.':
             path = './'
         realpath = abspath(join(self.filepath, path))
-        getLogger('localbox').info("processing " + path + " transformed to "
+        getLogger(__name__).info("processing " + path + " transformed to "
                                    + realpath)
         is_dir = isdir(realpath)
         modtime = stat(realpath).st_mtime
@@ -258,40 +259,40 @@ class Syncer(object):
                 mkdir(dirpath)
         for vfsfilename in self.localbox_metadata.yield_files():
             filename = vfsfilename.path
-            getLogger('localbox').info("processing file " + filename)
+            getLogger(__name__).info("processing file " + filename)
             localfile = self.filepath_metadata.get_entry(filename)
             remotefile = self.localbox_metadata.get_entry(filename)
             if localfile is None or (remotefile is not None and
                                      localfile.modified_at <
                                      remotefile.modified_at + 2):
-                getLogger('localbox').info("downloading " + filename)
+                getLogger(__name__).info("downloading " + filename)
                 self.download(filename)
             else:
-                getLogger('localbox').info("Already downloaded " + filename)
+                getLogger(__name__).info("Already downloaded " + filename)
         self.filepath_metadata.save(OLD_SYNC_STATUS)
 
     def upsync(self):
         for vfsdirname in self.filepath_metadata.yield_directories():
             dirpath = vfsdirname.path
-            getLogger('localbox').info("processing " + dirpath)
+            getLogger(__name__).info("processing " + dirpath)
             # dirname = join(self.filepath, "." + dirpath)
             if not self.localbox_metadata.contains_directory(dirpath):
-                getLogger('localbox').info("creating directory " + dirpath)
+                getLogger(__name__).info("creating directory " + dirpath)
                 self.localbox.create_directory(dirpath)
 
         for vfsfilename in self.filepath_metadata.yield_files():
             filename = vfsfilename.path
-            getLogger('localbox').info("processing file " + filename)
+            getLogger(__name__).info("processing file " + filename)
             remote = self.localbox_metadata.get_entry(filename)
             remotetime = self.localbox_metadata.get_entry(filename).modified_at
             localtime = self.filepath_metadata.get_entry(filename).modified_at
             if remote is None or localtime + 2 > remotetime:
-                getLogger('localbox').info("uploading " + filename)
+                getLogger(__name__).info("uploading " + filename)
                 self.localbox.create_directory(dirname(filename))
                 self.localbox.upload_file(filename, join(self.filepath,
                                                          filename[1:]))
             else:
-                getLogger('localbox').info("Already uploaded " + filename)
+                getLogger(__name__).info("Already uploaded " + filename)
 
         self.filepath_metadata.save(OLD_SYNC_STATUS)
         # self.filepath_metadata.load(OLD_SYNC_STATUS)
@@ -309,9 +310,10 @@ class Syncer(object):
             try:
                 remove(localfilename)
             except OSError:
-                getLogger('localbox').info("Already deleted " + filename)
+                getLogger(__name__).info("Already deleted " + localfilename)
 
     def download(self, path):
+        path = path.replace('/', sep)
         contents = self.localbox.get_file(path)
         localfilename = join(self.filepath, path[1:])
         # precreate folder if needed
@@ -344,12 +346,16 @@ class Syncer(object):
                 try:
                     self.mkdir(directory)
                 except OSError as error:
-                    getLogger('localbox').info("OSError when creating folder %s: %s", directory ,error)
+                    getLogger(__name__).info("OSError when creating folder %s: %s", directory ,error)
             if olddir is None and remotedir is None:
                 self.localbox.create_directory(directory)
 
     def syncsync(self):
-        getLogger('localbox').info("Starting syncsync")
+        getLogger(__name__).info("Starting syncsync")
+        getLogger(__name__).info("LocalBox:")
+        self.populate_localbox_metadata(path='/', parent=None)
+        getLogger(__name__).info("Local FS:")
+        self.populate_filepath_metadata(path='./', parent=None)
         directories = set(chain(self.filepath_metadata.yield_directories(), self.localbox_metadata.yield_directories()))
         self.dirsync(directories)
         allpaths = set(self.filepath_metadata.get_files() +
@@ -361,10 +367,10 @@ class Syncer(object):
             oldmetadata = self.filepath_metadata.load(OLD_SYNC_STATUS)
             allpaths = set(list(allpaths) + oldmetadata.get_files())
         except (IOError, AttributeError) as error:
-            getLogger('localbox').info("Old data unknown")
-            getLogger('localbox').exception(error)
+            getLogger(__name__).info("Old data unknown")
+            getLogger(__name__).exception(error)
             oldmetadata = MetaVFS(path='/', modified_at=0)
-        getLogger('localbox').info(str(allpaths))
+        getLogger(__name__).info(str(allpaths))
 
         for path in sorted(allpaths):
             print("Syncing %s" % path)
@@ -374,11 +380,11 @@ class Syncer(object):
 
             if remotefile == oldfile and localfile is None:
                 self.localbox.delete(path)
-                getLogger('localbox').info("Deleting remote %s", path)
+                getLogger(__name__).info("Deleting remote %s", path)
                 continue
             if localfile == oldfile and remotefile is None:
                 print(path)
-                getLogger('localbox').info("Deleting local %s", path)
+                getLogger(__name__).info("Deleting local %s", path)
                 self.delete(path)
                 continue
 
@@ -386,14 +392,14 @@ class Syncer(object):
             print("====Newest %s, Local %s, Remote %s, Old %s ====" % (newest, localfile, remotefile, oldfile))
 
             if newest == oldfile and newest is not None:
-                getLogger('localbox').info(
+                getLogger(__name__).info(
                     "Skipping %s because all files are older then the previous file", newest.path)
                 continue
 
             newest = MetaVFS.newest(localfile, remotefile)
 
             if newest == localfile:
-                getLogger('localbox').info("Uploading %s", newest.path)
+                getLogger(__name__).info("Uploading %s", newest.path)
                 # TODO: Only create directorieswhen needed, preferably not.
                 if dirname(path) not in self.localbox_metadata.get_paths():
                     self.localbox.create_directory(dirname(path))
@@ -401,7 +407,7 @@ class Syncer(object):
                                                      path[1:]))
                 continue
             if newest == remotefile:
-                getLogger('localbox').info("Downloading %s", newest.path)
+                getLogger(__name__).info("Downloading %s", newest.path)
                 self.download(path)
                 continue
 

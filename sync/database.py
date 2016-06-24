@@ -47,14 +47,14 @@ def get_sql_log_dict():
     try:
         dbtype = parser.get('database', 'type')
     except (NoSectionError, NoOptionError) as error:
-        getLogger('database').warning("%s in '%s'" % (error.message, SYNCINI_PATH))
+        getLogger(__name__).warning("%s in '%s'" % (error.message, SYNCINI_PATH))
 
         dbtype = "sqlite"
     if dbtype in ['sqlite', 'sqlite3']:
         try:
             ip_address = parser.get('database', 'filename')
         except (NoSectionError, NoOptionError) as error:
-            getLogger('database').warning("%s in '%s'" % (error.message, SYNCINI_PATH))
+            getLogger(__name__).warning("%s in '%s'" % (error.message, SYNCINI_PATH))
             ip_address = DATABASE_PATH
     else:
         ip_address = parser.get('database', 'hostname')
@@ -70,14 +70,14 @@ def database_execute(command, params=None):
     @param params a list of tuple of values to substitute in command
     @returns a list of dictionaries representing the sql result
     """
-    getLogger("database").info("database_execute(" + command + ", " +
+    getLogger(__name__).info("database_execute(" + command + ", " +
                                str(params) + ")", extra=get_sql_log_dict())
     parser = ConfigParser()
     parser.read(SYNCINI_PATH)
     try:
         dbtype = parser.get('database', 'type')
     except (NoSectionError, NoOptionError) as error:
-        getLogger('database').warning("%s in '%s'" % (error.message, SYNCINI_PATH))
+        getLogger(__name__).warning("%s in '%s'" % (error.message, SYNCINI_PATH))
         dbtype = 'sqlite'
 
     if dbtype == "mysql":
@@ -102,7 +102,7 @@ def sqlite_execute(command, params=None):
     @returns a list of dictionaries representing the sql result
     """
     # NOTE mostly copypasta'd from mysql_execute, may be a better way
-    getLogger("database").debug("sqlite_execute(" + command + ", " +
+    getLogger(__name__).debug("sqlite_execute(" + command + ", " +
                                 str(params) + ")", extra=get_sql_log_dict())
     try:
         parser = ConfigParser()
@@ -110,7 +110,7 @@ def sqlite_execute(command, params=None):
         try:
             filename = parser.get('database', 'filename')
         except (NoSectionError, NoOptionError) as error:
-            getLogger('database').warning("%s in '%s'" % (error.message, SYNCINI_PATH))
+            getLogger(__name__).warning("%s in '%s'" % (error.message, SYNCINI_PATH))
             filename = DATABASE_PATH
 
         init_db = not exists(expandvars(filename))
@@ -135,14 +135,14 @@ def sqlite_execute(command, params=None):
         connection.commit()
         return cursor.fetchall()
     except SQLiteError as sqlerror:
-        getLogger('database').exception(sqlerror)
+        getLogger(__name__).exception(sqlerror)
         raise DatabaseError("SQLite Error: %s" % (sqlerror.args[0]))
     except (NoSectionError, NoOptionError) as error:
-        getLogger('database').exception(error)
+        getLogger(__name__).exception(error)
         raise DatabaseError("Please configure the database section"
                             " in the ini file")
     except TypeError as error:
-        getLogger('database').exception(error)
+        getLogger(__name__).exception(error)
         raise DatabaseError("Please configure the 'filename' parameter"
                             " in the [database] section in the ini file")
     finally:
@@ -150,7 +150,7 @@ def sqlite_execute(command, params=None):
             if connection:
                 connection.close()
         except UnboundLocalError as error:
-            getLogger('database').exception(error)
+            getLogger(__name__).exception(error)
 
 
 def mysql_execute(command, params=None):
@@ -162,7 +162,7 @@ def mysql_execute(command, params=None):
     @param params a list of tuple of values to substitute in command
     @returns a list of dictionaries representing the sql result
     """
-    getLogger("database").debug("mysql_execute(" + command + ", " + str(params)
+    getLogger(__name__).debug("mysql_execute(" + command + ", " + str(params)
                                 + ")", extra=get_sql_log_dict())
     parser = ConfigParser()
     parser.read(SYNCINI_PATH)
@@ -181,10 +181,10 @@ def mysql_execute(command, params=None):
     except MySQLError as mysqlerror:
         string = "MySQL Error: %d: %s" % (mysqlerror.args[0],
                                           mysqlerror.args[1])
-        getLogger('database').debug(string, extra=get_sql_log_dict())
+        getLogger(__name__).debug(string, extra=get_sql_log_dict())
     finally:
         try:
             if connection:
                 connection.close()
         except UnboundLocalError as error:
-            getLogger('database').exception(error)
+            getLogger(__name__).exception(error)

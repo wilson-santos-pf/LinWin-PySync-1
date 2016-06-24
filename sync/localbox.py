@@ -10,6 +10,7 @@ from Crypto.Cipher.AES import new as AES_Key
 #from Crypto.Cipher.AES import MODE_CBC
 from Crypto.Cipher.AES import MODE_CFB
 from Crypto.Random import new as CryptoRandom
+from os.path import sep
 
 from .gpg import gpg
 from .defaults import SITESINI_PATH
@@ -74,7 +75,7 @@ class LocalBox(object):
                 non_verifying_context = SSLContext(PROTOCOL_TLSv1)
                 urlopen(self.url, context=non_verifying_context)
             except BadStatusLine as error:
-                getLogger('error').exception(error.description)
+                getLogger(__name__).exception(error.description)
                 raise error
             except HTTPError as error:
                 if error.code != 401:
@@ -88,7 +89,7 @@ class LocalBox(object):
                             if entry[0].lower() == "domain":
                                 return entry[1][1:-1]
                         except ValueError as error:
-                            getLogger('error').exception(error)
+                            getLogger(__name__).exception(error)
                             bearer = False
                     if field.lower() == 'bearer':
                         bearer = True
@@ -127,6 +128,7 @@ class LocalBox(object):
         """
         do the create directory call
         """
+        path = path.replace(sep, '/')
         if path[0] != '/':
             path = '/' + path
         if path[-1] == '/':
@@ -161,6 +163,7 @@ class LocalBox(object):
         """
         upload a file to localbox
         """
+        path = path.replace(sep, '/')
         if path[0] == '.':
             path = path[1:]
         if len(path) > 0 and path[0] == '/':
@@ -170,10 +173,10 @@ class LocalBox(object):
         try:
             contents = self.encode_file(path, contents)
         except BadStatusLine as error:
-            getLogger('error').exception(error)
+            getLogger(__name__).exception(error)
             # TODO: make sure files get encrypted
         except HTTPError as error:
-            getLogger('error').exception(error)
+            getLogger(__name__).exception(error)
 
         request = Request(url=self.url + 'lox_api/files/' + metapath,
                           data=contents)
@@ -201,8 +204,8 @@ class LocalBox(object):
         try:
             index = path.index('/')
             cryptopath = path[:index]
-        except ValueError as error:
-            getLogger('error').exception(error)
+            getLogger(__name__).exception("call_keys called with a path with '/''s.")
+        except ValueError:
             cryptopath = path
         request = Request(url=self.url + 'lox_api/key/' + cryptopath)
         return self._make_call(request)
@@ -220,10 +223,8 @@ class LocalBox(object):
         try:
             index = path.index('/')
             cryptopath = path[:index]
-            
+            getLogger(__name__).warning("Trying to save a key for an entry in a subdirectory. Saving the key for the subdir instead")
         except ValueError as error:
-            # TODO: make more clear this is not an 'error' per se
-            getLogger('error').warning("The path argument to save_key contained no '/' components (which is not a problem)")
             cryptopath = path
 
         site = self.authenticator.label
@@ -254,7 +255,6 @@ class LocalBox(object):
 
         key = AES_Key(keystring, MODE_CFB, ivstring)
         result = key.decrypt(contents)
-        print key
         return result
 
     def encode_file(self, path, contents):
@@ -264,8 +264,16 @@ class LocalBox(object):
         print "encodin' file"
         pgpclient = gpg()
         site = self.authenticator.label
-        keydata = loads(self.call_keys(path).read())
-        key = AES_Key(pgpclient.decrypt(b64decode(keydata['key']), site), MODE_CFB, pgpclient.decrypt(b64decode(keydata['iv']), site))
+        try:
+            keydata = loads(self.call_keys(path).read())
+            key = pgpclient.decrypt(b64decode(keydata['key']), site)
+            iv = pgpclient.decrypt(b64decode(keydata['iv']), site)
+        except (HTTPError, TypeError):
+            # generate keys if they don't exist
+            key = CryptoRandom().read(16)
+            iv = CryptoRandom().read(16)
+            self.save_key(path, key, iv)
+        key = AES_Key(key, MODE_CFB, iv)
         result = key.encrypt(contents)
         print result
         return result

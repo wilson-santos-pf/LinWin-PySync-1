@@ -108,6 +108,11 @@ class LocalBox(object):
         """
         do the meta call
         """
+        path = path.replace(sep, '/')
+        if path[0] != '/':
+            path = '/' + path
+        if path[-1] == '/':
+            path = path[:-1]
         metapath = quote(path).strip('/')
         request = Request(url=self.url + "lox_api/meta/" + metapath)
         json_text = self._make_call(request).read()
@@ -117,6 +122,11 @@ class LocalBox(object):
         """
         do the file call
         """
+        path = path.replace(sep, '/')
+        if path[0] != '/':
+            path = '/' + path
+        if path[-1] == '/':
+            path = path[:-1]
         metapath = quote(path).strip('/')
         request = Request(url=self.url + "lox_api/files/" + metapath)
         data = self._make_call(request).read()

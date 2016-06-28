@@ -1,10 +1,12 @@
 from Tkinter import Tk
-# from Tkinter import Toplevel as Tk
 from Tkinter import Frame
 from Tkinter import Label
 from Tkinter import Entry
 from Tkinter import Button
+
+from tkMessageBox import showerror
 import tkFileDialog
+
 from Tkinter import END
 from ConfigParser import ConfigParser
 from ConfigParser import NoOptionError
@@ -51,7 +53,8 @@ class UsernameAndPasswordAsker(Tk):
             self.lock.set()
             self.destroy()
         else:
-            #  TODO: window saying authentication failed
+            window = showerror('Authentication Failed', 'Could not authenticate, Check username and password')
+
             pass
 
     def __call__(self):

@@ -6,7 +6,6 @@ from os.path import isdir
 from os.path import exists
 from os.path import dirname
 from os import makedirs
-from base64 import b64decode
 from json import loads
 from json import dumps
 
@@ -334,4 +333,4 @@ class Wizard(Tk):
         getLogger(__name__).debug("wizard endwizard")
         self.topwindow.update_window()
         self.destroy()
-        self.sites.append(Syncer(self.localbox, self.filepath, 'sync'))
+        self.sites.append(Syncer(self.localbox, self.filepath, 'sync', self.box_label))

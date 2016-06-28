@@ -128,13 +128,10 @@ class MetaVFS(object):
         """
         load this metvfs into a file
         """
-        try:
-            filedescriptor = open(filename, 'r')
-            value = load(filedescriptor)
-            filedescriptor.close()
-            return value
-        except IOError:
-            return None
+        filedescriptor = open(filename, 'r')
+        value = load(filedescriptor)
+        filedescriptor.close()
+        return value
 
     def add_child(self, child):
         """
@@ -203,8 +200,9 @@ class MetaVFS(object):
 
 class Syncer(object):
 
-    def __init__(self, localbox_instance, file_root_path, direction):
+    def __init__(self, localbox_instance, file_root_path, direction, name=None):
         self.localbox = localbox_instance
+        self.name = name
         self.filepath = file_root_path
         self.localbox_metadata = None
         self.filepath_metadata = None
@@ -236,11 +234,18 @@ class Syncer(object):
     def populate_filepath_metadata(self, path='./', parent=None):
         if path == '.':
             path = './'
+        path=path.lstrip("/\\")
         realpath = abspath(join(self.filepath, path))
+        print realpath
         getLogger(__name__).info("processing " + path + " transformed to "
                                    + realpath)
         is_dir = isdir(realpath)
         modtime = stat(realpath).st_mtime
+        path = path.replace(sep, '/')
+        if path[0] != '/':
+            path = '/' + path
+        if path[-1] == '/':
+            path = path[:-1]
         vfsnode = MetaVFS(modtime, path[1:], is_dir)
 
         if is_dir:
@@ -251,52 +256,6 @@ class Syncer(object):
             self.filepath_metadata = vfsnode
         else:
             parent.add_child(vfsnode)
-
-    def downsync(self):
-        for vfsdirname in self.localbox_metadata.yield_directories():
-            dirpath = join(self.filepath, "." + vfsdirname.path)
-            if not isdir(dirpath):
-                mkdir(dirpath)
-        for vfsfilename in self.localbox_metadata.yield_files():
-            filename = vfsfilename.path
-            getLogger(__name__).info("processing file " + filename)
-            localfile = self.filepath_metadata.get_entry(filename)
-            remotefile = self.localbox_metadata.get_entry(filename)
-            if localfile is None or (remotefile is not None and
-                                     localfile.modified_at <
-                                     remotefile.modified_at + 2):
-                getLogger(__name__).info("downloading " + filename)
-                self.download(filename)
-            else:
-                getLogger(__name__).info("Already downloaded " + filename)
-        self.filepath_metadata.save(OLD_SYNC_STATUS)
-
-    def upsync(self):
-        for vfsdirname in self.filepath_metadata.yield_directories():
-            dirpath = vfsdirname.path
-            getLogger(__name__).info("processing " + dirpath)
-            # dirname = join(self.filepath, "." + dirpath)
-            if not self.localbox_metadata.contains_directory(dirpath):
-                getLogger(__name__).info("creating directory " + dirpath)
-                self.localbox.create_directory(dirpath)
-
-        for vfsfilename in self.filepath_metadata.yield_files():
-            filename = vfsfilename.path
-            getLogger(__name__).info("processing file " + filename)
-            remote = self.localbox_metadata.get_entry(filename)
-            remotetime = self.localbox_metadata.get_entry(filename).modified_at
-            localtime = self.filepath_metadata.get_entry(filename).modified_at
-            if remote is None or localtime + 2 > remotetime:
-                getLogger(__name__).info("uploading " + filename)
-                self.localbox.create_directory(dirname(filename))
-                self.localbox.upload_file(filename, join(self.filepath,
-                                                         filename[1:]))
-            else:
-                getLogger(__name__).info("Already uploaded " + filename)
-
-        self.filepath_metadata.save(OLD_SYNC_STATUS)
-        # self.filepath_metadata.load(OLD_SYNC_STATUS)
-        self.filepath_metadata.debug_print()
 
     def mkdir(self, path):
         localfilename = join(self.filepath, path[1:])
@@ -328,8 +287,9 @@ class Syncer(object):
         utime(localfilename, (time(), modtime))
 
     def dirsync(self, directories):
-        oldmetadata = self.filepath_metadata.load(OLD_SYNC_STATUS)
-        if oldmetadata is None:
+        try:
+            oldmetadata = self.filepath_metadata.load(OLD_SYNC_STATUS + "." + self.name)
+        except IOError:
             oldmetadata = MetaVFS(path='/', modified_at=0)
 
         for directory in directories:
@@ -364,7 +324,7 @@ class Syncer(object):
         self.localbox_metadata.debug_print()
 
         try:
-            oldmetadata = self.filepath_metadata.load(OLD_SYNC_STATUS)
+            oldmetadata = self.filepath_metadata.load(OLD_SYNC_STATUS + "." + self.name)
             allpaths = set(list(allpaths) + oldmetadata.get_files())
         except (IOError, AttributeError) as error:
             getLogger(__name__).info("Old data unknown")
@@ -411,4 +371,4 @@ class Syncer(object):
                 self.download(path)
                 continue
 
-        self.filepath_metadata.save(OLD_SYNC_STATUS)
+        self.filepath_metadata.save(OLD_SYNC_STATUS + "." + self.name)

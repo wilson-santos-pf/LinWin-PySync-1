@@ -2,7 +2,6 @@
 main module for localbox sync
 """
 from threading import Lock
-from logging import basicConfig
 from getpass import getpass
 from logging import getLogger
 from logging import StreamHandler
@@ -59,7 +58,6 @@ class SyncRunner(Thread):
         """
         getLogger(__name__).info("SyncRunner " + self.name + " started")
         self.lock.acquire()
-        # TODO: Direction
         self.syncer.syncsync()
         self.lock.release()
         getLogger(__name__).info("SyncRunner " + self.name + " finished")
@@ -100,7 +98,7 @@ def get_site_list():
                     getLogger(__name__).info("authentication data incorrect. "
                                            "Skipping entry.")
             else:
-                syncer = Syncer(localbox, path, direction)
+                syncer = Syncer(localbox, path, direction, name=section)
                 sites.append(syncer)
         except NoOptionError as error:
             getLogger(__name__).exception(error)
@@ -120,7 +118,6 @@ def main(waitevent=None):
     """
     temp test function
     """
-    sites = get_site_list()
     location = SITESINI_PATH
     configparser = ConfigParser()
     configparser.read(location)
@@ -133,6 +130,7 @@ def main(waitevent=None):
             delay = 3600
         while KEEP_RUNNING:
             getLogger(__name__).debug("starting loop")
+            sites = get_site_list()
             for syncer in sites:
                 runner = SyncRunner(syncer=syncer)
                 runner.start()
@@ -152,14 +150,14 @@ def main(waitevent=None):
         getLogger(__name__).exception(error)
 
 def prepare_logging():
-        handlers = [StreamHandler(stdout), FileHandler(LOG_PATH)]
-        log_text_format = Formatter("%(asctime)s - %(module)s - %(lineno)s - %(thread)d - %(message)s")
-        logger = getLogger() # Root logger
-        for handler in handlers:
-            handler.setFormatter(log_text_format)
-            logger.addHandler(handler)
-            logger.setLevel(0)
-            logger.info("Starting LocalBox Sync logger ")
+    handlers = [StreamHandler(stdout), FileHandler(LOG_PATH)]
+    log_text_format = Formatter("%(asctime)s - %(module)s - %(lineno)s - %(thread)d - %(message)s")
+    logger = getLogger() # Root logger
+    for handler in handlers:
+        handler.setFormatter(log_text_format)
+        logger.addHandler(handler)
+        logger.setLevel(0)
+        logger.info("Starting LocalBox Sync logger ")
 
 if __name__ == '__main__':
     prepare_logging()

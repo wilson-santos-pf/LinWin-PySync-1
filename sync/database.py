@@ -47,14 +47,16 @@ def get_sql_log_dict():
     try:
         dbtype = parser.get('database', 'type')
     except (NoSectionError, NoOptionError) as error:
-        getLogger(__name__).warning("%s in '%s'" % (error.message, SYNCINI_PATH))
+        getLogger(__name__).warning("%s in '%s'" %
+                                    (error.message, SYNCINI_PATH))
 
         dbtype = "sqlite"
     if dbtype in ['sqlite', 'sqlite3']:
         try:
             ip_address = parser.get('database', 'filename')
         except (NoSectionError, NoOptionError) as error:
-            getLogger(__name__).warning("%s in '%s'" % (error.message, SYNCINI_PATH))
+            getLogger(__name__).warning("%s in '%s'" %
+                                        (error.message, SYNCINI_PATH))
             ip_address = DATABASE_PATH
     else:
         ip_address = parser.get('database', 'hostname')
@@ -71,13 +73,14 @@ def database_execute(command, params=None):
     @returns a list of dictionaries representing the sql result
     """
     getLogger(__name__).info("database_execute(" + command + ", " +
-                               str(params) + ")", extra=get_sql_log_dict())
+                             str(params) + ")", extra=get_sql_log_dict())
     parser = ConfigParser()
     parser.read(SYNCINI_PATH)
     try:
         dbtype = parser.get('database', 'type')
     except (NoSectionError, NoOptionError) as error:
-        getLogger(__name__).warning("%s in '%s'" % (error.message, SYNCINI_PATH))
+        getLogger(__name__).warning("%s in '%s'" %
+                                    (error.message, SYNCINI_PATH))
         dbtype = 'sqlite'
 
     if dbtype == "mysql":
@@ -103,14 +106,15 @@ def sqlite_execute(command, params=None):
     """
     # NOTE mostly copypasta'd from mysql_execute, may be a better way
     getLogger(__name__).debug("sqlite_execute(" + command + ", " +
-                                str(params) + ")", extra=get_sql_log_dict())
+                              str(params) + ")", extra=get_sql_log_dict())
     try:
         parser = ConfigParser()
         parser.read(SYNCINI_PATH)
         try:
             filename = parser.get('database', 'filename')
         except (NoSectionError, NoOptionError) as error:
-            getLogger(__name__).warning("%s in '%s'" % (error.message, SYNCINI_PATH))
+            getLogger(__name__).warning("%s in '%s'" %
+                                        (error.message, SYNCINI_PATH))
             filename = DATABASE_PATH
 
         init_db = not exists(expandvars(filename))
@@ -163,7 +167,7 @@ def mysql_execute(command, params=None):
     @returns a list of dictionaries representing the sql result
     """
     getLogger(__name__).debug("mysql_execute(" + command + ", " + str(params)
-                                + ")", extra=get_sql_log_dict())
+                              + ")", extra=get_sql_log_dict())
     parser = ConfigParser()
     parser.read(SYNCINI_PATH)
     try:

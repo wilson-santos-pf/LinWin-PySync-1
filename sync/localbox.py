@@ -22,7 +22,7 @@ try:
     from urllib import urlencode
     from urllib import quote
     from httplib import BadStatusLine
-    from ConfigParser import ConfigParser 
+    from ConfigParser import ConfigParser
 except ImportError:
     from urllib.error import HTTPError  # pylint: disable=F0401,E0611
     from urllib.parse import quote  # pylint: disable=F0401,E0611
@@ -30,7 +30,7 @@ except ImportError:
     from urllib.request import urlopen  # pylint: disable=F0401,E0611
     from urllib.request import Request  # pylint: disable=F0401,E0611
     from http.client import BadStatusLine  # pylint: disable=F0401,E0611
-    from configparser import ConfigParser 
+    from configparser import ConfigParser
 
 from json import loads
 from json import dumps
@@ -214,7 +214,8 @@ class LocalBox(object):
         try:
             index = path.index('/')
             cryptopath = path[:index]
-            getLogger(__name__).exception("call_keys called with a path with '/''s.")
+            getLogger(__name__).exception(
+                "call_keys called with a path with '/''s.")
         except ValueError:
             cryptopath = path
         request = Request(url=self.url + 'lox_api/key/' + cryptopath)
@@ -233,7 +234,8 @@ class LocalBox(object):
         try:
             index = path.index('/')
             cryptopath = path[:index]
-            getLogger(__name__).warning("Trying to save a key for an entry in a subdirectory. Saving the key for the subdir instead")
+            getLogger(__name__).warning(
+                "Trying to save a key for an entry in a subdirectory. Saving the key for the subdir instead")
         except ValueError as error:
             cryptopath = path
 
@@ -243,12 +245,14 @@ class LocalBox(object):
         configparser.read(location)
         user = configparser.get(site, 'user')
         pgpclient = gpg()
-        encodedata = {'key': b64encode(pgpclient.encrypt(key, site, user)), 'iv': b64encode(pgpclient.encrypt(iv, site, user)), 'user': user}
+        encodedata = {'key': b64encode(pgpclient.encrypt(key, site, user)), 'iv': b64encode(
+            pgpclient.encrypt(iv, site, user)), 'user': user}
         data = dumps(encodedata)
         request = Request(
-                url=self.url + 'lox_api/key/' + cryptopath, data=data)
+            url=self.url + 'lox_api/key/' + cryptopath, data=data)
         result = self._make_call(request)
-        # NOTE: this is just the result of the last call, not all of them. should be more robust then this
+        # NOTE: this is just the result of the last call, not all of them.
+        # should be more robust then this
         return result
 
     def decode_file(self, path, contents):

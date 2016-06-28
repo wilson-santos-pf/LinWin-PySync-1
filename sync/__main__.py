@@ -39,6 +39,7 @@ except ImportError:
 
 
 class SyncRunner(Thread):
+
     """
     Thread responsible for synchronizing between the client and one server.
     """
@@ -87,8 +88,8 @@ def get_site_list():
             localbox.add_authenticator(authenticator)
             if not authenticator.has_client_credentials():
                 getLogger(__name__).info("Don't have client credentials for "
-                                       "this host yet. We need to log in with"
-                                       " your data for once.")
+                                         "this host yet. We need to log in with"
+                                         " your data for once.")
                 username = raw_input("Username: ")
                 password = getpass("Password: ")
                 try:
@@ -96,7 +97,7 @@ def get_site_list():
                 except AuthenticationError as error:
                     getLogger(__name__).exception(error)
                     getLogger(__name__).info("authentication data incorrect. "
-                                           "Skipping entry.")
+                                             "Skipping entry.")
             else:
                 syncer = Syncer(localbox, path, direction, name=section)
                 sites.append(syncer)
@@ -110,7 +111,7 @@ def get_site_list():
             string = "Skipping '%s' because it cannot be reached" % \
                      (section)
             getLogger(__name__).info(string)
-   
+
     return sites
 
 
@@ -126,7 +127,8 @@ def main(waitevent=None):
         try:
             delay = int(configparser.get('sync', 'delay'))
         except (NoSectionError, NoOptionError) as error:
-            getLogger(__name__).warning("%s in '%s'" % (error.message, SYNCINI_PATH))
+            getLogger(__name__).warning("%s in '%s'" %
+                                        (error.message, SYNCINI_PATH))
             delay = 3600
         while KEEP_RUNNING:
             getLogger(__name__).debug("starting loop")
@@ -149,10 +151,12 @@ def main(waitevent=None):
     except Exception as error:  # pylint: disable=W0703
         getLogger(__name__).exception(error)
 
+
 def prepare_logging():
     handlers = [StreamHandler(stdout), FileHandler(LOG_PATH)]
-    log_text_format = Formatter("%(asctime)s - %(module)s - %(lineno)s - %(thread)d - %(message)s")
-    logger = getLogger() # Root logger
+    log_text_format = Formatter(
+        "%(asctime)s - %(module)s - %(lineno)s - %(thread)d - %(message)s")
+    logger = getLogger()  # Root logger
     for handler in handlers:
         handler.setFormatter(log_text_format)
         logger.addHandler(handler)

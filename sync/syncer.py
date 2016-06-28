@@ -3,7 +3,7 @@ from os import remove
 from os import removedirs
 from logging import getLogger
 from os import utime
-from shutil import rmtree #TODO: remove directories
+from shutil import rmtree  # TODO: remove directories
 from os.path import isdir
 from os import stat
 from os.path import join
@@ -234,11 +234,11 @@ class Syncer(object):
     def populate_filepath_metadata(self, path='./', parent=None):
         if path == '.':
             path = './'
-        path=path.lstrip("/\\")
+        path = path.lstrip("/\\")
         realpath = abspath(join(self.filepath, path))
         print realpath
         getLogger(__name__).info("processing " + path + " transformed to "
-                                   + realpath)
+                                 + realpath)
         is_dir = isdir(realpath)
         modtime = stat(realpath).st_mtime
         path = path.replace(sep, '/')
@@ -288,7 +288,8 @@ class Syncer(object):
 
     def dirsync(self, directories):
         try:
-            oldmetadata = self.filepath_metadata.load(OLD_SYNC_STATUS + "." + self.name)
+            oldmetadata = self.filepath_metadata.load(
+                OLD_SYNC_STATUS + "." + self.name)
         except IOError:
             oldmetadata = MetaVFS(path='/', modified_at=0)
 
@@ -297,7 +298,8 @@ class Syncer(object):
             olddir = oldmetadata.get_entry(directory)
             localdir = self.filepath_metadata.get_entry(directory)
             remotedir = self.localbox_metadata.get_entry(directory)
-            print("====Local %s, Remote %s, Old %s ====" % (localdir, remotedir, olddir))
+            print("====Local %s, Remote %s, Old %s ====" %
+                  (localdir, remotedir, olddir))
             if olddir is not None and localdir is None:
                 self.localbox.delete(directory)
             if olddir is not None and remotedir is None:
@@ -306,7 +308,8 @@ class Syncer(object):
                 try:
                     self.mkdir(directory)
                 except OSError as error:
-                    getLogger(__name__).info("OSError when creating folder %s: %s", directory ,error)
+                    getLogger(__name__).info(
+                        "OSError when creating folder %s: %s", directory, error)
             if olddir is None and remotedir is None:
                 self.localbox.create_directory(directory)
 
@@ -316,7 +319,8 @@ class Syncer(object):
         self.populate_localbox_metadata(path='/', parent=None)
         getLogger(__name__).info("Local FS:")
         self.populate_filepath_metadata(path='./', parent=None)
-        directories = set(chain(self.filepath_metadata.yield_directories(), self.localbox_metadata.yield_directories()))
+        directories = set(chain(self.filepath_metadata.yield_directories(
+        ), self.localbox_metadata.yield_directories()))
         self.dirsync(directories)
         allpaths = set(self.filepath_metadata.get_files() +
                        self.localbox_metadata.get_files())
@@ -324,7 +328,8 @@ class Syncer(object):
         self.localbox_metadata.debug_print()
 
         try:
-            oldmetadata = self.filepath_metadata.load(OLD_SYNC_STATUS + "." + self.name)
+            oldmetadata = self.filepath_metadata.load(
+                OLD_SYNC_STATUS + "." + self.name)
             allpaths = set(list(allpaths) + oldmetadata.get_files())
         except (IOError, AttributeError) as error:
             getLogger(__name__).info("Old data unknown")
@@ -349,7 +354,8 @@ class Syncer(object):
                 continue
 
             newest = MetaVFS.newest(oldfile, localfile, remotefile)
-            print("====Newest %s, Local %s, Remote %s, Old %s ====" % (newest, localfile, remotefile, oldfile))
+            print("====Newest %s, Local %s, Remote %s, Old %s ====" %
+                  (newest, localfile, remotefile, oldfile))
 
             if newest == oldfile and newest is not None:
                 getLogger(__name__).info(

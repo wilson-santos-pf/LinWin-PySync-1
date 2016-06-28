@@ -75,7 +75,8 @@ class Authenticator(object):
         """
         sql = "insert into sites (site, user, client_id, client_secret) " \
             "values (?, ?, ?, ?);"
-        database_execute(sql, (self.label, self.username, self.client_id, self.client_secret))
+        database_execute(
+            sql, (self.label, self.username, self.client_id, self.client_secret))
 
     def load_client_data(self):
         """
@@ -121,7 +122,7 @@ class Authenticator(object):
             self._call_authentication_server(authdata)
             if self.access_token is not None:
                 getLogger(__name__).debug("Authentication Succesful. "
-                                        "Saving Client Data")
+                                          "Saving Client Data")
                 self.save_client_data()
                 return True
         except (URLError) as error:
@@ -165,7 +166,7 @@ class Authenticator(object):
         except (HTTPError, URLError) as error:
             getLogger(__name__).exception(error)
             getLogger(__name__).debug('HTTPError when calling '
-                                    'the authentication server')
+                                      'the authentication server')
             getLogger(__name__).debug(error.message)
             if hasattr(error, 'code') and error.code == 400:
                 getLogger(__name__).debug('Authentication Problem')

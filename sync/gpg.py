@@ -69,7 +69,8 @@ class gpg(object):
         try:
             assert result1.fingerprints[0] == result2.fingerprints[0]
         except (IndexError, AssertionError) as error:
-            getLogger(__name__).exception('add_keypair IndexError/AssertionError: ' + str(error))
+            getLogger(__name__).exception(
+                'add_keypair IndexError/AssertionError: ' + str(error))
             return None
         fingerprint = result1.fingerprints[0]
         sign = self.gpg.sign("test", keyid=fingerprint, passphrase=passphrase)
@@ -113,7 +114,8 @@ class gpg(object):
         configparser = ConfigParser()
         configparser.read(SITESINI_PATH)
         passphrase = configparser.get(site, 'passphrase')
-        datafile= StringIO(data)
+        datafile = StringIO(data)
         outfile = StringIO()
-        result = self.gpg.decrypt_file(datafile, passphrase=passphrase, always_trust=True)
+        result = self.gpg.decrypt_file(
+            datafile, passphrase=passphrase, always_trust=True)
         return str(result)

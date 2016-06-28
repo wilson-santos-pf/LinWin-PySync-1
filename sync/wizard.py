@@ -333,4 +333,5 @@ class Wizard(Tk):
         getLogger(__name__).debug("wizard endwizard")
         self.topwindow.update_window()
         self.destroy()
-        self.sites.append(Syncer(self.localbox, self.filepath, 'sync', self.box_label))
+        self.sites.append(
+            Syncer(self.localbox, self.filepath, 'sync', self.box_label))

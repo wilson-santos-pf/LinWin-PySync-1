@@ -24,4 +24,4 @@ DATABASE_PATH = join(APPDIR, 'database.sqlite3')
 LOG_PATH = join(APPDIR, 'localbox-sync.log')
 LOCALE_PATH = join(PACKAGEDIR, 'locale')
 
-OLD_SYNC_STATUS = join(APPDIR, '.localbox.pickle')
+OLD_SYNC_STATUS = join(APPDIR, 'localbox.pickle.')

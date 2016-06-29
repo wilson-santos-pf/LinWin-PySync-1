@@ -149,13 +149,12 @@ class LocalBox(object):
         try:
             call_result = self._make_call(request)
             if path.count('/') == 1:
-                print "Creating a key for folder " + path
+                getLogger(__name__).debug("Creating a key for folder " + path)
                 key = CryptoRandom().read(16)
                 iv = CryptoRandom().read(16)
                 self.save_key(path, key, iv)
         except HTTPError as error:
-            print("HTTPError creating directory")
-            print(error)
+            getLogger.warning(error)
         # TODO: make directory encrypted
 
     def delete(self, path):
@@ -167,7 +166,10 @@ class LocalBox(object):
         metapath = urlencode({'path': path})
         request = Request(url=self.url + 'lox_api/operations/delete/',
                           data=metapath)
-        return self._make_call(request)
+        try:
+            return self._make_call(request)
+        except HTTPError:
+            getLogger(__name__).error("Error remote deleting '%s'", path)
 
     def upload_file(self, path, localpath):
         """
@@ -275,7 +277,6 @@ class LocalBox(object):
         """
         encode a file
         """
-        print "encodin' file"
         pgpclient = gpg()
         site = self.authenticator.label
         try:
@@ -289,5 +290,4 @@ class LocalBox(object):
             self.save_key(path, key, iv)
         key = AES_Key(key, MODE_CFB, iv)
         result = key.encrypt(contents)
-        print result
         return result

@@ -33,9 +33,6 @@ class gpg(object):
         self.gpg = GPG(gpgbinary=binary_path, gnupghome=folder_path,
                        verbose=False, options="--allow-non-selfsigned-uid")
 
-    # def remove_passphrase(self, fingerprint):
-    # def add_passphrase(self, fingerprint, passphrase):
-
     def get_key(self, fingerprint, private):
         key = self.gpg.export_keys(fingerprint, private, armor=False)
         return b64encode(key.encode('ISO8859-1'))
@@ -55,14 +52,8 @@ class gpg(object):
         add a keypair into the gpg key database
         """
         try:
-            print public_key
-            print private_key
             result1 = self.gpg.import_keys(b64decode(public_key))
             result2 = self.gpg.import_keys(b64decode(private_key))
-            getLogger(__name__).debug(str(result1.fingerprints))
-            getLogger(__name__).debug(str(result2.fingerprints))
-            print result1
-            print result2
         except TypeError as error:
             print("add_keypair TypeError " + str(error))
         # make sure this is a key _pair_
@@ -115,7 +106,6 @@ class gpg(object):
         configparser.read(SITESINI_PATH)
         passphrase = configparser.get(site, 'passphrase')
         datafile = StringIO(data)
-        outfile = StringIO()
         result = self.gpg.decrypt_file(
             datafile, passphrase=passphrase, always_trust=True)
         return str(result)

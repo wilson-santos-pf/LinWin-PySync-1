@@ -108,11 +108,6 @@ class LocalBox(object):
         """
         do the meta call
         """
-        path = path.replace(sep, '/')
-        if path[0] != '/':
-            path = '/' + path
-        if path[-1] == '/':
-            path = path[:-1]
         metapath = quote(path).strip('/')
         request = Request(url=self.url + "lox_api/meta/" + metapath)
         json_text = self._make_call(request).read()
@@ -122,11 +117,6 @@ class LocalBox(object):
         """
         do the file call
         """
-        path = path.replace(sep, '/')
-        if path[0] != '/':
-            path = '/' + path
-        if path[-1] == '/':
-            path = path[:-1]
         metapath = quote(path).strip('/')
         request = Request(url=self.url + "lox_api/files/" + metapath)
         data = self._make_call(request).read()
@@ -138,11 +128,6 @@ class LocalBox(object):
         """
         do the create directory call
         """
-        path = path.replace(sep, '/')
-        if path[0] != '/':
-            path = '/' + path
-        if path[-1] == '/':
-            path = path[:-1]
         metapath = urlencode({'path': path})
         request = Request(url=self.url + 'lox_api/operations/create_folder/',
                           data=metapath)
@@ -154,15 +139,13 @@ class LocalBox(object):
                 iv = CryptoRandom().read(16)
                 self.save_key(path, key, iv)
         except HTTPError as error:
-            getLogger.warning(error)
+            getLogger(__name__).warning(error)
         # TODO: make directory encrypted
 
     def delete(self, path):
         """
         do the delete call
         """
-        if path[0] != '/':
-            path = '/' + path
         metapath = urlencode({'path': path})
         request = Request(url=self.url + 'lox_api/operations/delete/',
                           data=metapath)
@@ -175,11 +158,6 @@ class LocalBox(object):
         """
         upload a file to localbox
         """
-        path = path.replace(sep, '/')
-        if path[0] == '.':
-            path = path[1:]
-        if len(path) > 0 and path[0] == '/':
-            path = path[1:]
         metapath = quote(path)
         contents = open(localpath).read()
         try:
@@ -209,10 +187,6 @@ class LocalBox(object):
         """
         do the keys call
         """
-        if path[0] == '.':
-            path = path[1:]
-        if len(path) > 0 and path[0] == '/':
-            path = path[1:]
         try:
             index = path.index('/')
             cryptopath = path[:index]
@@ -229,10 +203,6 @@ class LocalBox(object):
         return loads(result)
 
     def save_key(self, path, key, iv):
-        if path[0] == '.':
-            path = path[1:]
-        if len(path) > 0 and path[0] == '/':
-            path = path[1:]
         try:
             index = path.index('/')
             cryptopath = path[:index]

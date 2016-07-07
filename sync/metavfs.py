@@ -16,6 +16,7 @@ from time import time
 from os.path import exists
 from os.path import dirname
 from os import makedirs
+from copy import deepcopy
 from os.path import sep
 try:
     from cPickle import dump, load
@@ -44,7 +45,8 @@ class MetaVFS(object):
     def __init__(self, modified_at=None, path=None, is_dir=None,
                  children=None):
         self.path = normalize_path(path)
-        getLogger(__name__).debug("MetaVFS writing %s as %s", path, self.path)
+        if self.path != path:
+          getLogger(__name__).debug("MetaVFS writing %s as %s", path, self.path)
         self.is_dir = is_dir
         self.modified_at = modified_at
         self.children = children
@@ -81,6 +83,23 @@ class MetaVFS(object):
 
     def __ne__(self, other):
         return not self.__eq__(other)
+
+    def gen(self):
+        getLogger(__name__).debug("Yielding %s", self)
+        yield self
+        for child in self.children:
+          for entry in child.gen():
+            #y=child.gen()
+            yield entry
+
+    def add_paths(self, other):
+        for kid in other.children:
+          if kid.path not in self.get_paths():
+            self.children.append(deepcopy(kid))
+          else:
+            entry = self.get_entry(kid.path)
+            entry.add_paths(kid)
+        return self
 
     @staticmethod
     def newest(*arguments):
@@ -138,7 +157,7 @@ class MetaVFS(object):
 
     def load(self, filename):
         """
-        load this metvfs into a file
+        load this metvfs from a file
         """
         getLogger(__name__).info('loading state from %s', filename)
         filedescriptor = open(filename, 'r')

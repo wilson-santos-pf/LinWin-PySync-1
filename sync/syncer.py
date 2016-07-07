@@ -39,23 +39,31 @@ class Syncer(object):
         getLogger(__name__).info("Local FS:")
         self.populate_filepath_metadata(path='./', parent=None)
 
+    def get_file_path(self, metavfs_entry):
+        path = metavfs_entry.path.split('/')
+        return join(self.filepath, *path)
+
+    def get_url_path(self, metavfs_entry):
+        # path begins with '/', urls end in '/', one of these has got to go
+        return self.localbox.url + metavfs_entry.path[1:]
+        
+
     def populate_localbox_metadata(self, path='/', parent=None):
+        getLogger(__name__).debug("POPuLATING LOCALBOX METADATA")
         node = self.localbox.get_meta(path)
         splittime = node['modified_at'].split('.', 1)
         modtime = mktime(strptime(splittime[0], "%Y-%m-%dT%H:%M:%S")) + \
             float("0." + splittime[1])
         vfsnode = MetaVFS(modtime, node['path'], node['is_dir'])
-        print("VFSNode Problematica")
-        vfsnode.debug_print()
-        print("END VFSNode Problematica")
         for child in node['children']:
             print("recursing")
             self.populate_localbox_metadata(child['path'], parent=vfsnode)
         if parent is None:
-            print("parent is none")
+            print("%s parent is none" % vfsnode)
             self.localbox_metadata = vfsnode
+            self.localbox_metadata.debug_print()
         else:
-            print("parent gets child")
+            print("parent %s gets child %s" % (parent, vfsnode))
             parent.add_child(vfsnode)
 
     def populate_filepath_metadata(self, path='./', parent=None):
@@ -68,11 +76,6 @@ class Syncer(object):
                                  + realpath)
         is_dir = isdir(realpath)
         modtime = stat(realpath).st_mtime
-        path = path.replace(sep, '/')
-        if path[0] != '/':
-            path = '/' + path
-        if path[-1] == '/':
-            path = path[:-1]
         vfsnode = MetaVFS(modtime, path[1:], is_dir)
 
         if is_dir:
@@ -99,7 +102,6 @@ class Syncer(object):
                 getLogger(__name__).info("Already deleted " + localfilename)
 
     def download(self, path):
-        path = path.replace('/', sep)
         contents = self.localbox.get_file(path)
         localfilename = join(self.filepath, path[1:])
         # precreate folder if needed
@@ -136,7 +138,7 @@ class Syncer(object):
                     self.mkdir(directory)
                 except OSError as error:
                     getLogger(__name__).info(
-                        "OSError when creating folder %s: %s", directory, error)
+                        "continuing after OSError when creating folder %s: %s", directory, error)
             if olddir is None and remotedir is None:
                 self.localbox.create_directory(directory)
 
@@ -149,43 +151,45 @@ class Syncer(object):
         directories = set(chain(self.filepath_metadata.yield_directories(
         ), self.localbox_metadata.yield_directories()))
         self.dirsync(directories)
-        allpaths = set(self.filepath_metadata.get_files() +
-                       self.localbox_metadata.get_files())
+        #allpaths = set(self.filepath_metadata.get_files() +
+        #               self.localbox_metadata.get_files())
+        full_tree = MetaVFS('0', '/', True, None)
+        full_tree.add_paths(self.localbox_metadata)
+        full_tree.add_paths(self.filepath_metadata)
+        print "FILEPATH_METADATA"
         self.filepath_metadata.debug_print()
+        print "LOCALBOX METADATA"
         self.localbox_metadata.debug_print()
+        print "_ALL_THE METADATA"
+        full_tree.debug_print()
 
         try:
             oldmetadata = self.filepath_metadata.load(
                 OLD_SYNC_STATUS + self.name)
-            allpaths = set(list(allpaths) + oldmetadata.get_files())
+            full_tree.add_paths(oldmetadata)
         except (IOError, AttributeError) as error:
             getLogger(__name__).info(str(error) + " Using empty tree instead")
             oldmetadata = MetaVFS(path='/', modified_at=0)
-        getLogger(__name__).info(str(allpaths))
 
-        for path in sorted(allpaths):
-            if path[0] == ".":
-                getLogger(__name__).debug("TODO: this removes the dot from './some/path/ext'; this should be done in the metavfs instead")
-                path = path[1:]
+        for metavfs in full_tree.gen():
+            print metavfs.__dict__
+            path = metavfs.path
 
-            print("Syncing %s" % path)
             oldfile = oldmetadata.get_entry(path)
             localfile = self.filepath_metadata.get_entry(path)
             remotefile = self.localbox_metadata.get_entry(path)
             getLogger(__name__).debug("====Local %s, Remote %s, Old %s ====", localfile, remotefile, oldfile)
 
-            if remotefile == oldfile and localfile is None:
-                self.localbox.delete(path)
+            if remotefile == oldfile and self.get_file_path(metavfs)is None:
+                self.localbox.delete(metavfs)
                 getLogger(__name__).info("Deleting remote %s", path)
                 continue
-            if localfile == oldfile and remotefile is None:
+            if localfile == oldfile and self.get_url_path(metavfs) is None:
                 getLogger(__name__).info("Deleting local %s", path)
-                self.delete(path)
+                self.delete(metavfs)
                 continue
 
             newest = MetaVFS.newest(oldfile, localfile, remotefile)
-            print("====Newest %s, Local %s, Remote %s, Old %s ====" %
-                  (newest, localfile, remotefile, oldfile))
 
             if newest == oldfile and newest is not None:
                 getLogger(__name__).info(
@@ -195,17 +199,23 @@ class Syncer(object):
             newest = MetaVFS.newest(localfile, remotefile)
 
             if newest == localfile:
-                getLogger(__name__).info("Uploading %s", newest.path)
                 # TODO: Only create directorieswhen needed, preferably not.
                 if dirname(path) not in self.localbox_metadata.get_paths():
+
                     self.localbox.create_directory(dirname(path))
 
-                self.localbox.upload_file(path, join(self.filepath,
-                                                     path[1:]))
+                if not isdir(self.get_file_path(metavfs)):
+                  getLogger(__name__).info("Uploading %s", newest.path)
+                  self.localbox.upload_file(path, self.get_file_path(metavfs))
+                else: 
+                   #should make directory, but is not quite needed now
+                   pass
                 continue
             if newest == remotefile:
-                getLogger(__name__).info("Downloading %s", newest.path)
-                self.download(path)
+                if not isdir(self.get_file_path(metavfs)):
+                  getLogger(__name__).info("Downloading %s", newest.path)
+                  self.download(path)
                 continue
 
+        self.populate_filepath_metadata(path='./', parent=None)
         self.filepath_metadata.save(OLD_SYNC_STATUS + self.name)

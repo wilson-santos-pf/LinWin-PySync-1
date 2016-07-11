@@ -61,7 +61,7 @@ class MetaVFS(object):
         apart. See
         https://msdn.microsoft.com/en-us/library/windows/desktop/ms724290%28v=vs.85%29.aspx
         """
-        if other == None:
+        if other is None:
             return False
         return abs(self.modified_at - other.modified_at) <= 2
 

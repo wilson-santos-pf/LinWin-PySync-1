@@ -3,11 +3,11 @@ localbox client library
 """
 
 from logging import getLogger
+from md5 import new as newmd5
 
 from base64 import b64encode
 from base64 import b64decode
 from Crypto.Cipher.AES import new as AES_Key
-#from Crypto.Cipher.AES import MODE_CBC
 from Crypto.Cipher.AES import MODE_CFB
 from Crypto.Random import new as CryptoRandom
 
@@ -34,6 +34,12 @@ except ImportError:
 from json import loads
 from json import dumps
 from ssl import SSLContext, PROTOCOL_TLSv1  # pylint: disable=E0611
+
+
+def getChecksum(key)
+    checksum = newmd5()
+    checksum.update(key)
+    return checksum.hexdigest()
 
 
 class AlreadyAuthenticatedError(Exception):
@@ -241,6 +247,7 @@ class LocalBox(object):
         keystring = pgpclient.decrypt(pgpdkeystring, site)
         ivstring = pgpclient.decrypt(pgpdivstring, site)
 
+        getLogger(__name__).debug("Decoding %s with key %s", getChecksum(key))
         key = AES_Key(keystring, MODE_CFB, ivstring)
         result = key.decrypt(contents)
         return result
@@ -260,6 +267,7 @@ class LocalBox(object):
             key = CryptoRandom().read(16)
             iv = CryptoRandom().read(16)
             self.save_key(path, key, iv)
+        getLogger(__name__).debug("Decoding %s with key %s", getChecksum(key))
         key = AES_Key(key, MODE_CFB, iv)
         result = key.encrypt(contents)
         return result

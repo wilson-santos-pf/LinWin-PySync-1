@@ -8,13 +8,19 @@ from os.path import dirname
 from os import makedirs
 from json import loads
 from json import dumps
+from sys import exit as sysexit
 
-from Tkinter import Tk
-from Tkinter import Label
-from Tkinter import Entry
-from Tkinter import Button
-from Tkinter import END
-import tkFileDialog
+try:
+    from Tkinter import Tk
+    from Tkinter import Label
+    from Tkinter import Entry
+    from Tkinter import Button
+    from Tkinter import END
+    import tkFileDialog
+except ImportError:
+    getLogger(__name__).critical("Cannot import python Tk modules")
+    sysexit(1)
+
 try:
     from urllib2 import URLError
     from urllib2 import HTTPError

@@ -14,7 +14,6 @@ from time import time
 from os.path import exists
 from os.path import dirname
 from os import makedirs
-from os.path import sep
 
 from .defaults import OLD_SYNC_STATUS
 from .metavfs import MetaVFS

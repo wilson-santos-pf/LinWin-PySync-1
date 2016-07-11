@@ -194,7 +194,7 @@ class LocalBox(object):
         except ValueError:
             cryptopath = path
         getLogger(__name__).debug(
-            "call_keys on path %s = %s", (path, cryptopath))
+            "call_keys on path %s = %s", path, cryptopath)
 
         request = Request(url=self.url + 'lox_api/key/' + cryptopath)
         return self._make_call(request)

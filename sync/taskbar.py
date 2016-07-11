@@ -3,19 +3,22 @@ Modulemanaging a Windows Taskbar icon
 """
 from sys import executable
 from subprocess import call
-
-import wx
-
-try:
-    from ConfigParser import ConfigParser  # pylint: disable=F0401,E0611
-except ImportError:
-    from configparser import ConfigParser  # pylint: disable=F0401,E0611
 from threading import Thread
 from sysconfig import get_path
 from os.path import join
 from logging import getLogger
 
 from .defaults import SITESINI_PATH
+
+try:
+    import wx
+except ImportError:
+    getLogger(__name__).critical("Cannot import wx")
+
+try:
+    from ConfigParser import ConfigParser  # pylint: disable=F0401,E0611
+except ImportError:
+    from configparser import ConfigParser  # pylint: disable=F0401,E0611
 
 
 class LocalBoxIcon(wx.TaskBarIcon):

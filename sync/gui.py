@@ -53,10 +53,7 @@ class UsernameAndPasswordAsker(Tk):
             self.lock.set()
             self.destroy()
         else:
-            window = showerror(
-                'Authentication Failed', 'Could not authenticate, Check username and password')
-
-            pass
+            showerror('Authentication Failed', 'Could not authenticate, Check username and password')
 
     def __call__(self):
         self.mainloop()

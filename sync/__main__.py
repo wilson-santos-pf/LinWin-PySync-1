@@ -30,10 +30,9 @@ try:
     from urllib2 import URLError
 except ImportError:
     from configparser import ConfigParser  # pylint: disable=F0401,W0611
-    # pylint: disable=F0401
-    from configparser import NoOptionError
-    from configparser import NoSectionError
-    from urllib.error import URLError
+    from configparser import NoOptionError  # pylint: disable=F0401,W0611
+    from configparser import NoSectionError  # pylint: disable=F0401,W0611
+    from urllib.error import URLError # pylint: disable=F0401,W0611
 
     raw_input = input  # pylint: disable=W0622,C0103
 
@@ -127,7 +126,7 @@ def main(waitevent=None):
         try:
             delay = int(configparser.get('sync', 'delay'))
         except (NoSectionError, NoOptionError) as error:
-            getLogger(__name__).warning("%s in '%s'" %
+            getLogger(__name__).warning("%s in '%s'",
                                         (error.message, SYNCINI_PATH))
             delay = 3600
         while KEEP_RUNNING:

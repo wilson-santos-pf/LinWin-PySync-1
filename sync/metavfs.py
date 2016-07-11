@@ -95,7 +95,7 @@ class MetaVFS(object):
     def add_paths(self, other):
         for kid in other.children:
           if kid.path not in self.get_paths():
-            self.children.append(deepcopy(kid))
+            self.children.add_child(deepcopy(kid))
           else:
             entry = self.get_entry(kid.path)
             entry.add_paths(kid)

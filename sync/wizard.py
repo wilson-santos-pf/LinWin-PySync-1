@@ -207,7 +207,6 @@ class Wizard(Tk):
         getLogger(__name__).debug("wizard window3")
         response = self.localbox.call_user()
         result = loads(response.read())
-        print result
         if self.username is None:
             getLogger(__name__).debug("username is None")
             self.username = result['user']

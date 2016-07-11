@@ -47,7 +47,7 @@ def get_sql_log_dict():
     try:
         dbtype = parser.get('database', 'type')
     except (NoSectionError, NoOptionError) as error:
-        getLogger(__name__).warning("%s in '%s'" %
+        getLogger(__name__).warning("%s in '%s'",
                                     (error.message, SYNCINI_PATH))
 
         dbtype = "sqlite"
@@ -55,7 +55,7 @@ def get_sql_log_dict():
         try:
             ip_address = parser.get('database', 'filename')
         except (NoSectionError, NoOptionError) as error:
-            getLogger(__name__).warning("%s in '%s'" %
+            getLogger(__name__).warning("%s in '%s'",
                                         (error.message, SYNCINI_PATH))
             ip_address = DATABASE_PATH
     else:
@@ -79,7 +79,7 @@ def database_execute(command, params=None):
     try:
         dbtype = parser.get('database', 'type')
     except (NoSectionError, NoOptionError) as error:
-        getLogger(__name__).warning("%s in '%s'" %
+        getLogger(__name__).warning("%s in '%s'",
                                     (error.message, SYNCINI_PATH))
         dbtype = 'sqlite'
 
@@ -113,7 +113,7 @@ def sqlite_execute(command, params=None):
         try:
             filename = parser.get('database', 'filename')
         except (NoSectionError, NoOptionError) as error:
-            getLogger(__name__).warning("%s in '%s'" %
+            getLogger(__name__).warning("%s in '%s'",
                                         (error.message, SYNCINI_PATH))
             filename = DATABASE_PATH
 

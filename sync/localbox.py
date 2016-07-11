@@ -10,7 +10,6 @@ from Crypto.Cipher.AES import new as AES_Key
 #from Crypto.Cipher.AES import MODE_CBC
 from Crypto.Cipher.AES import MODE_CFB
 from Crypto.Random import new as CryptoRandom
-from os.path import sep
 
 from .gpg import gpg
 from .defaults import SITESINI_PATH
@@ -30,7 +29,7 @@ except ImportError:
     from urllib.request import urlopen  # pylint: disable=F0401,E0611
     from urllib.request import Request  # pylint: disable=F0401,E0611
     from http.client import BadStatusLine  # pylint: disable=F0401,E0611
-    from configparser import ConfigParser
+    from configparser import ConfigParser  # pylint: disable=F0401,E0611
 
 from json import loads
 from json import dumps
@@ -132,7 +131,7 @@ class LocalBox(object):
         request = Request(url=self.url + 'lox_api/operations/create_folder/',
                           data=metapath)
         try:
-            call_result = self._make_call(request)
+            self._make_call(request)
             if path.count('/') == 1:
                 getLogger(__name__).debug("Creating a key for folder " + path)
                 key = CryptoRandom().read(16)
@@ -211,7 +210,7 @@ class LocalBox(object):
             cryptopath = path[:index]
             getLogger(__name__).warning(
                 "Trying to save a key for an entry in a subdirectory. Saving the key for the subdir instead")
-        except ValueError as error:
+        except ValueError:
             cryptopath = path
 
         site = self.authenticator.label

@@ -1,14 +1,12 @@
 from os import listdir
 from os import remove
-from os import removedirs
 from logging import getLogger
 from os import utime
-from shutil import rmtree  # TODO: remove directories
+from shutil import rmtree
 from os.path import isdir
 from os import stat
 from os.path import join
 from os.path import abspath
-from os import mkdir
 from itertools import chain
 from time import mktime
 from time import strptime
@@ -17,10 +15,6 @@ from os.path import exists
 from os.path import dirname
 from os import makedirs
 from os.path import sep
-try:
-    from cPickle import dump, load
-except ImportError:
-    from pickle import dump, load
 
 from .defaults import OLD_SYNC_STATUS
 from .metavfs import MetaVFS

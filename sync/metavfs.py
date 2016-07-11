@@ -1,29 +1,11 @@
-from os import listdir
-from os import remove
-from os import removedirs
 from logging import getLogger
-from os import utime
-from shutil import rmtree  # TODO: remove directories
-from os.path import isdir
-from os import stat
-from os.path import join
-from os.path import abspath
-from os import mkdir
 from itertools import chain
-from time import mktime
-from time import strptime
-from time import time
-from os.path import exists
-from os.path import dirname
-from os import makedirs
 from copy import deepcopy
 from os.path import sep
 try:
     from cPickle import dump, load
 except ImportError:
     from pickle import dump, load
-
-from .defaults import OLD_SYNC_STATUS
 
 
 def normalize_path(path):
@@ -97,7 +79,7 @@ class MetaVFS(object):
     def add_paths(self, other):
         for kid in other.children:
             if kid.path not in self.get_paths():
-                self.children.add_child(deepcopy(kid))
+                self.add_child(deepcopy(kid))
             else:
                 entry = self.get_entry(kid.path)
                 entry.add_paths(kid)

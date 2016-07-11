@@ -25,6 +25,7 @@ except ImportError:
 from .defaults import OLD_SYNC_STATUS
 from .metavfs import MetaVFS
 
+
 class Syncer(object):
 
     def __init__(self, localbox_instance, file_root_path, direction, name=None):
@@ -46,7 +47,6 @@ class Syncer(object):
     def get_url_path(self, metavfs_entry):
         # path begins with '/', urls end in '/', one of these has got to go
         return self.localbox.url + metavfs_entry.path[1:]
-        
 
     def populate_localbox_metadata(self, path='/', parent=None):
         getLogger(__name__).debug("POPuLATING LOCALBOX METADATA")
@@ -151,7 +151,7 @@ class Syncer(object):
         directories = set(chain(self.filepath_metadata.yield_directories(
         ), self.localbox_metadata.yield_directories()))
         self.dirsync(directories)
-        #allpaths = set(self.filepath_metadata.get_files() +
+        # allpaths = set(self.filepath_metadata.get_files() +
         #               self.localbox_metadata.get_files())
         full_tree = MetaVFS('0', '/', True, None)
         full_tree.add_paths(self.localbox_metadata)
@@ -178,7 +178,8 @@ class Syncer(object):
             oldfile = oldmetadata.get_entry(path)
             localfile = self.filepath_metadata.get_entry(path)
             remotefile = self.localbox_metadata.get_entry(path)
-            getLogger(__name__).debug("====Local %s, Remote %s, Old %s ====", localfile, remotefile, oldfile)
+            getLogger(__name__).debug(
+                "====Local %s, Remote %s, Old %s ====", localfile, remotefile, oldfile)
 
             if remotefile == oldfile and self.get_file_path(metavfs)is None:
                 self.localbox.delete(metavfs)
@@ -205,16 +206,17 @@ class Syncer(object):
                     self.localbox.create_directory(dirname(path))
 
                 if not isdir(self.get_file_path(metavfs)):
-                  getLogger(__name__).info("Uploading %s", newest.path)
-                  self.localbox.upload_file(path, self.get_file_path(metavfs))
-                else: 
-                   #should make directory, but is not quite needed now
-                   pass
+                    getLogger(__name__).info("Uploading %s", newest.path)
+                    self.localbox.upload_file(
+                        path, self.get_file_path(metavfs))
+                else:
+                    # should make directory, but is not quite needed now
+                    pass
                 continue
             if newest == remotefile:
                 if not isdir(self.get_file_path(metavfs)):
-                  getLogger(__name__).info("Downloading %s", newest.path)
-                  self.download(path)
+                    getLogger(__name__).info("Downloading %s", newest.path)
+                    self.download(path)
                 continue
 
         self.populate_filepath_metadata(path='./', parent=None)

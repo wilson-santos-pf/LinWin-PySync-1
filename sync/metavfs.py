@@ -25,6 +25,7 @@ except ImportError:
 
 from .defaults import OLD_SYNC_STATUS
 
+
 def normalize_path(path):
     path = path.replace(sep, '/')
     if path[0] == '.':
@@ -46,7 +47,8 @@ class MetaVFS(object):
                  children=None):
         self.path = normalize_path(path)
         if self.path != path:
-          getLogger(__name__).debug("MetaVFS writing %s as %s", path, self.path)
+            getLogger(__name__).debug(
+                "MetaVFS writing %s as %s", path, self.path)
         self.is_dir = is_dir
         self.modified_at = modified_at
         self.children = children
@@ -88,17 +90,17 @@ class MetaVFS(object):
         getLogger(__name__).debug("Yielding %s", self)
         yield self
         for child in self.children:
-          for entry in child.gen():
-            #y=child.gen()
-            yield entry
+            for entry in child.gen():
+                # y=child.gen()
+                yield entry
 
     def add_paths(self, other):
         for kid in other.children:
-          if kid.path not in self.get_paths():
-            self.children.add_child(deepcopy(kid))
-          else:
-            entry = self.get_entry(kid.path)
-            entry.add_paths(kid)
+            if kid.path not in self.get_paths():
+                self.children.add_child(deepcopy(kid))
+            else:
+                entry = self.get_entry(kid.path)
+                entry.add_paths(kid)
         return self
 
     @staticmethod

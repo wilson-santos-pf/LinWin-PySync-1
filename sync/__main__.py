@@ -32,7 +32,7 @@ except ImportError:
     from configparser import ConfigParser  # pylint: disable=F0401,W0611
     from configparser import NoOptionError  # pylint: disable=F0401,W0611
     from configparser import NoSectionError  # pylint: disable=F0401,W0611
-    from urllib.error import URLError # pylint: disable=F0401,W0611
+    from urllib.error import URLError  # pylint: disable=F0401,W0611
 
     raw_input = input  # pylint: disable=W0622,C0103
 

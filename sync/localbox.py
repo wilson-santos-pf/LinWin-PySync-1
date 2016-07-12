@@ -36,7 +36,7 @@ from json import dumps
 from ssl import SSLContext, PROTOCOL_TLSv1  # pylint: disable=E0611
 
 
-def getChecksum(key)
+def getChecksum(key):
     checksum = newmd5()
     checksum.update(key)
     return checksum.hexdigest()

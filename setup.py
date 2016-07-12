@@ -14,7 +14,10 @@ from subprocess import check_output
 
 import sys
 
-from _winreg import *
+try:
+   from _winreg import *
+except ImportError:
+   print "this is not windows"
 
 # tweak as necessary
 version = sys.version[:3]
@@ -50,8 +53,10 @@ def RegisterPy():
     print "*** Unable to register!"
     print "*** You probably have another Python installation!"
 
-
-RegisterPy()
+try:
+ RegisterPy()
+except NameError:
+   print "this is not windows"
 
 data_files = [('localbox', ['localbox.ico'])]
 

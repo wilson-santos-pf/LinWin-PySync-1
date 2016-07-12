@@ -145,14 +145,17 @@ class Gui(Tk):
                 getLogger(__name__).debug(string)
 
 
-def get_entry_fields(parent, text, value, row):
+def get_entry_fields(parent, text, value, row, show=None):
     """
     create a line in the gui consisting of a label with 'text' and a textentry
     with 'value'
     """
     label = Label(text=text, master=parent, justify="left")
     label.grid(column=0, row=row)
-    entry = Entry(master=parent, width=30)
+    if show is not None:
+        entry = Entry(master=parent, show=show, width=30)
+    else:
+        entry = Entry(master=parent, width=30)
     entry.insert(0, value)
     entry.grid(column=1, row=row)
     return entry
@@ -186,7 +189,7 @@ class DataEntry(Frame):
         self.local_path = get_entry_fields(self, mllgt("local path"),
                                            localdir, 2)
         self.passphrase = get_entry_fields(self, mllgt("passphrase"),
-                                           passphrase, 3)
+                                           passphrase, 3, show="*")
         self.lpbutton = Button(master=self, text=mllgt("folder select"),
                                command=self.getfile)
         self.lpbutton.grid(column=2, row=2)

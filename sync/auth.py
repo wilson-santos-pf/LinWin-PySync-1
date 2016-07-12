@@ -28,7 +28,6 @@ EXPIRATION_LEEWAY = 5
 
 
 class AuthenticationError(Exception):
-
     """
     Custom error class to signify problems in authentication
     """
@@ -50,7 +49,6 @@ def generate_client_secret():
 
 
 class Authenticator(object):
-
     """
     class implementing the authentication code
     """

@@ -37,9 +37,12 @@ from ssl import SSLContext, PROTOCOL_TLSv1  # pylint: disable=E0611
 
 
 def getChecksum(key):
+    """
+    returns a partial hash of the given key for differentiation in logs. May need a stronger algorithm.
+    """
     checksum = newmd5()
     checksum.update(key)
-    return checksum.hexdigest()
+    return checksum.hexdigest()[:5]
 
 
 class AlreadyAuthenticatedError(Exception):
@@ -51,7 +54,6 @@ class AlreadyAuthenticatedError(Exception):
 
 
 class LocalBox(object):
-
     """
     object representing localbox
     """
@@ -206,11 +208,17 @@ class LocalBox(object):
         return self._make_call(request)
 
     def get_all_users(self):
+        """
+        gets a list from the localbox server with all users.
+        """
         request = Request(url=self.url + 'lox_api/identities')
         result = self._make_call(request).read()
         return loads(result)
 
     def save_key(self, path, key, iv):
+        """
+        saves an encrypted key on the localbox server
+        """
         try:
             index = path.index('/')
             cryptopath = path[:index]

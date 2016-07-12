@@ -31,7 +31,6 @@ from sqlite3 import connect as sqlite_connect
 
 
 class DatabaseError(Exception):
-
     """
     An error related to the database has occurred
     """

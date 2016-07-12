@@ -38,7 +38,6 @@ except ImportError:
 
 
 class SyncRunner(Thread):
-
     """
     Thread responsible for synchronizing between the client and one server.
     """
@@ -72,6 +71,9 @@ def stop_running():
 
 
 def get_site_list():
+    """
+    returns a list of configured localbox instances.
+    """
     location = SITESINI_PATH
     configparser = ConfigParser()
     configparser.read(location)
@@ -152,6 +154,9 @@ def main(waitevent=None):
 
 
 def prepare_logging():
+    """
+    sets up the root logger, Stream/File handlers, log format and log level
+    """
     handlers = [StreamHandler(stdout), FileHandler(LOG_PATH)]
     log_text_format = Formatter(
         "%(asctime)s - %(module)s - %(lineno)s - %(thread)d - %(message)s")

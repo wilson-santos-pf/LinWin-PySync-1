@@ -17,7 +17,6 @@ from .defaults import SITESINI_PATH
 
 
 class gpg(object):
-
     """
     module to wrap the gnupg library and gpg binary
     """
@@ -34,6 +33,11 @@ class gpg(object):
                        verbose=False, options="--allow-non-selfsigned-uid")
 
     def get_key(self, fingerprint, private):
+        """
+        returns the key belonging to the fingerprint given. if 'private' is
+        True, the private key is returned. If 'private' is False, the public
+        key will be returned.
+        """
         key = self.gpg.export_keys(fingerprint, private, armor=False)
         return b64encode(key.encode('ISO8859-1'))
 
@@ -73,6 +77,9 @@ class gpg(object):
             return fingerprint
 
     def generate(self, passphrase, site, user):
+        """
+        Generate a new 2048 bit GPG key and add it to the gpg manager.
+        """
         data = self.gpg.gen_key_input(key_length=2048, passphrase=passphrase)
         dat = self.gpg.gen_key(data)
         fingerprint = dat.fingerprint
@@ -81,6 +88,9 @@ class gpg(object):
         return fingerprint
 
     def has_key(self, site, user):
+        """
+        Check whether a key is present for a certain site and user
+        """
         sql = "select fingerprint from keys where site = ? and user = ?"
         result = database_execute(sql, (site, user))
         if result == []:

@@ -29,6 +29,10 @@ from .wizard import ConfigError
 
 
 class UsernameAndPasswordAsker(Tk):
+    """
+    Window which ask the user for an username and password which checks the
+    valitity of said credentials
+    """
 
     def __init__(self, authenticator, translator, parent=None):
         Tk.__init__(self, parent)
@@ -48,6 +52,10 @@ class UsernameAndPasswordAsker(Tk):
         self.button.grid(row=2)
 
     def stop_window(self):
+        """
+        checks authentication and loses the window is authentication is
+        succesful. Shows an error when it is not.
+        """
         if self.authenticator.init_authenticate(self.username.get(),
                                                 self.password.get()):
             self.lock.set()
@@ -61,6 +69,10 @@ class UsernameAndPasswordAsker(Tk):
 
 
 class Gui(Tk):
+    """
+    localbox configuration user interface. Tool to make changes in the
+    configuration of the localbox.
+    """
 
     def __init__(self, parent=None, configparser=None, siteslist=None):
         print("GUi Initing")
@@ -80,21 +92,33 @@ class Gui(Tk):
         self.update_window()
 
     def localbox_button(self):
+        """
+        add an "add localbox" button
+        """
         self.button = Button(text=self.language.lgettext("add localbox"),
                              command=self.add_new)
         self.button.grid(row=0, column=0)
 
     def add_entries(self, dataentryframe):
+        """
+        add a 'dataentryframe' to the gui in which certain strings are set.
+        """
         self.configs.append(dataentryframe)
         position = len(self.configs)
         dataentryframe.grid(row=position, column=0)
 
     def add_new(self):
+        """
+        start the wizard to add a new localbox instance.
+        """
         wizard = Wizard(
             None, self.language, self.configparser, self, siteslist=self.siteslist)
         wizard.mainloop()
 
     def update_window(self):
+        """
+        redraw the window
+        """
         for widget in self.winfo_children():
             widget.destroy()
         self.localbox_button()
@@ -122,6 +146,10 @@ class Gui(Tk):
 
 
 def get_entry_fields(parent, text, value, row):
+    """
+    create a line in the gui consisting of a label with 'text' and a textentry
+    with 'value'
+    """
     label = Label(text=text, master=parent, justify="left")
     label.grid(column=0, row=row)
     entry = Entry(master=parent, width=30)
@@ -131,8 +159,14 @@ def get_entry_fields(parent, text, value, row):
 
 
 class DataEntry(Frame):
+    """
+    configuration ui for a single, configured localbox instance.
+    """
 
     def getfile(self):
+        """
+        open a directory picker and return the directory
+        """
         result = tkFileDialog.askdirectory()
         self.local_path.delete(0, END)
         self.local_path.insert(0, result)
@@ -165,6 +199,9 @@ class DataEntry(Frame):
         self.authbutton.grid(row=5, column=1)
 
     def delete(self):
+        """
+        removes the configuration of this localbox from the config file.
+        """
         self.configparser.remove_section(self.orig_name)
         if not exists(dirname(SITESINI_PATH)):
             makedirs(dirname(SITESINI_PATH))
@@ -173,6 +210,9 @@ class DataEntry(Frame):
         self.master.update_window()
 
     def save(self):
+        """
+        saves the configuration of this localbox from the config file.
+        """
         try:
             if self.site_name.get() != self.orig_name:
                 if (self.configparser.sections() is not None and
@@ -220,9 +260,15 @@ class DataEntry(Frame):
             errorbutton.grid(row=1, column=0)
 
     def close_exception_window(self):
+        """
+        closes the event window (which mentions configuration errors)
+        """
         self.eventwindow.destroy()
 
     def authenticate(self):
+        """
+        tries to authenticate to the configured box with the authentication data supplied.
+        """
         localbox = LocalBox(self.localbox_url.get())
         authurl = localbox.get_authentication_url()
         authenticator = Authenticator(authurl, self.site_name.get())
@@ -247,6 +293,9 @@ class DataEntry(Frame):
 
 
 def main(gui=None, sites=None):
+    """
+    starts the gui component of localbox
+    """
     getLogger(__name__).debug("Gui Main Started")
     location = SITESINI_PATH
     configparser = ConfigParser()

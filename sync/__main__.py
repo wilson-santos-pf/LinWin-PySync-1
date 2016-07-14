@@ -166,6 +166,7 @@ def prepare_logging():
         logger.addHandler(handler)
         logger.setLevel(0)
         logger.info("Starting LocalBox Sync logger ")
+    getLogger('gnupg').setLevel(3)
 
 if __name__ == '__main__':
     prepare_logging()

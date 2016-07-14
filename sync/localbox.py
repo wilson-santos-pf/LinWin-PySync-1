@@ -146,7 +146,7 @@ class LocalBox(object):
                 iv = CryptoRandom().read(16)
                 self.save_key(path, key, iv)
         except HTTPError as error:
-            getLogger(__name__).warning(error)
+            getLogger(__name__).warning("'%s' whilst creating directory", error)
         # TODO: make directory encrypted
 
     def delete(self, path):
@@ -196,11 +196,11 @@ class LocalBox(object):
         """
         try:
             index = path[1:].index('/')
-            cryptopath = path[:index + 1]
+            cryptopath = path[1:index + 1]
             getLogger(__name__).exception(
                 "call_keys called with a path with excess \"/\"'s.")
         except ValueError:
-            cryptopath = path
+            cryptopath = path[1:]
         getLogger(__name__).debug(
             "call_keys on path %s = %s", path, cryptopath)
 
@@ -215,18 +215,20 @@ class LocalBox(object):
         result = self._make_call(request).read()
         return loads(result)
 
+
     def save_key(self, path, key, iv):
         """
         saves an encrypted key on the localbox server
         """
         try:
-            index = path.index('/')
-            cryptopath = path[:index]
+            index = path[1:].index('/')
+            cryptopath = path[1:index + 1]
             getLogger(__name__).warning(
                 "Trying to save a key for an entry in a subdirectory. Saving the key for the subdir instead")
         except ValueError:
-            cryptopath = path
-
+            cryptopath = path[1:]
+        
+        cryptopath=quote(cryptopath)
         site = self.authenticator.label
         location = SITESINI_PATH
         configparser = ConfigParser()
@@ -239,23 +241,32 @@ class LocalBox(object):
         request = Request(
             url=self.url + 'lox_api/key/' + cryptopath, data=data)
         result = self._make_call(request)
+        getLogger(__name__).debug('saving key for %s', cryptopath)
         # NOTE: this is just the result of the last call, not all of them.
         # should be more robust then this
         return result
+
 
     def decode_file(self, path, contents):
         """
         decode a file
         """
+        path = quote(path)
         pgpclient = gpg()
-        keydata = loads(self.call_keys(path).read())
+        try:
+          jsontext = self.call_keys(path).read()
+          keydata = loads(jsontext)
+        except ValueError:
+          getLogger(__name__).info("cannot decode JSON: %s", jsontext)
+        except HTTPError as error:
+          getLogger(__name__).info("HTTPError: %s", error)
         site = self.authenticator.label
         pgpdkeystring = b64decode(keydata['key'])
         pgpdivstring = b64decode(keydata['iv'])
         keystring = pgpclient.decrypt(pgpdkeystring, site)
         ivstring = pgpclient.decrypt(pgpdivstring, site)
 
-        getLogger(__name__).debug("Decoding %s with key %s", getChecksum(key))
+        getLogger(__name__).debug("Decoding %s with key %s", path, getChecksum(keystring))
         key = AES_Key(keystring, MODE_CFB, ivstring)
         result = key.decrypt(contents)
         return result
@@ -270,12 +281,13 @@ class LocalBox(object):
             keydata = loads(self.call_keys(path).read())
             key = pgpclient.decrypt(b64decode(keydata['key']), site)
             iv = pgpclient.decrypt(b64decode(keydata['iv']), site)
-        except (HTTPError, TypeError):
+        except (HTTPError, TypeError, ValueError):
+            getLogger(__name__).debug("path '%s' is without key, generating one.", path)
             # generate keys if they don't exist
             key = CryptoRandom().read(16)
             iv = CryptoRandom().read(16)
             self.save_key(path, key, iv)
-        getLogger(__name__).debug("Decoding %s with key %s", getChecksum(key))
+        getLogger(__name__).debug("Encoding %s with key %s", path, getChecksum(key))
         key = AES_Key(key, MODE_CFB, iv)
         result = key.encrypt(contents)
         return result

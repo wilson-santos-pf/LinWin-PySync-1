@@ -6,6 +6,7 @@ from time import time
 from .database import database_execute
 from logging import getLogger
 from ssl import SSLContext, PROTOCOL_TLSv1  # pylint: disable=E0611
+from httplib import BadStatusLine
 
 try:
     from urllib import urlencode  # pylint: disable=E0611
@@ -161,8 +162,7 @@ class Authenticator(object):
             self.scope = json.get('scope')
             self.expires = time() + json.get('expires_in', 0) - \
                 EXPIRATION_LEEWAY
-        except (HTTPError, URLError) as error:
-            getLogger(__name__).exception(error)
+        except (HTTPError, URLError, BadStatusLine) as error:
             getLogger(__name__).debug('HTTPError when calling '
                                       'the authentication server')
             getLogger(__name__).debug(error.message)

@@ -59,7 +59,7 @@ class gpg(object):
             result1 = self.gpg.import_keys(b64decode(public_key))
             result2 = self.gpg.import_keys(b64decode(private_key))
         except TypeError as error:
-            print("add_keypair TypeError " + str(error))
+            getLogger(__name__).critical("add_keypair TypeError " + str(error))
         # make sure this is a key _pair_
         try:
             assert result1.fingerprints[0] == result2.fingerprints[0]

@@ -23,6 +23,8 @@ from .auth import AuthenticationError
 from .localbox import LocalBox
 from .syncer import Syncer
 from .taskbar import taskbarmain
+from log import prepare_logging
+
 try:
     from ConfigParser import ConfigParser
     from ConfigParser import NoOptionError
@@ -133,40 +135,27 @@ def main(waitevent=None):
             delay = 3600
         while KEEP_RUNNING:
             getLogger(__name__).debug("starting loop")
-            sites = get_site_list()
-            for syncer in sites:
+            waitevent.set()
+            threadpool=[]
+            for syncer in get_site_list():
                 runner = SyncRunner(syncer=syncer)
+                getLogger(__name__).debug("starting thread %s", runner.name)
                 runner.start()
-                # if syncer.direction == 'up':
-                #     syncer.upsync()
-                # if syncer.direction == 'down':
-                #     syncer.downsync()
-                # if syncer.direction == 'sync':
-                #     syncer.syncsync()
-            getLogger(__name__).debug("waiting")
+                threadpool.append(runner)
+                getLogger(__name__).debug("started thread %s", runner.name)
+            for runner in threadpool:
+                getLogger(__name__).debug("joining thread %s", runner.name)
+                runner.join()
+                getLogger(__name__).debug("joined thread %s", runner.name)
+            waitevent.clear()
+            getLogger(__name__).debug("Cleared Event")
             if waitevent.wait(delay):
                 getLogger(__name__).debug("stopped waiting")
-                waitevent.clear()
             else:
                 getLogger(__name__).debug("done waiting")
     except Exception as error:  # pylint: disable=W0703
         getLogger(__name__).exception(error)
 
-
-def prepare_logging():
-    """
-    sets up the root logger, Stream/File handlers, log format and log level
-    """
-    handlers = [StreamHandler(stdout), FileHandler(LOG_PATH)]
-    log_text_format = Formatter(
-        "%(asctime)s - %(module)s - %(lineno)s - %(thread)d - %(message)s")
-    logger = getLogger()  # Root logger
-    for handler in handlers:
-        handler.setFormatter(log_text_format)
-        logger.addHandler(handler)
-        logger.setLevel(0)
-        logger.info("Starting LocalBox Sync logger ")
-    getLogger('gnupg').setLevel(3)
 
 if __name__ == '__main__':
     prepare_logging()

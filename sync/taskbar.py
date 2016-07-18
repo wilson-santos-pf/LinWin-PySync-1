@@ -32,6 +32,7 @@ class LocalBoxIcon(wx.TaskBarIcon):
     TBMENU_REMOVE = wx.NewId()
     TBMENU_GUI = wx.NewId()
     TBMENU_SYNC = wx.NewId()
+    TBMENU_SYNC2 = wx.NewId()
     icon_path = None
 
     def __init__(self, waitevent=None, sites=None):
@@ -78,7 +79,10 @@ class LocalBoxIcon(wx.TaskBarIcon):
         """
         tell the syncer the system is ready to sync
         """
-        self.event.set()
+        if not self.event.is_set():
+            self.event.set()
+        else:
+            getLogger(__name__).debug("Pressing start sync whilst sync in progress")
 
     def create_popup_menu(self):
         """
@@ -87,11 +91,16 @@ class LocalBoxIcon(wx.TaskBarIcon):
         the menu how you want it and return it from this function,
         the base class takes care of the rest.
         """
+        getLogger(__name__).debug("create_popup_menu")
         menu = wx.Menu()
         menu.Append(self.TBMENU_GUI, "Instellingen")
         # TODO: 'force sync'/'wait sync' dependant on lock status
         menu.AppendSeparator()
-        menu.Append(self.TBMENU_SYNC, "Force Sync")
+        if self.event.is_set():
+            menu.Append(self.TBMENU_SYNC2, "Sync in progress")
+            menu.Enable(id=self.TBMENU_SYNC2, enable=False)
+        else:
+            menu.Append(self.TBMENU_SYNC, "Force Sync")
         menu.AppendSeparator()
         menu.Append(self.TBMENU_CLOSE, "Afsluiten")
         return menu
@@ -124,3 +133,4 @@ def taskbarmain(waitevent=None, sites=None):
     app = wx.App(False)
     LocalBoxIcon(waitevent, sites=sites)
     app.MainLoop()
+

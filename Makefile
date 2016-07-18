@@ -1,7 +1,7 @@
 all: winstall
 
 clean:
-	rm -rf build sync/__pycache__ sync/*.pyc LocalBoxSync-0.1a*.win32.exe LocalBoxInstaller.exe dist/*
+	rm -rf build sync/__pycache__ sync/*.pyc LocalBoxSync-0.1a*.win32.exe LocalBoxInstaller.exe dist/* gnupg.pyc
 
 winstall: clean  installer
 

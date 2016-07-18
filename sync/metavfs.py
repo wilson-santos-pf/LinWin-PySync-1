@@ -95,7 +95,6 @@ class MetaVFS(object):
         args = [item for item in arguments if item is not None]
         unique = True
         current = args[0]
-        print(current)
         for entry in args[1:]:
             if entry is None:
                 continue

@@ -59,6 +59,7 @@ class LocalBox(object):
     """
 
     def __init__(self, url):
+        getLogger(__name__).debug("initialising Localbox for %s", url)
         if url[-1] != '/':
             url = url + "/"
         self.url = url
@@ -146,7 +147,7 @@ class LocalBox(object):
                 iv = CryptoRandom().read(16)
                 self.save_key(path, key, iv)
         except HTTPError as error:
-            getLogger(__name__).warning("'%s' whilst creating directory", error)
+            getLogger(__name__).warning("'%s' whilst creating directory %s", error, path)
         # TODO: make directory encrypted
 
     def delete(self, path):

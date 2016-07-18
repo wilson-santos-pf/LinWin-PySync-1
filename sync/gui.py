@@ -75,9 +75,7 @@ class Gui(Tk):
     """
 
     def __init__(self, parent=None, configparser=None, siteslist=None):
-        print("GUi Initing")
         Tk.__init__(self, parent)
-        print("tk Inited")
         if siteslist is None:
             self.siteslist = []
         else:

@@ -187,17 +187,14 @@ class Wizard(Tk):
             if self.localbox.authenticator.init_authenticate(self.username,
                                                              password):
                 getLogger(__name__).debug("ini authenticate = true")
-                print("done")
             else:
                 getLogger(__name__).debug("ini authenticate = false")
-                print("password error")
                 return Errorwindow("Username/Password incorrect", parent=self,
                                    language=self.translate)
         except AlreadyAuthenticatedError as error:
             getLogger(__name__).debug(
                 "ini authenticate = AlreadyAuthenticatedError")
             getLogger(__name__).exception(error)
-            print("already authenticated")
             Errorwindow("Already authenticated. Please send localbox-sync.log to show us how you did this. You might want to clear the AppData folder as well",
                         language=self.translate, parent=self)
         except (HTTPError, URLError) as error:
@@ -279,13 +276,13 @@ class Wizard(Tk):
         self.localbox = LocalBox(server_url)
         try:
             self.localbox.get_authentication_url()
-            print("success")
             return self.localbox
         except (URLError, BadStatusLine, ValueError,
                 AlreadyAuthenticatedError) as error:
             getLogger(__name__).debug("error with uthentication url thingie")
             getLogger(__name__).exception(error)
-            print("failed")
+            Errorwindow("Cannot validate LocalBox Server", parent=self,
+                        language=self.language)
             return None
 
     def clear(self):
@@ -297,7 +294,6 @@ class Wizard(Tk):
         getLogger(__name__).debug("wizard translate")
         if self.language is None:
             getLogger(__name__).debug("language is none")
-            print("Warning: Translation not loaded")
             return string
         return self.language.lgettext(string)
 

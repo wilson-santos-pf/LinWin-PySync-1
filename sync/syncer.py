@@ -133,24 +133,19 @@ class Syncer(object):
     def syncsync(self):
         getLogger(__name__).info("Starting syncsync")
         getLogger(__name__).info("LocalBox:")
+        self.localbox_metadata = None
+        self.filepath_metadata = None
         self.populate_localbox_metadata(path='/', parent=None)
         getLogger(__name__).info("Local FS:")
         self.populate_filepath_metadata(path='./', parent=None)
-        directories = set(chain(self.filepath_metadata.yield_directories(
-        ), self.localbox_metadata.yield_directories()))
-        self.dirsync(directories)
+        #directories = set(chain(self.filepath_metadata.yield_directories(
+        #), self.localbox_metadata.yield_directories()))
+        #self.dirsync(directories)
         # allpaths = set(self.filepath_metadata.get_files() +
         #               self.localbox_metadata.get_files())
         full_tree = MetaVFS('0', '/', True, None)
         full_tree.add_paths(self.localbox_metadata)
         full_tree.add_paths(self.filepath_metadata)
-
-        print "FILEPATH_METADATA"
-        self.filepath_metadata.debug_print()
-        print "LOCALBOX METADATA"
-        self.localbox_metadata.debug_print()
-        print "_ALL_THE METADATA"
-        full_tree.debug_print()
 
         try:
             oldmetadata = self.filepath_metadata.load(
@@ -161,6 +156,7 @@ class Syncer(object):
             oldmetadata = MetaVFS(path='/', modified_at=0)
 
         for metavfs in full_tree.gen():
+          try:
             path = metavfs.path
 
             oldfile = oldmetadata.get_entry(path)
@@ -169,11 +165,13 @@ class Syncer(object):
             getLogger(__name__).debug(
                 "====Local %s, Remote %s, Old %s ====", localfile, remotefile, oldfile)
 
-            if remotefile == oldfile and self.get_file_path(metavfs)is None:
+            #if remotefile == oldfile and self.get_file_path(metavfs)is None:
+            if remotefile == oldfile and localfile is None:
                 self.localbox.delete(metavfs)
                 getLogger(__name__).info("Deleting remote %s", path)
                 continue
-            if localfile == oldfile and self.get_url_path(metavfs) is None:
+            #if localfile == oldfile and self.get_url_path(metavfs) is None:
+            if localfile == oldfile and remotefile is None:
                 getLogger(__name__).info("Deleting local %s", path)
                 self.delete(metavfs)
                 continue
@@ -190,7 +188,6 @@ class Syncer(object):
             if newest == localfile:
                 # TODO: Only create directorieswhen needed, preferably not.
                 if dirname(path) not in self.localbox_metadata.get_paths():
-
                     self.localbox.create_directory(dirname(path))
 
                 if not isdir(self.get_file_path(metavfs)):
@@ -199,14 +196,14 @@ class Syncer(object):
                     self.localbox.upload_file(
                         path, localpath)
                 else:
-                    # should make directory, but is not quite needed now
-                    pass
+                    self.localbox.create_directory(path)
                 continue
             if newest == remotefile:
                 if not isdir(self.get_file_path(metavfs)):
                     getLogger(__name__).info("Downloading %s", newest.path)
                     self.download(path)
                 continue
-
+          except Exception as error:
+            getLogger(__name__).critical("Problem '%s' with file %s; continuing", error, metavfs.path)
         self.populate_filepath_metadata(path='./', parent=None)
         self.filepath_metadata.save(OLD_SYNC_STATUS + self.name)

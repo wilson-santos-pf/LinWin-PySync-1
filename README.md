@@ -11,7 +11,7 @@ voer LocalBoxInstaller.exe uit
 - kies indien gewenst een andere instalatiefolder, druk dan op [Install]
 - mogelijk komt er een window 'A prior wxPython installation was found in this directory. It is recommended that it be uninstalled first. Should I doit?' Antwoord dan [Yes].
 - wacht tot de installer voor PyCrypto-2.6 start. Druk dan op [Next >] [Next >] [Next >] [Finish]
-- wacht tot de installer voor LocalboxSyn-0.1a0 start. Druk dan op [Next >] [Next >] [Next >] [Finish]
+- wacht tot de installer voor LocalboxSync-0.1a0 start. Druk dan op [Next >] [Next >] [Next >] [Finish]
 - druk dan op [Close]
 start de computer opnieuw op. Hierna heeft u in uw taakbalk een localbox icoon.
 

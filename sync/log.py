@@ -39,13 +39,16 @@ def prepare_logging():
         logger.setLevel(0)
         logger.info("Starting LocalBox Sync logger ")
     getLogger('gnupg').setLevel('INFO')
-    for (name, value) in configparser.items('loglevels'):
-        getLogger(__name__).info("Setting logger %s to %s", name, value)
-        logger = getLogger(name)
-        try:
-            value = int(value)
-        except ValueError:
-            if value not in ['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'NOTSET']:
-                getLogger(__name__).info("unrecognised loglevel %s for logger %s, skipping", value, name)
-                continue
-        logger.setLevel(value)
+    try:
+        for (name, value) in configparser.items('loglevels'):
+            getLogger(__name__).info("Setting logger %s to %s", name, value)
+            logger = getLogger(name)
+            try:
+                value = int(value)
+            except ValueError:
+                if value not in ['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'NOTSET']:
+                    getLogger(__name__).info("unrecognised loglevel %s for logger %s, skipping", value, name)
+                    continue
+            logger.setLevel(value)
+    except NoSectionError:
+        pass

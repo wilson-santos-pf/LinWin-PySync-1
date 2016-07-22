@@ -16,6 +16,7 @@ from .defaults import KEEP_RUNNING
 from .defaults import SITESINI_PATH
 from .defaults import SYNCINI_PATH
 from .defaults import LOG_PATH
+from .defaults import VERSION
 from sys import stdout
 
 from .auth import Authenticator
@@ -159,6 +160,7 @@ def main(waitevent=None):
 
 if __name__ == '__main__':
     prepare_logging()
+    getLogger(__name__).info("LocalBox Sync Version: %s", VERSION)
     try:
         if not isdir(dirname(LOG_PATH)):
             makedirs(dirname(LOG_PATH))

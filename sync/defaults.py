@@ -6,6 +6,10 @@ from os.path import join
 from os.path import expandvars
 from os.path import abspath
 from os.path import dirname
+try:
+    from .version import VERSION
+except ImportError:
+    VERSION = "development"
 
 KEEP_RUNNING = True
 

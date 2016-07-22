@@ -13,6 +13,7 @@ from Crypto.Random import new as CryptoRandom
 
 from .gpg import gpg
 from .defaults import SITESINI_PATH
+from os import stat
 
 try:
     from urllib2 import HTTPError
@@ -31,6 +32,7 @@ except ImportError:
     from http.client import BadStatusLine  # pylint: disable=F0401,E0611
     from configparser import ConfigParser  # pylint: disable=F0401,E0611
 
+from os import fsync
 from json import loads
 from json import dumps
 from ssl import SSLContext, PROTOCOL_TLSv1  # pylint: disable=E0611
@@ -127,9 +129,16 @@ class LocalBox(object):
         """
         metapath = quote(path).strip('/')
         request = Request(url=self.url + "lox_api/files/" + metapath)
-        data = self._make_call(request).read()
-        if self.get_meta(path)['has_keys']:
+        webdata = self._make_call(request)
+        websize = webdata.headers['content-length']
+        data = webdata.read()
+        ldata = len(data)
+        stats = self.get_meta(path)
+        if stats['has_keys']:
             data = self.decode_file(path, data)
+
+        getLogger(__name__).info("Downloading %s: Websize: %d, readsize: %d cryptosize: %d", path, websize, clen, len(contents))
+
         return data
 
     def create_directory(self, path):
@@ -167,7 +176,13 @@ class LocalBox(object):
         upload a file to localbox
         """
         metapath = quote(path)
-        contents = open(localpath).read()
+        #contents = open(localpath).read()
+        #larger version
+        stats = stat(localpath)
+        openfile = open(localpath, 'rb')
+        contents = openfile.read(stats.st_size)
+        fsync(openfile)
+        clen = len(contents)
         try:
             contents = self.encode_file(path, contents)
         except BadStatusLine as error:
@@ -175,6 +190,8 @@ class LocalBox(object):
             # TODO: make sure files get encrypted
         except HTTPError as error:
             getLogger(__name__).exception(error)
+
+        getLogger(__name__).info("Uploading %s: Statsize: %d, readsize: %d cryptosize: %d", localpath, stats.st_size, clen, len(contents))
 
         request = Request(url=self.url + 'lox_api/files/' + metapath,
                           data=contents)

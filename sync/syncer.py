@@ -80,7 +80,8 @@ class Syncer(object):
         makedirs(localfilename)
 
     def delete(self, path):
-        localfilename = join(self.filepath, path[1:])
+        #join(self.filepath, path[1:])
+        localfilename = self.get_file_path(path)
         if isdir(localfilename):
             rmtree(localfilename)
         else:
@@ -96,39 +97,12 @@ class Syncer(object):
         localdirname = dirname(localfilename)
         if not exists(localdirname):
             makedirs(localdirname)
-        localfile = open(localfilename, 'w')
+        localfile = open(localfilename, 'wb')
         localfile.write(contents)
         localfile.close()
         localfilepath = self.localbox_metadata.get_entry(path)
         modtime = localfilepath.modified_at
         utime(localfilename, (time(), modtime))
-
-    def dirsync(self, directories):
-        try:
-            oldmetadata = self.filepath_metadata.load(
-                OLD_SYNC_STATUS + self.name)
-        except IOError:
-            oldmetadata = MetaVFS(path='/', modified_at=0)
-
-        for directory in directories:
-            directory = str(directory)
-            olddir = oldmetadata.get_entry(directory)
-            localdir = self.filepath_metadata.get_entry(directory)
-            remotedir = self.localbox_metadata.get_entry(directory)
-            getLogger(__name__).debug("====Local %s, Remote %s, Old %s ====" %
-                  (localdir, remotedir, olddir))
-            if olddir is not None and localdir is None:
-                self.localbox.delete(directory)
-            if olddir is not None and remotedir is None:
-                self.delete(directory)
-            if olddir is None and localdir is None:
-                try:
-                    self.mkdir(directory)
-                except OSError as error:
-                    getLogger(__name__).info(
-                        "continuing after OSError when creating folder %s: %s", directory, error)
-            if olddir is None and remotedir is None:
-                self.localbox.create_directory(directory)
 
     def syncsync(self):
         getLogger(__name__).info("Starting syncsync")
@@ -204,6 +178,6 @@ class Syncer(object):
                     self.download(path)
                 continue
           except Exception as error:
-            getLogger(__name__).critical("Problem '%s' with file %s; continuing", error, metavfs.path)
+            getLogger(__name__).exception("Problem '%s' with file %s; continuing", error, metavfs.path)
         self.populate_filepath_metadata(path='./', parent=None)
         self.filepath_metadata.save(OLD_SYNC_STATUS + self.name)

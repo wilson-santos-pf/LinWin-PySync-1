@@ -182,7 +182,6 @@ class LocalBox(object):
         openfile = open(localpath, 'rb')
         contents = openfile.read(stats.st_size)
         openfile.flush()
-        fsync(openfile.fileno())
         clen = len(contents)
         try:
             contents = self.encode_file(path, contents)

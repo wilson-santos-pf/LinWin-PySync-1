@@ -14,6 +14,7 @@ from time import time
 from os.path import exists
 from os.path import dirname
 from os import makedirs
+from os import sep
 
 from .defaults import OLD_SYNC_STATUS
 from .metavfs import MetaVFS
@@ -24,10 +25,7 @@ class Syncer(object):
     def __init__(self, localbox_instance, file_root_path, direction, name=None):
         self.localbox = localbox_instance
         self.name = name
-        rootpathlist = file_root_path.split('/')
-        if file_root_path[0] == '/':
-            rootpathlist = ['/'] + rootpathlist
-        self.filepath = join(*rootpathlist)
+        self.filepath = file_root_path.replace('/', sep)
         self.localbox_metadata = None
         self.filepath_metadata = None
         self.direction = direction

@@ -9,6 +9,8 @@ except ImportError:
 
 
 def normalize_path(path):
+    if path == '':
+        return '/'
     path = path.replace(sep, '/')
     if path[0] == '.':
         path = path[1:]

@@ -25,6 +25,8 @@ class Syncer(object):
         self.localbox = localbox_instance
         self.name = name
         rootpathlist = file_root_path.split('/')
+        if file_root_path[0] == '/':
+            rootpathlist = ['/'] + rootpathlist
         self.filepath = join(*rootpathlist)
         self.localbox_metadata = None
         self.filepath_metadata = None
@@ -57,10 +59,12 @@ class Syncer(object):
             parent.add_child(vfsnode)
 
     def populate_filepath_metadata(self, path='./', parent=None):
-        if path == '.':
-            path = './'
-        path = path.lstrip("/\\")
-        realpath = abspath(join(self.filepath, path))
+        path = path.rstrip("/\\")
+        print self.filepath
+        if path == ".":
+            realpath = self.filepath
+        else:
+            realpath = join(self.filepath, path)
         getLogger(__name__).info("processing " + path + " transformed to "
                                  + realpath)
         is_dir = isdir(realpath)

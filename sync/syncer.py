@@ -24,7 +24,8 @@ class Syncer(object):
     def __init__(self, localbox_instance, file_root_path, direction, name=None):
         self.localbox = localbox_instance
         self.name = name
-        self.filepath = file_root_path
+        rootpathlist = file_root_path.split('/')
+        self.filepath = join(*rootpathlist)
         self.localbox_metadata = None
         self.filepath_metadata = None
         self.direction = direction

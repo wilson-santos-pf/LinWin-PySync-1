@@ -130,14 +130,14 @@ class LocalBox(object):
         metapath = quote(path).strip('/')
         request = Request(url=self.url + "lox_api/files/" + metapath)
         webdata = self._make_call(request)
-        websize = webdata.headers['content-length']
+        websize = webdata.headers.get('content-length', -1)
         data = webdata.read()
         ldata = len(data)
         stats = self.get_meta(path)
         if stats['has_keys']:
             data = self.decode_file(path, data)
 
-        getLogger(__name__).info("Downloading %s: Websize: %d, readsize: %d cryptosize: %d", path, websize, clen, len(contents))
+        getLogger(__name__).info("Downloading %s: Websize: %d, readsize: %d cryptosize: %d", path, websize, ldata, len(data))
 
         return data
 
@@ -181,7 +181,8 @@ class LocalBox(object):
         stats = stat(localpath)
         openfile = open(localpath, 'rb')
         contents = openfile.read(stats.st_size)
-        fsync(openfile)
+        openfile.flush()
+        fsync(openfile.fileno())
         clen = len(contents)
         try:
             contents = self.encode_file(path, contents)
@@ -216,7 +217,7 @@ class LocalBox(object):
             index = path[1:].index('/')
             cryptopath = path[1:index + 1]
             getLogger(__name__).exception(
-                "call_keys called with a path with excess \"/\"'s.")
+                "call_keys called with a path with excess \"/\"'s: %s", path)
         except ValueError:
             cryptopath = path[1:]
         getLogger(__name__).debug(

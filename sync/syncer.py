@@ -75,8 +75,8 @@ class Syncer(object):
         else:
             parent.add_child(vfsnode)
 
-    def mkdir(self, path):
-        localfilename = join(self.filepath, path[1:])
+    def mkdir(self, metavfs):
+        localfilename = self.get_file_path(metavfs)
         makedirs(localfilename)
 
     def delete(self, path):
@@ -173,9 +173,14 @@ class Syncer(object):
                     self.localbox.create_directory(path)
                 continue
             if newest == remotefile:
-                if not isdir(self.get_file_path(metavfs)):
+                print metavfs.is_dir
+                if not metavfs.is_dir:
                     getLogger(__name__).info("Downloading %s", newest.path)
                     self.download(path)
+                else:
+                    if not isdir(self.get_file_path(metavfs)):
+                        self.mkdir(metavfs)
+                     
                 continue
           except Exception as error:
             getLogger(__name__).exception("Problem '%s' with file %s; continuing", error, metavfs.path)

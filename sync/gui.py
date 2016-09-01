@@ -7,6 +7,8 @@ from Tkinter import Button
 from tkMessageBox import showerror
 import tkFileDialog
 
+from codecs import open as codecsopen
+
 from Tkinter import END
 from ConfigParser import ConfigParser
 from ConfigParser import NoOptionError
@@ -125,11 +127,11 @@ class Gui(Tk):
         sites = []
         for section in self.configparser.sections():
             try:
-                dictionary = {'name': section,
-                              'url': self.configparser.get(section, 'url'),
-                              'path': self.configparser.get(section, 'path')}
+                dictionary = {'name': section.encode('ascii', 'replace'),
+                              'url': self.configparser.get(section, 'url').encode('ascii', 'replace'),
+                              'path': self.configparser.get(section, 'path').encode('ascii', 'replace')}
                 sites.append(dictionary)
-                passphrase = self.configparser.get(section, 'passphrase')
+                passphrase = self.configparser.get(section, 'passphrase').encode('ascii', 'replace')
                 dataentry = DataEntry(self, section, dictionary['url'],
                                       dictionary['path'],
                                       self.configparser, passphrase=passphrase,
@@ -203,10 +205,10 @@ class DataEntry(Frame):
         """
         removes the configuration of this localbox from the config file.
         """
-        self.configparser.remove_section(self.orig_name)
+        self.configparser.remove_section(self.orig_name.encode('ascii', 'replace'))
         if not exists(dirname(SITESINI_PATH)):
             makedirs(dirname(SITESINI_PATH))
-        with open(SITESINI_PATH, 'wb') as configfile:
+        with open(SITESINI_PATH, 'wb+') as configfile:
             self.configparser.write(configfile)
         self.master.update_window()
 
@@ -238,7 +240,7 @@ class DataEntry(Frame):
                                   self.passphrase.get())
             if not exists(dirname(SITESINI_PATH)):
                 makedirs(dirname(SITESINI_PATH))
-            with open(SITESINI_PATH, 'wb') as configfile:
+            with open(SITESINI_PATH, 'wb+') as configfile:
                 self.configparser.write(configfile)
             self.eventwindow = Tk()
             smll = self.master.language.lgettext

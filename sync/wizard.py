@@ -9,6 +9,7 @@ from os import makedirs
 from json import loads
 from json import dumps
 from sys import exit as sysexit
+from codecs import open as codecsopen
 
 try:
     from Tkinter import Tk
@@ -300,18 +301,19 @@ class Wizard(Tk):
     def save(self):
         getLogger(__name__).debug("wizard save")
         try:
+            self.box_label = self.box_label.encode('ascii', 'replace')
             self.configparser.add_section(self.box_label)
-            self.configparser.set(self.box_label, 'url', self.server_url)
-            self.configparser.set(self.box_label, 'path', self.filepath)
+            self.configparser.set(self.box_label, 'url', self.server_url.encode('ascii', 'replace'))
+            self.configparser.set(self.box_label, 'path', self.filepath.encode('ascii', 'replace'))
             self.configparser.set(self.box_label, 'direction', 'sync')
             self.configparser.set(self.box_label, 'passphrase',
-                                  self.passphrasestring)
-            self.configparser.set(self.box_label, 'user', self.username)
+                                  self.passphrasestring.encode('ascii', 'replace'))
+            self.configparser.set(self.box_label, 'user', self.username.encode('ascii', 'replace'))
 
             if not exists(dirname(SITESINI_PATH)):
                 getLogger(__name__).debug("not exists dirname sitesini")
                 makedirs(dirname(SITESINI_PATH))
-            with open(SITESINI_PATH, 'wb') as configfile:
+            with open(SITESINI_PATH, 'wb+') as configfile:
                 self.configparser.write(configfile)
             self.clear()
             sll = self.language.lgettext

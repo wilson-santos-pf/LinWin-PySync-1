@@ -29,6 +29,7 @@ class MetaVFS(object):
 
     def __init__(self, modified_at=None, path=None, is_dir=None,
                  children=None):
+        path=path.encode('utf-8')
         self.path = normalize_path(path)
         if self.path != path:
             getLogger(__name__).debug(

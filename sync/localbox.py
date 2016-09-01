@@ -271,22 +271,24 @@ class LocalBox(object):
         """
         path = quote(path)
         pgpclient = gpg()
+        site = self.authenticator.label
         try:
           jsontext = self.call_keys(path).read()
           keydata = loads(jsontext)
+          pgpdkeystring = b64decode(keydata['key'])
+          pgpdivstring = b64decode(keydata['iv'])
+          keystring = pgpclient.decrypt(pgpdkeystring, site)
+          ivstring = pgpclient.decrypt(pgpdivstring, site)
+
+          getLogger(__name__).debug("Decoding %s with key %s", path, getChecksum(keystring))
+          key = AES_Key(keystring, MODE_CFB, ivstring)
+          result = key.decrypt(contents)
         except ValueError:
           getLogger(__name__).info("cannot decode JSON: %s", jsontext)
+          result = None
         except HTTPError as error:
           getLogger(__name__).info("HTTPError: %s", error)
-        site = self.authenticator.label
-        pgpdkeystring = b64decode(keydata['key'])
-        pgpdivstring = b64decode(keydata['iv'])
-        keystring = pgpclient.decrypt(pgpdkeystring, site)
-        ivstring = pgpclient.decrypt(pgpdivstring, site)
-
-        getLogger(__name__).debug("Decoding %s with key %s", path, getChecksum(keystring))
-        key = AES_Key(keystring, MODE_CFB, ivstring)
-        result = key.decrypt(contents)
+          result = None
         return result
 
     def encode_file(self, path, contents):

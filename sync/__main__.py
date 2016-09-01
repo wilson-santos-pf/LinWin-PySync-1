@@ -82,6 +82,7 @@ def get_site_list():
     configparser.read(location)
     sites = []
     for section in configparser.sections():
+        getLogger(__name__).info("Syncing %s", section)
         try:
             url = configparser.get(section, 'url')
             path = configparser.get(section, 'path')

@@ -21,6 +21,12 @@ try:
 except ImportError:
     from configparser import ConfigParser  # pylint: disable=F0401,E0611
 
+try:
+    from version import VERSION
+except ImportError:
+    VERSION = open('VERSION').readline().strip()
+import runpy
+
 
 class LocalBoxIcon(wx.TaskBarIcon):
 
@@ -34,6 +40,7 @@ class LocalBoxIcon(wx.TaskBarIcon):
     TBMENU_GUI = wx.NewId()
     TBMENU_SYNC = wx.NewId()
     TBMENU_SYNC2 = wx.NewId()
+    TBMENU_VERSION = wx.NewId()
     icon_path = None
 
     def __init__(self, waitevent=None, sites=None):
@@ -102,6 +109,10 @@ class LocalBoxIcon(wx.TaskBarIcon):
             menu.Enable(id=self.TBMENU_SYNC2, enable=False)
         else:
             menu.Append(self.TBMENU_SYNC, "Force Sync")
+
+        menu.Append(self.TBMENU_VERSION, "Version: %s" % VERSION)
+        menu.Enable(id=self.TBMENU_VERSION, enable=False)
+
         menu.AppendSeparator()
         menu.Append(self.TBMENU_CLOSE, "Afsluiten")
         return menu

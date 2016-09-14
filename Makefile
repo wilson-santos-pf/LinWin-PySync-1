@@ -1,7 +1,7 @@
 all: winstall
 
 sync/version.py:
-	echo VERSION=`echo "from subprocess import check_output; print len([elem for elem in check_output(['git', 'log']).split('\n') if elem.startswith('commit ')])" | python` >> sync/version.py
+	echo VERSION=\'`cat VERSION`.`git log | grep -c ^commit`\' >> sync/version.py
 
 clean:
 	rm -rf build sync/__pycache__ sync/*.pyc LocalBoxSync-0.1a*.win32.exe LocalBoxInstaller.exe dist/* gnupg.pyc sync/version.py

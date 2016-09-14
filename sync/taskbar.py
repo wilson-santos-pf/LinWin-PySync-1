@@ -4,6 +4,7 @@ Modulemanaging a Windows Taskbar icon
 from sys import executable
 from subprocess import call
 from threading import Thread
+import runpy
 from sysconfig import get_path
 from os.path import join
 from logging import getLogger
@@ -73,7 +74,7 @@ class LocalBoxIcon(wx.TaskBarIcon):
         start the graphical user interface for configuring localbox
         """
         getLogger(__name__).debug("Starting GUI")
-        Thread(target=call, args=[[executable, '-m', 'sync.gui']]).start()
+        runpy.run_module('sync.gui', run_name="__main__", alter_sys=True)
 
     def start_sync(self, wx_event):  # pylint: disable=W0613
         """

@@ -1,19 +1,16 @@
 """
 listing of values/variables' default values.
 """
-from os.path import exists
-from os.path import join
-from os.path import expandvars
 from os.path import abspath
 from os.path import dirname
+from os.path import exists
+from os.path import expandvars
+from os.path import join
 
 try:
     from sync.version import VERSION
 except ImportError:
     VERSION = open('VERSION').readline().strip()
-
-from subprocess import check_output
-GIT_VERSION = check_output(['git','log']).split('\n')[0].split(' ')[1]
 
 KEEP_RUNNING = True
 

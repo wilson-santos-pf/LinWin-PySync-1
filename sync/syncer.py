@@ -93,7 +93,7 @@ class Syncer(object):
 
     def download(self, path):
         contents = self.localbox.get_file(path)
-        if contents:
+        if contents is not None:
             localfilename = join(self.filepath, path[1:])
             # precreate folder if needed
             localdirname = dirname(localfilename)

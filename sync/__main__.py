@@ -1,31 +1,25 @@
 """
 main module for localbox sync
 """
-from threading import Lock
 from getpass import getpass
 from logging import getLogger
-from logging import StreamHandler
-from logging import FileHandler
-from logging import Formatter
-from threading import Thread
-from threading import Event
 from os import makedirs
-from os.path import isdir
 from os.path import dirname
-from .defaults import KEEP_RUNNING, GIT_VERSION
+from os.path import isdir
+from threading import Event
+from threading import Lock
+from threading import Thread
+
 from sync.controllers.localbox_ctrl import SyncsController
+from sync.gui.taskbar import taskbarmain
+from .auth import AuthenticationError
+from .defaults import LOG_PATH
+from .defaults import KEEP_RUNNING
 from .defaults import SITESINI_PATH
 from .defaults import SYNCINI_PATH
-from .defaults import LOG_PATH
 from .defaults import VERSION
-from sys import stdout
-
-from .auth import Authenticator
-from .auth import AuthenticationError
 from .localbox import LocalBox
 from .syncer import Syncer
-from sync.gui.taskbar import taskbarmain
-from loxcommon.log import prepare_logging
 
 try:
     from ConfigParser import ConfigParser
@@ -157,7 +151,7 @@ def main(waitevent=None):
 
 
 if __name__ == '__main__':
-    getLogger(__name__).info("LocalBox Sync Version: %s (git_version=%s)", VERSION, GIT_VERSION)
+    getLogger(__name__).info("LocalBox Sync Version: %s", VERSION)
     try:
         if not isdir(dirname(LOG_PATH)):
             makedirs(dirname(LOG_PATH))

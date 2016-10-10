@@ -147,7 +147,7 @@ class LocalBox(object):
             data = self.decode_file(path, data)
             getLogger(__name__).info("Downloading %s: Websize: %d, readsize: %d cryptosize: %d", path, websize, ldata,
                                      len(data))
-            return data
+            return data if data is not None else ''
         else:
             getLogger(__name__).error("No keys found for %s", path)
             return None

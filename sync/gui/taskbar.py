@@ -1,15 +1,13 @@
 """
 Modulemanaging a Windows Taskbar icon
 """
-from sys import executable
-from subprocess import call
-from threading import Thread
-import runpy
-from sysconfig import get_path
-from os.path import join
 from logging import getLogger
 
-from .defaults import SITESINI_PATH
+from sync import language
+from sync.controllers.preferences_ctrl import ctrl as preferences_ctrl
+from sync.gui.gui_wx import Gui
+from sync.defaults import SITESINI_PATH, LOCALE_PATH, VERSION
+import sync.gui.gui_utils as gui_utils
 
 try:
     import wx
@@ -20,12 +18,6 @@ try:
     from ConfigParser import ConfigParser  # pylint: disable=F0401,E0611
 except ImportError:
     from configparser import ConfigParser  # pylint: disable=F0401,E0611
-
-try:
-    from version import VERSION
-except ImportError:
-    VERSION = open('VERSION').readline().strip()
-import runpy
 
 
 class LocalBoxIcon(wx.TaskBarIcon):
@@ -54,14 +46,14 @@ class LocalBoxIcon(wx.TaskBarIcon):
             self.sites = []
         # The purpose of this 'frame' is to keep the mainloop of wx alive
         # (which checks for living wx thingies)
-        self.frame = wx.Frame(parent=None)
+        self.frame = Gui(None)
         self.frame.Show(False)
         self.event = waitevent
 
         # Set the image
-        self.taskbar_icon = wx.Icon(self.iconpath())
+        self.taskbar_icon = wx.Icon(gui_utils.iconpath())
 
-        self.SetIcon(self.taskbar_icon, "Test")
+        self.SetIcon(self.taskbar_icon, gui_utils.MAIN_TITLE)
 
         # bind some events
         self.Bind(wx.EVT_MENU, self.OnTaskBarClose, id=self.TBMENU_CLOSE)
@@ -70,18 +62,13 @@ class LocalBoxIcon(wx.TaskBarIcon):
         self.Bind(wx.EVT_TASKBAR_LEFT_DOWN, self.OnTaskBarClick)
         self.Bind(wx.EVT_TASKBAR_RIGHT_DOWN, self.OnTaskBarClick)
 
-    def iconpath(self):
-        """
-        returns the path for the icon related to this widget
-        """
-        return join(get_path('data'), 'localbox', 'localbox.ico')
-
     def start_gui(self, event):  # pylint: disable=W0613
         """
         start the graphical user interface for configuring localbox
         """
         getLogger(__name__).debug("Starting GUI")
-        runpy.run_module('sync.gui', run_name="__main__", alter_sys=True)
+        self.frame.Show()
+        self.frame.Raise()
 
     def start_sync(self, wx_event):  # pylint: disable=W0613
         """
@@ -101,20 +88,20 @@ class LocalBoxIcon(wx.TaskBarIcon):
         """
         getLogger(__name__).debug("create_popup_menu")
         menu = wx.Menu()
-        menu.Append(self.TBMENU_GUI, "Instellingen")
+        menu.Append(self.TBMENU_GUI, _("Settings"))
         # TODO: 'force sync'/'wait sync' dependant on lock status
         menu.AppendSeparator()
         if self.event.is_set():
-            menu.Append(self.TBMENU_SYNC2, "Sync in progress")
+            menu.Append(self.TBMENU_SYNC2, _("Sync in progress"))
             menu.Enable(id=self.TBMENU_SYNC2, enable=False)
         else:
-            menu.Append(self.TBMENU_SYNC, "Force Sync")
+            menu.Append(self.TBMENU_SYNC, _("Force Sync"))
 
-        menu.Append(self.TBMENU_VERSION, "Version: %s" % VERSION)
+        menu.Append(self.TBMENU_VERSION, _("Version: %s") % VERSION)
         menu.Enable(id=self.TBMENU_VERSION, enable=False)
 
         menu.AppendSeparator()
-        menu.Append(self.TBMENU_CLOSE, "Afsluiten")
+        menu.Append(self.TBMENU_CLOSE, _("Quit"))
         return menu
 
     def OnTaskBarActivate(self, event):  # pylint: disable=W0613
@@ -135,7 +122,7 @@ class LocalBoxIcon(wx.TaskBarIcon):
         """
         menu = self.create_popup_menu()
         self.PopupMenu(menu)
-        menu.Destroy()
+        # menu.Destroy()
 
 
 def taskbarmain(waitevent=None, sites=None):
@@ -143,6 +130,7 @@ def taskbarmain(waitevent=None, sites=None):
     main function to run to get the taskbar started
     """
     app = wx.App(False)
+    language.set_language(preferences_ctrl.get_language_abbr())
     LocalBoxIcon(waitevent, sites=sites)
     app.MainLoop()
 

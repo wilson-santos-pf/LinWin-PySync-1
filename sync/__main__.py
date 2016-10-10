@@ -12,7 +12,8 @@ from threading import Event
 from os import makedirs
 from os.path import isdir
 from os.path import dirname
-from .defaults import KEEP_RUNNING
+from .defaults import KEEP_RUNNING, GIT_VERSION
+from sync.controllers.localbox_ctrl import SyncsController
 from .defaults import SITESINI_PATH
 from .defaults import SYNCINI_PATH
 from .defaults import LOG_PATH
@@ -23,8 +24,8 @@ from .auth import Authenticator
 from .auth import AuthenticationError
 from .localbox import LocalBox
 from .syncer import Syncer
-from .taskbar import taskbarmain
-from log import prepare_logging
+from sync.gui.taskbar import taskbarmain
+from loxcommon.log import prepare_logging
 
 try:
     from ConfigParser import ConfigParser
@@ -52,11 +53,10 @@ class SyncRunner(Thread):
         self.setDaemon(True)
         self.syncer = syncer
         self.lock = Lock()
-        getLogger(__name__).info("SyncRunner started")
 
     def run(self):
         """
-        Function that runs one iteration of the synhronization
+        Function that runs one iteration of the synchronization
         """
         getLogger(__name__).info("SyncRunner " + self.name + " started")
         self.lock.acquire()
@@ -77,44 +77,41 @@ def get_site_list():
     """
     returns a list of configured localbox instances.
     """
-    location = SITESINI_PATH
-    configparser = ConfigParser()
-    configparser.read(location)
+    syncs_ctrl = SyncsController()
+
     sites = []
-    for section in configparser.sections():
-        getLogger(__name__).info("Syncing %s", section)
+    for sync_item in syncs_ctrl:
+        getLogger(__name__).info("Syncing %s", sync_item.label)
         try:
-            url = configparser.get(section, 'url')
-            path = configparser.get(section, 'path')
-            direction = configparser.get(section, 'direction')
-            localbox = LocalBox(url)
-            authenticator = Authenticator(localbox.get_authentication_url(),
-                                          section)
-            localbox.add_authenticator(authenticator)
-            if not authenticator.has_client_credentials():
+            url = sync_item.url
+            path = sync_item.path
+            direction = sync_item.direction
+            label = sync_item.label
+            localbox_client = LocalBox(url, label)
+            if not localbox_client.authenticator.has_client_credentials():
                 getLogger(__name__).info("Don't have client credentials for "
                                          "this host yet. We need to log in with"
                                          " your data for once.")
                 username = raw_input("Username: ")
                 password = getpass("Password: ")
                 try:
-                    authenticator.init_authenticate(username, password)
+                    localbox_client.authenticator.init_authenticate(username, password)
                 except AuthenticationError as error:
                     getLogger(__name__).exception(error)
                     getLogger(__name__).info("authentication data incorrect. "
                                              "Skipping entry.")
             else:
-                syncer = Syncer(localbox, path, direction, name=section)
+                syncer = Syncer(localbox_client, path, direction, name=sync_item.label)
                 sites.append(syncer)
         except NoOptionError as error:
             getLogger(__name__).exception(error)
             string = "Skipping '%s' due to missing option '%s'" % \
-                     (section, error.option)
+                     (sync_item, error.option)
             getLogger(__name__).info(string)
         except URLError as error:
             getLogger(__name__).exception(error)
             string = "Skipping '%s' because it cannot be reached" % \
-                     (section)
+                     (sync_item)
             getLogger(__name__).info(string)
 
     return sites
@@ -138,7 +135,7 @@ def main(waitevent=None):
         while KEEP_RUNNING:
             getLogger(__name__).debug("starting loop")
             waitevent.set()
-            threadpool=[]
+            threadpool = []
             for syncer in get_site_list():
                 runner = SyncRunner(syncer=syncer)
                 getLogger(__name__).debug("starting thread %s", runner.name)
@@ -160,8 +157,7 @@ def main(waitevent=None):
 
 
 if __name__ == '__main__':
-    prepare_logging()
-    getLogger(__name__).info("LocalBox Sync Version: %s", VERSION)
+    getLogger(__name__).info("LocalBox Sync Version: %s (git_version=%s)", VERSION, GIT_VERSION)
     try:
         if not isdir(dirname(LOG_PATH)):
             makedirs(dirname(LOG_PATH))

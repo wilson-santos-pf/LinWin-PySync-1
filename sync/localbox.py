@@ -2,21 +2,24 @@
 localbox client library
 """
 
+import errno
+import hashlib
+from Crypto.Cipher.AES import MODE_CFB
+from Crypto.Cipher.AES import new as AES_Key
+from Crypto.Random import new as CryptoRandom
+from base64 import b64decode
+from base64 import b64encode
 from logging import getLogger
 from md5 import new as newmd5
-
-from base64 import b64encode
-from base64 import b64decode
-from Crypto.Cipher.AES import new as AES_Key
-from Crypto.Cipher.AES import MODE_CFB
-from Crypto.Random import new as CryptoRandom
-
-from .gpg import gpg
-from .defaults import SITESINI_PATH
 from os import stat
+from socket import error as SocketError
+
+from sync.auth import Authenticator, AlreadyAuthenticatedError
+from sync.controllers.localbox_ctrl import SyncsController
+from .gpg import gpg
 
 try:
-    from urllib2 import HTTPError
+    from urllib2 import HTTPError, URLError
     from urllib2 import Request
     from urllib2 import urlopen
     from urllib import urlencode
@@ -32,7 +35,6 @@ except ImportError:
     from http.client import BadStatusLine  # pylint: disable=F0401,E0611
     from configparser import ConfigParser  # pylint: disable=F0401,E0611
 
-from os import fsync
 from json import loads
 from json import dumps
 from ssl import SSLContext, PROTOCOL_TLSv1  # pylint: disable=E0611
@@ -47,45 +49,52 @@ def getChecksum(key):
     return checksum.hexdigest()[:5]
 
 
-class AlreadyAuthenticatedError(Exception):
-
-    """
-    authentication has already been done error.
-    """
-    pass
-
-
 class LocalBox(object):
     """
     object representing localbox
     """
 
-    def __init__(self, url):
-        getLogger(__name__).debug("initialising Localbox for %s", url)
-        if url[-1] != '/':
-            url = url + "/"
-        self.url = url
-        self.authentication_url = None
-        self.authenticator = None
+    """
 
-    def add_authenticator(self, authenticator):
-        """
-        add an authenticator to the localbox to do authenticationwhen needed
-        """
-        self.authenticator = authenticator
+    """
+    _instance = dict()
+
+    def __new__(cls, *args, **kwargs):
+        server = args[0]
+        m = hashlib.md5()
+        m.update(server)
+        server_hash = m.digest()
+
+        if not server_hash in cls._instance.keys():
+            cls._instance[server_hash] = super(LocalBox, cls).__new__(
+                cls, *args, **kwargs)
+        return cls._instance[server_hash]
+
+    def __init__(self, url, label):
+        if url[-1] != '/':
+            url += "/"
+        self.url = url
+        self._authentication_url = None
+        self._authentication_url = self.get_authentication_url()
+        self._authenticator = Authenticator(self._authentication_url, label)
+
+    @property
+    def authenticator(self):
+        return self._authenticator
 
     def get_authentication_url(self):
         """
         return an authentication url belonging to a localbox instance.
         """
-        if self.authentication_url is not None:
-            return self.authentication_url
+        if self._authentication_url is not None:
+            return self._authentication_url
         else:
             try:
                 non_verifying_context = SSLContext(PROTOCOL_TLSv1)
+                getLogger(__name__).debug("validating localbox server: %s" % self.url)
                 urlopen(self.url, context=non_verifying_context)
             except BadStatusLine as error:
-                getLogger(__name__).exception(error.description)
+                getLogger(__name__).exception(error)
                 raise error
             except HTTPError as error:
                 if error.code != 401:
@@ -136,10 +145,12 @@ class LocalBox(object):
         stats = self.get_meta(path)
         if stats['has_keys']:
             data = self.decode_file(path, data)
-
-        getLogger(__name__).info("Downloading %s: Websize: %d, readsize: %d cryptosize: %d", path, websize, ldata, len(data))
-
-        return data
+            getLogger(__name__).info("Downloading %s: Websize: %d, readsize: %d cryptosize: %d", path, websize, ldata,
+                                     len(data))
+            return data
+        else:
+            getLogger(__name__).error("No keys found for %s", path)
+            return None
 
     def create_directory(self, path):
         """
@@ -156,8 +167,8 @@ class LocalBox(object):
                 iv = CryptoRandom().read(16)
                 self.save_key(path, key, iv)
         except HTTPError as error:
-            getLogger(__name__).warning("'%s' whilst creating directory %s", error, path)
-        # TODO: make directory encrypted
+            getLogger(__name__).warning("'%s' whilst creating directory %s. %s", error, path, error.message)
+            # TODO: make directory encrypted
 
     def delete(self, path):
         """
@@ -176,8 +187,8 @@ class LocalBox(object):
         upload a file to localbox
         """
         metapath = quote(path)
-        #contents = open(localpath).read()
-        #larger version
+        # contents = open(localpath).read()
+        # larger version
         stats = stat(localpath)
         openfile = open(localpath, 'rb')
         contents = openfile.read(stats.st_size)
@@ -191,7 +202,8 @@ class LocalBox(object):
         except HTTPError as error:
             getLogger(__name__).exception(error)
 
-        getLogger(__name__).info("Uploading %s: Statsize: %d, readsize: %d cryptosize: %d", localpath, stats.st_size, clen, len(contents))
+        getLogger(__name__).info("Uploading %s: Statsize: %d, readsize: %d cryptosize: %d", localpath, stats.st_size,
+                                 clen, len(contents))
 
         request = Request(url=self.url + 'lox_api/files/' + metapath,
                           data=contents)
@@ -233,7 +245,6 @@ class LocalBox(object):
         result = self._make_call(request).read()
         return loads(result)
 
-
     def save_key(self, path, key, iv):
         """
         saves an encrypted key on the localbox server
@@ -245,13 +256,11 @@ class LocalBox(object):
                 "Trying to save a key for an entry in a subdirectory. Saving the key for the subdir instead")
         except ValueError:
             cryptopath = path[1:]
-        
-        cryptopath=quote(cryptopath)
+
+        cryptopath = quote(cryptopath)
         site = self.authenticator.label
-        location = SITESINI_PATH
-        configparser = ConfigParser()
-        configparser.read(location)
-        user = configparser.get(site, 'user')
+        ctrl = SyncsController()
+        user = ctrl.get(site).user
         pgpclient = gpg()
         encodedata = {'key': b64encode(pgpclient.encrypt(key, site, user)), 'iv': b64encode(
             pgpclient.encrypt(iv, site, user)), 'user': user}
@@ -264,7 +273,6 @@ class LocalBox(object):
         # should be more robust then this
         return result
 
-
     def decode_file(self, path, contents):
         """
         decode a file
@@ -273,22 +281,22 @@ class LocalBox(object):
         pgpclient = gpg()
         site = self.authenticator.label
         try:
-          jsontext = self.call_keys(path).read()
-          keydata = loads(jsontext)
-          pgpdkeystring = b64decode(keydata['key'])
-          pgpdivstring = b64decode(keydata['iv'])
-          keystring = pgpclient.decrypt(pgpdkeystring, site)
-          ivstring = pgpclient.decrypt(pgpdivstring, site)
+            jsontext = self.call_keys(path).read()
+            keydata = loads(jsontext)
+            pgpdkeystring = b64decode(keydata['key'])
+            pgpdivstring = b64decode(keydata['iv'])
+            keystring = pgpclient.decrypt(pgpdkeystring, site)
+            ivstring = pgpclient.decrypt(pgpdivstring, site)
 
-          getLogger(__name__).debug("Decoding %s with key %s", path, getChecksum(keystring))
-          key = AES_Key(keystring, MODE_CFB, ivstring)
-          result = key.decrypt(contents)
+            getLogger(__name__).debug("Decoding %s with key %s", path, getChecksum(keystring))
+            key = AES_Key(keystring, MODE_CFB, ivstring)
+            result = key.decrypt(contents)
         except ValueError:
-          getLogger(__name__).info("cannot decode JSON: %s", jsontext)
-          result = None
+            getLogger(__name__).info("cannot decode JSON: %s", jsontext)
+            result = None
         except HTTPError as error:
-          getLogger(__name__).info("HTTPError: %s", error)
-          result = None
+            getLogger(__name__).info("HTTPError: %s", error)
+            result = None
         return result
 
     def encode_file(self, path, contents):
@@ -311,3 +319,26 @@ class LocalBox(object):
         key = AES_Key(key, MODE_CFB, iv)
         result = key.encrypt(contents)
         return result
+
+    def is_valid_url(self):
+        getLogger(__name__).debug("validating localbox server: %s" % (self.url))
+        try:
+            self.get_authentication_url()
+            return True
+        except (URLError, BadStatusLine, ValueError,
+                AlreadyAuthenticatedError) as error:
+            getLogger(__name__).debug("error with authentication url thingie")
+            getLogger(__name__).exception(error)
+            return False
+        except SocketError as e:
+            if e.errno != errno.ECONNRESET:
+                raise  # Not error we are looking for
+            getLogger(__name__).error('Failed to connect to server, maybe forgot https? %s', e)
+            return False
+
+
+class InvalidLocalboxError(Exception):
+    """
+    URL for localbox backend is invalid or is unreachable
+    """
+    pass

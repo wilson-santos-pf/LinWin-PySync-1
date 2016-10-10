@@ -288,7 +288,7 @@ class DataEntry(Frame):
                 getLogger(__name__).info("failure")
         else:
             try:
-                authenticator.authenticate()
+                authenticator.authenticate_with_client_secret()
                 getLogger(__name__).info("credentials seem valid")
             except AuthenticationError as error:
                 getLogger(__name__).exception(error)

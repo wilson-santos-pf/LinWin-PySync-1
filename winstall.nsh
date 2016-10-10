@@ -121,6 +121,8 @@ Section Install
 
   CreateDirectory $INSTDIR\Lib\site-packages\sync\locale\nl\LC_MESSAGES
   File "/oname=$INSTDIR\Lib\site-packages\sync\locale\nl\LC_MESSAGES\localboxsync.mo" sync/locale/nl/LC_MESSAGES/localboxsync.mo 
+  CreateDirectory $INSTDIR\Lib\site-packages\sync\locale\en\LC_MESSAGES
+  File "/oname=$INSTDIR\Lib\site-packages\sync\locale\en\LC_MESSAGES\localboxsync.mo" sync/locale/en/LC_MESSAGES/localboxsync.mo 
 
   WriteUninstaller $INSTDIR\LocalBoxUninstaller.exe
 

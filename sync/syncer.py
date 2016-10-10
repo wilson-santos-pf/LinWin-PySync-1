@@ -29,10 +29,6 @@ class Syncer(object):
         self.localbox_metadata = None
         self.filepath_metadata = None
         self.direction = direction
-        getLogger(__name__).info("LocalBox:")
-        self.populate_localbox_metadata(path='/', parent=None)
-        getLogger(__name__).info("Local FS:")
-        self.populate_filepath_metadata(path='./', parent=None)
 
     def get_file_path(self, metavfs_entry):
         path = metavfs_entry.path.split('/')
@@ -44,9 +40,11 @@ class Syncer(object):
 
     def populate_localbox_metadata(self, path='/', parent=None):
         node = self.localbox.get_meta(path)
+        getLogger(__name__).debug('populate_localbox_metadata node: %s' % node)
         splittime = node['modified_at'].split('.', 1)
         modtime = mktime(strptime(splittime[0], "%Y-%m-%dT%H:%M:%S")) + \
             float("0." + splittime[1])
+        getLogger(__name__).debug('%s local modification time: %s' % (path, modtime))
         vfsnode = MetaVFS(modtime, node['path'], node['is_dir'])
         for child in node['children']:
             self.populate_localbox_metadata(child['path'], parent=vfsnode)
@@ -58,7 +56,7 @@ class Syncer(object):
 
     def populate_filepath_metadata(self, path='./', parent=None):
         path = path.rstrip("/\\")
-        print self.filepath
+        getLogger(__name__).debug('populate_filepath_metadata %s' % path)
         if path == ".":
             realpath = self.filepath
         else:
@@ -95,26 +93,29 @@ class Syncer(object):
 
     def download(self, path):
         contents = self.localbox.get_file(path)
-        localfilename = join(self.filepath, path[1:])
-        # precreate folder if needed
-        localdirname = dirname(localfilename)
-        if not exists(localdirname):
-            makedirs(localdirname)
-        localfile = open(localfilename, 'wb')
-        localfile.write(contents)
-        localfile.close()
-        localfilepath = self.localbox_metadata.get_entry(path)
-        modtime = localfilepath.modified_at
-        utime(localfilename, (time(), modtime))
+        if contents:
+            localfilename = join(self.filepath, path[1:])
+            # precreate folder if needed
+            localdirname = dirname(localfilename)
+            if not exists(localdirname):
+                makedirs(localdirname)
+            localfile = open(localfilename, 'wb')
+            localfile.write(contents)
+            localfile.close()
+            localfilepath = self.localbox_metadata.get_entry(path)
+            modtime = localfilepath.modified_at
+            utime(localfilename, (time(), modtime))
+        else:
+            getLogger(__name__).error('Failed to download %s' % path)
 
     def syncsync(self):
         getLogger(__name__).info("Starting syncsync")
-        getLogger(__name__).info("LocalBox:")
+
         self.localbox_metadata = None
         self.filepath_metadata = None
         self.populate_localbox_metadata(path='/', parent=None)
-        getLogger(__name__).info("Local FS:")
         self.populate_filepath_metadata(path='./', parent=None)
+
         #directories = set(chain(self.filepath_metadata.yield_directories(
         #), self.localbox_metadata.yield_directories()))
         #self.dirsync(directories)
@@ -172,11 +173,11 @@ class Syncer(object):
                     getLogger(__name__).info("Uploading %s:  %s", newest.path, localpath)
                     self.localbox.upload_file(
                         path, localpath)
-                else:
+                elif path != '/':
                     self.localbox.create_directory(path)
                 continue
             if newest == remotefile:
-                print metavfs.is_dir
+                getLogger(__name__).info("%s is_dir: %s", metavfs.path, metavfs.is_dir)
                 if not metavfs.is_dir:
                     getLogger(__name__).info("Downloading %s", newest.path)
                     self.download(path)

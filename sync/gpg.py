@@ -1,3 +1,4 @@
+from sync.controllers.localbox_ctrl import SyncsController
 from .database import database_execute
 from logging import getLogger
 from gnupg import GPG
@@ -13,7 +14,6 @@ except ImportError:
     from io import StringIO
 
 from distutils.sysconfig import project_base
-from .defaults import SITESINI_PATH
 
 
 class gpg(object):
@@ -112,9 +112,8 @@ class gpg(object):
         """
         decrypt data received from site.
         """
-        configparser = ConfigParser()
-        configparser.read(SITESINI_PATH)
-        passphrase = configparser.get(site, 'passphrase')
+        ctrl = SyncsController()
+        passphrase = ctrl.get(site).passphrase
         datafile = StringIO(data)
         result = self.gpg.decrypt_file(
             datafile, passphrase=passphrase, always_trust=True)

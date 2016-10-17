@@ -1,5 +1,37 @@
 Localbox Windows Sync
 =====================
+Eng:
+
+Download:
+---------
+The latest version is available at (ftp or Http) software.yourlocalbox.org/clients
+
+Installation:
+-------------
+execute the install (eg LocalBoxInstaller.exe)
+-Agree to the EUPL [I Agree]
+-choose a different directory to install (optional) or choose the default install folder.
+-Choose [Install] You can also choose [More details] for monitoring the installation.
+-Possible there is a message that there is a installation of the software found:
+'A prior wxPython installation was found in this directory. It is recommended that it be uninstalled first. Should I doit?'
+Answer: is [Yes].
+-Wait for the installer starts PyCrypto-xxx ---> push or click [Next >] [Next >] [Next >] {Finish}
+-Wait for the installer starts LocalboxSync-xxx start. push or click [Next >] [Next >] [Next >] {Finish}
+-If all goes well there is a completed window, and you can than click [Close]
+-Reboot or not (yep... it's Windows) or try to start the program, and you see in the taskbar a new localbox icon
+
+Config:
+-------
+
+- <right-click> LocalBox icon and choose [Setup]
+
+2becontinued......
+
+
+
+
+----------------------------------------------------------------------------------------
+Dutch:
 
 Download:
 ---------

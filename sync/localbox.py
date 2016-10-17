@@ -11,9 +11,10 @@ from base64 import b64decode
 from base64 import b64encode
 from logging import getLogger
 from md5 import new as newmd5
-from os import stat
+from os import stat, remove
 from socket import error as SocketError
 
+from sync import defaults
 from sync.auth import Authenticator, AlreadyAuthenticatedError
 from sync.controllers.localbox_ctrl import SyncsController
 from .gpg import gpg
@@ -129,6 +130,7 @@ class LocalBox(object):
         """
         metapath = quote(path).strip('/')
         request = Request(url=self.url + "lox_api/meta/" + metapath)
+        getLogger(__name__).debug('calling lox_api/meta/%s' % metapath)
         json_text = self._make_call(request).read()
         return loads(json_text)
 
@@ -142,15 +144,9 @@ class LocalBox(object):
         websize = webdata.headers.get('content-length', -1)
         data = webdata.read()
         ldata = len(data)
-        stats = self.get_meta(path)
-        if stats['has_keys']:
-            data = self.decode_file(path, data)
-            getLogger(__name__).info("Downloading %s: Websize: %d, readsize: %d cryptosize: %d", path, websize, ldata,
-                                     len(data))
-            return data if data is not None else ''
-        else:
-            getLogger(__name__).error("No keys found for %s", path)
-            return None
+        getLogger(__name__).info("Downloaded %s: Websize: %d, readsize: %d cryptosize: %d", path, websize, ldata,
+                                 len(data))
+        return data
 
     def create_directory(self, path):
         """
@@ -194,6 +190,7 @@ class LocalBox(object):
         contents = openfile.read(stats.st_size)
         openfile.flush()
         clen = len(contents)
+
         try:
             contents = self.encode_file(path, contents)
         except BadStatusLine as error:
@@ -201,6 +198,17 @@ class LocalBox(object):
             # TODO: make sure files get encrypted
         except HTTPError as error:
             getLogger(__name__).exception(error)
+
+        # remove plain file and save encryted
+        openfile.close()
+        try:
+            remove(localpath)
+        except Exception as error:
+            getLogger(__name__).error('Failed to remove decrypted file: %s, %s' % (localpath, error))
+
+        encrypted_file = open(localpath + defaults.LOCALBOX_EXTENSION, 'wb')
+        encrypted_file.write(contents)
+        encrypted_file.close()
 
         getLogger(__name__).info("Uploading %s: Statsize: %d, readsize: %d cryptosize: %d", localpath, stats.st_size,
                                  clen, len(contents))
@@ -227,9 +235,8 @@ class LocalBox(object):
         try:
             index = path[1:].index('/')
             cryptopath = path[1:index + 1]
-            getLogger(__name__).exception(
-                "call_keys called with a path with excess \"/\"'s: %s", path)
         except ValueError:
+            getLogger(__name__).exception("call_keys called with a path with excess \"/\"'s: %s", path)
             cryptopath = path[1:]
         getLogger(__name__).debug(
             "call_keys on path %s = %s", path, cryptopath)
@@ -273,31 +280,40 @@ class LocalBox(object):
         # should be more robust then this
         return result
 
-    def decode_file(self, path, contents):
+    def decode_file(self, path, filename):
         """
         decode a file
         """
-        path = quote(path)
-        pgpclient = gpg()
-        site = self.authenticator.label
         try:
-            jsontext = self.call_keys(path).read()
-            keydata = loads(jsontext)
-            pgpdkeystring = b64decode(keydata['key'])
-            pgpdivstring = b64decode(keydata['iv'])
-            keystring = pgpclient.decrypt(pgpdkeystring, site)
-            ivstring = pgpclient.decrypt(pgpdivstring, site)
+            path = path.replace('\\', '/')
+            stats = self.get_meta(path)
+            if stats['has_keys']:
+                path = quote(path)
+                pgpclient = gpg()
+                site = self.authenticator.label
+                try:
+                    jsontext = self.call_keys(path).read()
+                    keydata = loads(jsontext)
+                    pgpdkeystring = b64decode(keydata['key'])
+                    pgpdivstring = b64decode(keydata['iv'])
+                    keystring = pgpclient.decrypt(pgpdkeystring, site)
+                    ivstring = pgpclient.decrypt(pgpdivstring, site)
 
-            getLogger(__name__).debug("Decoding %s with key %s", path, getChecksum(keystring))
-            key = AES_Key(keystring, MODE_CFB, ivstring)
-            result = key.decrypt(contents)
-        except ValueError:
-            getLogger(__name__).info("cannot decode JSON: %s", jsontext)
-            result = None
+                    getLogger(__name__).debug("Decoding %s with key %s", path, getChecksum(keystring))
+                    key = AES_Key(keystring, MODE_CFB, ivstring)
+                    with open(filename, 'rb') as content_file:
+                        contents = content_file.read()
+                        result = key.decrypt(contents)
+                except ValueError:
+                    getLogger(__name__).info("cannot decode JSON: %s", jsontext)
+                    result = None
+                return result
+            else:
+                getLogger(__name__).error("No keys found for %s", path)
+                return None
         except HTTPError as error:
             getLogger(__name__).info("HTTPError: %s", error)
-            result = None
-        return result
+            return None
 
     def encode_file(self, path, contents):
         """

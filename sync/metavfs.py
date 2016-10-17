@@ -7,6 +7,8 @@ try:
 except ImportError:
     from pickle import dump, load
 
+import sync.defaults as defaults
+
 
 def normalize_path(path):
     if path == '':

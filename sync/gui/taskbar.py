@@ -21,7 +21,6 @@ except ImportError:
 
 
 class LocalBoxIcon(wx.TaskBarIcon):
-
     """
     Class for managing a Windows taskbar icon
     """
@@ -33,6 +32,7 @@ class LocalBoxIcon(wx.TaskBarIcon):
     TBMENU_SYNC = wx.NewId()
     TBMENU_SYNC2 = wx.NewId()
     TBMENU_VERSION = wx.NewId()
+    TBMENU_DELETE_DECRYPTED = wx.NewId()
     icon_path = None
 
     def __init__(self, waitevent=None, sites=None):
@@ -59,6 +59,7 @@ class LocalBoxIcon(wx.TaskBarIcon):
         self.Bind(wx.EVT_MENU, self.OnTaskBarClose, id=self.TBMENU_CLOSE)
         self.Bind(wx.EVT_MENU, self.start_gui, id=self.TBMENU_GUI)
         self.Bind(wx.EVT_MENU, self.start_sync, id=self.TBMENU_SYNC)
+        self.Bind(wx.EVT_MENU, self.delete_decrypted, id=self.TBMENU_DELETE_DECRYPTED)
         self.Bind(wx.EVT_TASKBAR_LEFT_DOWN, self.OnTaskBarClick)
         self.Bind(wx.EVT_TASKBAR_RIGHT_DOWN, self.OnTaskBarClick)
 
@@ -79,6 +80,10 @@ class LocalBoxIcon(wx.TaskBarIcon):
         else:
             getLogger(__name__).debug("Pressing start sync whilst sync in progress")
 
+    def delete_decrypted(self, event):
+        import sync
+        sync.remove_decrypted_files()
+
     def create_popup_menu(self):
         """
         This method is called by the base class when it needs to popup
@@ -97,10 +102,18 @@ class LocalBoxIcon(wx.TaskBarIcon):
         else:
             menu.Append(self.TBMENU_SYNC, _("Force Sync"))
 
+        menu.Append(self.TBMENU_DELETE_DECRYPTED, _("Delete decrypted files"))
+        import desktop_utils.controllers.openfiles_ctrl as openfiles_ctrl
+        if not openfiles_ctrl.load():
+            menu.Enable(id=self.TBMENU_DELETE_DECRYPTED, enable=False)
+
+        menu.AppendSeparator()
+
         menu.Append(self.TBMENU_VERSION, _("Version: %s") % VERSION)
         menu.Enable(id=self.TBMENU_VERSION, enable=False)
 
         menu.AppendSeparator()
+
         menu.Append(self.TBMENU_CLOSE, _("Quit"))
         return menu
 
@@ -113,7 +126,8 @@ class LocalBoxIcon(wx.TaskBarIcon):
         Destroy the taskbar icon and frame from the taskbar icon itself
         """
         self.frame.Close()
-        # TODO: This seems the wrong kind of action to perform here
+        import sync
+        sync.remove_decrypted_files()
         exit(1)
 
     def OnTaskBarClick(self, event):  # pylint: disable=W0613
@@ -133,4 +147,3 @@ def taskbarmain(waitevent=None, sites=None):
     language.set_language(preferences_ctrl.get_language_abbr())
     LocalBoxIcon(waitevent, sites=sites)
     app.MainLoop()
-

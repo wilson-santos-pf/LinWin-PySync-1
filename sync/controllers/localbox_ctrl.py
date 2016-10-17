@@ -1,7 +1,7 @@
 import json
 import pickle
-
 from logging import getLogger
+
 from sync.defaults import LOCALBOX_SITES_PATH
 
 
@@ -41,6 +41,10 @@ class SyncsController:
         for sync in self._list:
             if sync.label == other_label:
                 return sync
+
+    @property
+    def list(self):
+        return self._list
 
     def __iter__(self):
         return self._list.__iter__()
@@ -105,3 +109,6 @@ class SyncItem:
 
     def __str__(self):
         return json.dumps(self.__dict__)
+
+
+ctrl = SyncsController()

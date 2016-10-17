@@ -1,1 +1,1 @@
-/usr/lib/python2.7/site-packages/gnupg.py
+/usr/lib/python2.7/dist-packages/gnupg.py

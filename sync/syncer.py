@@ -1,3 +1,4 @@
+import os
 from os import listdir
 from os import remove
 from logging import getLogger
@@ -8,6 +9,7 @@ from os import stat
 from os.path import join
 from os.path import abspath
 from itertools import chain
+from threading import Thread, Lock
 from time import mktime
 from time import strptime
 from time import time
@@ -16,6 +18,8 @@ from os.path import dirname
 from os import makedirs
 from os import sep
 
+from loxcommon import os_utils
+from sync import defaults
 from .defaults import OLD_SYNC_STATUS
 from .metavfs import MetaVFS
 
@@ -31,6 +35,11 @@ class Syncer(object):
         self.direction = direction
 
     def get_file_path(self, metavfs_entry):
+        """
+        System local filename
+        :param metavfs_entry:
+        :return:
+        """
         path = metavfs_entry.path.split('/')
         return join(self.filepath, *path)
 
@@ -44,7 +53,7 @@ class Syncer(object):
         splittime = node['modified_at'].split('.', 1)
         modtime = mktime(strptime(splittime[0], "%Y-%m-%dT%H:%M:%S")) + \
             float("0." + splittime[1])
-        getLogger(__name__).debug('%s local modification time: %s' % (path, modtime))
+        getLogger(__name__).debug('%s remote modification time: %s' % (path, modtime))
         vfsnode = MetaVFS(modtime, node['path'], node['is_dir'])
         for child in node['children']:
             self.populate_localbox_metadata(child['path'], parent=vfsnode)
@@ -54,23 +63,40 @@ class Syncer(object):
             getLogger(__name__).debug("parent %s gets child %s" % (parent, vfsnode))
             parent.add_child(vfsnode)
 
-    def populate_filepath_metadata(self, path='./', parent=None):
-        path = path.rstrip("/\\")
-        getLogger(__name__).debug('populate_filepath_metadata %s' % path)
-        if path == ".":
+    def populate_filepath_metadata(self, path='/', parent=None):
+        path = path.lstrip('.').rstrip("/\\")
+        getLogger(__name__).debug('populate_filepath_metadata: %s' % path)
+        if path == '':
             realpath = self.filepath
         else:
             realpath = join(self.filepath, path)
         getLogger(__name__).info("processing " + path + " transformed to "
                                  + realpath)
         is_dir = isdir(realpath)
-        modtime = stat(realpath).st_mtime
-        vfsnode = MetaVFS(modtime, path[1:], is_dir)
 
+        path_dec = os_utils.remove_extension(path, defaults.LOCALBOX_EXTENSION)
+        realpath_dec = os_utils.remove_extension(realpath, defaults.LOCALBOX_EXTENSION)
         if is_dir:
+            modtime = os.path.getmtime(realpath)
+            vfsnode = MetaVFS(modtime, path_dec, is_dir)
             for entry in listdir(realpath):
-                self.populate_filepath_metadata(join(path, entry),
-                                                parent=vfsnode)
+                self.populate_filepath_metadata(join(path, entry), parent=vfsnode)
+        else:
+            if not path.endswith(defaults.LOCALBOX_EXTENSION):
+                if not os.path.exists(realpath + defaults.LOCALBOX_EXTENSION):
+                    modtime = os.path.getmtime(realpath)
+                else:
+                    return
+            else:
+                if os.path.exists(realpath_dec):
+                    modtime_enc = os.path.getmtime(realpath)
+                    modtime_dec = os.path.getmtime(realpath_dec)
+                    modtime = modtime_dec if modtime_dec > modtime_enc else modtime_enc
+                else:
+                    modtime = os.path.getmtime(realpath)
+
+            vfsnode = MetaVFS(modtime, path_dec, is_dir)
+
         if parent is None:
             self.filepath_metadata = vfsnode
         else:
@@ -87,21 +113,31 @@ class Syncer(object):
             rmtree(localfilename)
         else:
             try:
-                remove(localfilename)
+                # remove(localfilename)
+                remove(localfilename + defaults.LOCALBOX_EXTENSION)
             except OSError:
                 getLogger(__name__).info("Already deleted " + localfilename)
 
     def download(self, path):
         contents = self.localbox.get_file(path)
         if contents is not None:
-            localfilename = join(self.filepath, path[1:])
+            localfilename_noext = join(self.filepath, path[1:])
+            localfilename = localfilename_noext + defaults.LOCALBOX_EXTENSION
             # precreate folder if needed
             localdirname = dirname(localfilename)
             if not exists(localdirname):
                 makedirs(localdirname)
+
+            # save new encrypted file to disk
+            getLogger(__name__).debug('Saving to disk: %s' % localfilename)
             localfile = open(localfilename, 'wb')
             localfile.write(contents)
             localfile.close()
+
+            # delete old decrypted file
+            if exists(localfilename_noext):
+                os.remove(localfilename_noext)
+
             localfilepath = self.localbox_metadata.get_entry(path)
             modtime = localfilepath.modified_at
             utime(localfilename, (time(), modtime))
@@ -114,7 +150,7 @@ class Syncer(object):
         self.localbox_metadata = None
         self.filepath_metadata = None
         self.populate_localbox_metadata(path='/', parent=None)
-        self.populate_filepath_metadata(path='./', parent=None)
+        self.populate_filepath_metadata(path='/', parent=None)
 
         #directories = set(chain(self.filepath_metadata.yield_directories(
         #), self.localbox_metadata.yield_directories()))
@@ -163,16 +199,15 @@ class Syncer(object):
 
             newest = MetaVFS.newest(localfile, remotefile)
 
-            if newest == localfile:
+            localpath = self.get_file_path(metavfs)
+            if newest == localfile and os.path.exists(localpath):
                 # TODO: Only create directorieswhen needed, preferably not.
                 if dirname(path) not in self.localbox_metadata.get_paths():
                     self.localbox.create_directory(dirname(path))
 
                 if not isdir(self.get_file_path(metavfs)):
-                    localpath = self.get_file_path(metavfs)
                     getLogger(__name__).info("Uploading %s:  %s", newest.path, localpath)
-                    self.localbox.upload_file(
-                        path, localpath)
+                    self.localbox.upload_file(path, localpath)
                 elif path != '/':
                     self.localbox.create_directory(path)
                 continue
@@ -190,3 +225,31 @@ class Syncer(object):
             getLogger(__name__).exception("Problem '%s' with file %s; continuing", error, metavfs.path)
         self.populate_filepath_metadata(path='./', parent=None)
         self.filepath_metadata.save(OLD_SYNC_STATUS + self.name)
+
+
+class SyncRunner(Thread):
+    """
+    Thread responsible for synchronizing between the client and one server.
+    """
+
+    def __init__(self, group=None, target=None, name=None, args=(),
+                 kwargs=None, verbose=None, syncer=None):
+        Thread.__init__(self, group=group, target=target, name=name,
+                        args=args, kwargs=kwargs, verbose=verbose)
+        self.setDaemon(True)
+        self.syncer = syncer
+        self.lock = Lock()
+
+    def run(self):
+        """
+        Function that runs one iteration of the synchronization
+        """
+        getLogger(__name__).info("SyncRunner " + self.name + " started")
+        self.lock.acquire()
+        self.syncer.syncsync()
+        self.lock.release()
+        getLogger(__name__).info("SyncRunner " + self.name + " finished")
+
+    @property
+    def name(self):
+        return 'th-' + self.syncer.name

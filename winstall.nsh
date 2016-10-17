@@ -11,6 +11,7 @@ Icon "localbox.ico"
 !include MUI2.nsh
 !addincludedir .
 !include EnumUsersReg.nsh
+!include "FileAssociation.nsh"
 
 #trimming based on http://nsis.sourceforge.net/Remove_leading_and_trailing_whitespaces_from_a_string
 !define Trim "!insertmacro Trim"
@@ -123,6 +124,9 @@ Section Install
   File "/oname=$INSTDIR\Lib\site-packages\sync\locale\nl\LC_MESSAGES\localboxsync.mo" sync/locale/nl/LC_MESSAGES/localboxsync.mo 
   CreateDirectory $INSTDIR\Lib\site-packages\sync\locale\en\LC_MESSAGES
   File "/oname=$INSTDIR\Lib\site-packages\sync\locale\en\LC_MESSAGES\localboxsync.mo" sync/locale/en/LC_MESSAGES/localboxsync.mo 
+  File "/oname=$INSTDIR\run.bat" run.bat
+  File "/oname=$INSTDIR\get-pip.py" get-pip.py
+  File "/oname=$INSTDIR\install-pip.bat" install_pip.bat
 
   WriteUninstaller $INSTDIR\LocalBoxUninstaller.exe
 
@@ -130,6 +134,9 @@ Section Install
   ExecWait "$TEMP\wxpython.exe /silent"
   ExecWait "$TEMP\pycrypto.exe"
   ExecWait "$TEMP\LocalBoxSync.exe"
+  #ExecWait '$INSTDIR\install-pip.bat "$INSTDIR" > c:\install_pip.log'
+
+  ${registerExtension} "$INSTDIR\run.bat" ".lox" "LocalBox_File"
 SectionEnd
 
 SectionGroup "un.uninstall"
@@ -152,6 +159,8 @@ Function un.DelAppData
     Pop $0
     ReadRegStr $0 HKU "$0\Volatile Environment" "AppData"
     rmDir /r /REBOOTOK $0\localbox
+
+    ${unregisterExtension} ".lox" "LocalBox_File"
 FunctionEnd
 
 

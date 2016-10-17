@@ -7,19 +7,17 @@ from os import makedirs
 from os.path import dirname
 from os.path import isdir
 from threading import Event
-from threading import Lock
 from threading import Thread
 
 from sync.controllers.localbox_ctrl import SyncsController
 from sync.gui.taskbar import taskbarmain
 from .auth import AuthenticationError
 from .defaults import LOG_PATH
-from .defaults import KEEP_RUNNING
 from .defaults import SITESINI_PATH
 from .defaults import SYNCINI_PATH
 from .defaults import VERSION
 from .localbox import LocalBox
-from .syncer import Syncer
+from .syncer import Syncer, SyncRunner
 
 try:
     from ConfigParser import ConfigParser
@@ -34,30 +32,7 @@ except ImportError:
 
     raw_input = input  # pylint: disable=W0622,C0103
 
-
-class SyncRunner(Thread):
-    """
-    Thread responsible for synchronizing between the client and one server.
-    """
-
-    def __init__(self, group=None, target=None, name=None, args=(),
-                 kwargs=None, verbose=None, syncer=None):
-        Thread.__init__(self, group=group, target=target, name=name,
-                        args=args, kwargs=kwargs, verbose=verbose)
-        self.setDaemon(True)
-        self.syncer = syncer
-        self.lock = Lock()
-
-    def run(self):
-        """
-        Function that runs one iteration of the synchronization
-        """
-        getLogger(__name__).info("SyncRunner " + self.name + " started")
-        self.lock.acquire()
-        self.syncer.syncsync()
-        self.lock.release()
-        getLogger(__name__).info("SyncRunner " + self.name + " finished")
-
+KEEP_RUNNING = True
 
 def stop_running():
     """
@@ -67,9 +42,9 @@ def stop_running():
     KEEP_RUNNING = False
 
 
-def get_site_list():
+def get_syncers():
     """
-    returns a list of configured localbox instances.
+    returns a list of Syncers. One per configured localbox instance.
     """
     syncs_ctrl = SyncsController()
 
@@ -130,7 +105,7 @@ def main(waitevent=None):
             getLogger(__name__).debug("starting loop")
             waitevent.set()
             threadpool = []
-            for syncer in get_site_list():
+            for syncer in get_syncers():
                 runner = SyncRunner(syncer=syncer)
                 getLogger(__name__).debug("starting thread %s", runner.name)
                 runner.start()

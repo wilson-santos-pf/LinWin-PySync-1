@@ -12,8 +12,6 @@ try:
 except ImportError:
     VERSION = open('VERSION').readline().strip()
 
-KEEP_RUNNING = True
-
 PACKAGEDIR = dirname(abspath(__file__))
 
 # assuming 'c:' only exists on 'Windows' machines and adjust path accordingly
@@ -32,5 +30,6 @@ DATABASE_PATH = join(APPDIR, 'database.sqlite3')
 LOG_PATH = join(APPDIR, 'localbox-sync.log')
 LOCALE_PATH = join(PACKAGEDIR, 'locale')
 DEFAULT_LANGUAGE = 'ENGLISH'
+LOCALBOX_EXTENSION = '.lox'
 
 OLD_SYNC_STATUS = join(APPDIR, 'localbox.pickle.')

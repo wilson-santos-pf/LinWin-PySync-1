@@ -1,4 +1,6 @@
 import os
+from wx import wx
+
 import psutil
 import subprocess
 import sys
@@ -10,6 +12,8 @@ from desktop_utils.controllers import openfiles_ctrl
 from loxcommon import os_utils
 from sync import defaults
 from sync.controllers.localbox_ctrl import ctrl as sync_ctrl
+from sync.controllers.login_ctrl import LoginController
+from sync.gui.gui_wx import PassphraseDialog
 from sync.localbox import LocalBox
 from version import VERSION
 
@@ -91,8 +95,22 @@ try:
                 getLogger(__name__).error('%s does not belong to any localbox' % filename)
                 exit(1)
 
+            # get passphrase
+            ctrl = LoginController()
+            passphrase = ctrl.get_passphrase(localbox_client.authenticator.label)
+            if passphrase is None:
+                app = wx.App()
+                passphrase = PassphraseDialog.ask(localbox_client)
+                app.MainLoop()
+
+            passphrase = ctrl.get_passphrase(localbox_client.authenticator.label)
+            if passphrase is None:
+                app = wx.App()
+                # show error
+                app.MainLoop()
+
             # decode file
-            decoded_contents = localbox_client.decode_file(localbox_filename, filename)
+            decoded_contents = localbox_client.decode_file(localbox_filename, filename, passphrase)
             if decoded_contents is not None:
                 # getLogger(__name__).info('decoded contents: %s' % decoded_contents)
 

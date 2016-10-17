@@ -1,4 +1,3 @@
-from sync.controllers.localbox_ctrl import SyncsController
 from .database import database_execute
 from logging import getLogger
 from gnupg import GPG
@@ -6,6 +5,7 @@ from os.path import join
 from os.path import isfile
 from base64 import b64encode
 from base64 import b64decode
+
 try:
     from ConfigParser import ConfigParser  # pylint: disable=F0401
     from StringIO import StringIO  # pylint: disable=F0401
@@ -68,13 +68,20 @@ class gpg(object):
                 'add_keypair IndexError/AssertionError: ' + str(error))
             return None
         fingerprint = result1.fingerprints[0]
-        sign = self.gpg.sign("test", keyid=fingerprint, passphrase=passphrase)
-        if sign.data == '':  # pylint: disable=E1101
-            return None
-        else:
+
+        if self.is_passphrase_valid(passphrase=passphrase, fingerprint=fingerprint):
             sql = "INSERT INTO keys (site, user, fingerprint) VALUES (?, ?, ?)"
             database_execute(sql, (site, user, fingerprint))
             return fingerprint
+        else:
+            return None
+
+    def is_passphrase_valid(self, passphrase, label=None, user=None, fingerprint=None):
+        if not fingerprint:
+            sql = 'SELECT fingerprint FROM keys where site = ? and user = ?'
+            fingerprint = database_execute(sql, (label, user))[0][0]
+
+        return self.gpg.sign("test", keyid=fingerprint, passphrase=passphrase) != ''
 
     def generate(self, passphrase, site, user):
         """
@@ -104,17 +111,18 @@ class gpg(object):
         sql = "select fingerprint from keys where site = ? and user = ?"
         result = database_execute(sql, (site, user))
         fingerprint = result[0][0]
-        cryptdata = self.gpg.encrypt_file(StringIO(data), fingerprint,
-                                          always_trust=True, armor=armor)
+        cryptdata = self.gpg.encrypt_file(StringIO(data),
+                                          fingerprint,
+                                          always_trust=True,
+                                          armor=armor)
         return str(cryptdata)
 
-    def decrypt(self, data, site):
+    def decrypt(self, data, passphrase):
         """
         decrypt data received from site.
         """
-        ctrl = SyncsController()
-        passphrase = ctrl.get(site).passphrase
         datafile = StringIO(data)
-        result = self.gpg.decrypt_file(
-            datafile, passphrase=passphrase, always_trust=True)
+        result = self.gpg.decrypt_file(datafile,
+                                       passphrase=passphrase,
+                                       always_trust=True)
         return str(result)

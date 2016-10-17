@@ -145,5 +145,6 @@ def taskbarmain(waitevent=None, sites=None):
     """
     app = wx.App(False)
     language.set_language(preferences_ctrl.get_language_abbr())
-    LocalBoxIcon(waitevent, sites=sites)
+    icon = LocalBoxIcon(waitevent, sites=sites)
+    icon.start_gui(None)
     app.MainLoop()

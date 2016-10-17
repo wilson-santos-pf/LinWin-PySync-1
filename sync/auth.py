@@ -63,7 +63,7 @@ class Authenticator(object):
         self.expires = 0
         self.scope = None
         self.username = None
-        # todo:
+
         self.refresh_token = None
         self.load_client_data()
 
@@ -112,6 +112,7 @@ class Authenticator(object):
             raise AuthenticationError("Do not call init_authenticate w"
                                       "hen client_id and client_secret"
                                       " are already set")
+        self.username = username
         self.client_id = generate_client_id()
         self.client_secret = generate_client_secret()
         authdata = {'grant_type': 'password', 'username': username,
@@ -175,6 +176,8 @@ class Authenticator(object):
             self.client_id = generate_client_id()
             self.client_secret = generate_client_secret()
             getLogger(__name__).debug('Created new credentials, cliend_id=%s' % self.client_id)
+
+        self.username = username
 
         authdata = {'grant_type': 'password',
                     'username': username,

@@ -1,10 +1,12 @@
 import wx
 import wx.wizard
 from logging import getLogger
+from gettext import gettext as _
 
 import pkg_resources
 from sync.controllers.account_ctrl import AccountController
 from sync.controllers.localbox_ctrl import SyncsController
+from sync.controllers.login_ctrl import LoginController
 from sync.controllers.preferences_ctrl import ctrl as preferences_ctrl
 from sync.defaults import DEFAULT_LANGUAGE
 from sync.gui import gui_utils
@@ -23,6 +25,7 @@ class Gui(wx.Frame):
 
         # Attributes
         self.toolbar_panels = dict()
+        self.panel_login = FirstLoginPanel(self)
         self.panel_syncs = SyncsPanel(self)
         self.panel_account = AccountPanel(self)
         self.panel_preferences = PreferencesPanel(self)
@@ -35,11 +38,9 @@ class Gui(wx.Frame):
 
         self.ctrl = self.panel_syncs.ctrl
 
-        self.panel_account.Hide()
-        self.panel_preferences.Hide()
-
         bSizer1 = wx.BoxSizer(wx.VERTICAL)
         bSizer1.Add(self.panel_line, 0, wx.EXPAND, border=10)
+        bSizer1.Add(self.panel_login, 0, wx.EXPAND, 10)
         bSizer1.Add(self.panel_syncs, 0, wx.EXPAND, 10)
         bSizer1.Add(self.panel_account, 0, wx.EXPAND, 10)
         bSizer1.Add(self.panel_preferences, 0, wx.EXPAND, 10)
@@ -48,6 +49,8 @@ class Gui(wx.Frame):
         self.SetSizer(bSizer1)
 
         self.InitUI()
+
+        # self.hide_before_login()
 
         self.SetAutoLayout(True)
         self.SetSizer(bSizer1)
@@ -105,6 +108,22 @@ class Gui(wx.Frame):
         self.Bind(wx.EVT_TOOL, self.OnToolbarLocalboxesClick, id=bt_toolbar_localboxes.Id)
         self.Bind(wx.EVT_TOOL, self.OnToolbarLocalboxesClick, id=bt_toolbar_account.Id)
         self.Bind(wx.EVT_TOOL, self.OnToolbarLocalboxesClick, id=bt_toolbar_preferences.Id)
+
+    def hide_before_login(self):
+        self.toolbar.Hide()
+
+        self.panel_line.Hide()
+        self.panel_syncs.Hide()
+        self.panel_account.Hide()
+        self.panel_preferences.Hide()
+
+    def on_successful_login(self):
+        self.toolbar.Show()
+
+        self.ctrl = self.panel_syncs.ctrl
+
+        self.panel_line.Show()
+        self.panel_syncs.Show()
 
     def OnQuit(self, e):
         self.Close()
@@ -261,6 +280,29 @@ class LoginPanel(wx.Panel):
         return self._password.GetValue()
 
 
+class FirstLoginPanel(wx.Panel):
+    def __init__(self, parent):
+        super(FirstLoginPanel, self).__init__(parent)
+
+        # Attributes
+        self.parent = parent
+        self._ctrl = LoginController()
+        self.login_panel = LoginPanel(self)
+        self.main_sizer = wx.BoxSizer(wx.VERTICAL)
+
+        self.welcome_sizer = wx.BoxSizer(wx.VERTICAL)
+        self.welcome_sizer.Add(wx.StaticText(self, label=_("WELCOME")), 0, wx.ALL | wx.ALIGN_CENTER)
+
+        self.main_sizer.Add(self.welcome_sizer, 0, wx.ALL | wx.EXPAND)
+        self.main_sizer.Add(self.login_panel, 0, wx.ALL | wx.EXPAND)
+
+        self.SetSizer(self.main_sizer)
+
+    @property
+    def ctrl(self):
+        return self._ctrl
+
+
 class BottomPanel(wx.Panel):
     """
     Custom Panel containing buttons: "Ok", "Apply" and "Cancel"
@@ -378,3 +420,79 @@ class LoginDialog(wx.Dialog):
         sizer.Add(self.panel, 1, wx.EXPAND)
         self.SetSizer(sizer)
         self.SetInitialSize()
+
+
+class PasshphrasePanel(wx.Panel):
+    def __init__(self, parent, username, label):
+        super(PasshphrasePanel, self).__init__(parent=parent)
+
+
+        self._username = username
+        self._label = label
+        self._label_template = 'Hi {0}, please provide the passphrase for {1}'
+        label_text = _(self._label_template.format(username, label))
+        self.label = wx.StaticText(self, label=label_text)
+        self._passphrase = wx.TextCtrl(self, style=wx.TE_PASSWORD)
+        self._btn_ok = wx.Button(self, id=wx.ID_OK, label=_('Ok'))
+        self._btn_close = wx.Button(self, id=wx.ID_CLOSE, label=_('Close'))
+
+        # Layout
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(self.label, 0, wx.ALL | wx.EXPAND)
+        sizer.Add(self._passphrase, 0, wx.ALL | wx.EXPAND)
+
+        btn_szr = wx.StdDialogButtonSizer()
+
+        btn_szr.AddButton(self._btn_ok)
+        btn_szr.AddButton(self._btn_close)
+
+        btn_szr.Realize()
+
+        sizer.Add(btn_szr)
+
+        # Event Handlers
+        self.Bind(wx.EVT_BUTTON, self.OnClickOk, id=self._btn_ok.Id)
+        self.Bind(wx.EVT_BUTTON, self.OnClickClose, id=self._btn_close.Id)
+
+        self.SetSizer(sizer)
+        self.SetInitialSize()
+
+    def OnClickOk(self, event):
+        if not LoginController().is_passphrase_valid(passphrase=self._passphrase.Value,
+                                                     user=self._username,
+                                                     label=self._label):
+            gui_utils.show_error_dialog(message=_('Wrong passphase'), title=_('Error'))
+        else:
+            self.Hide()
+
+    def OnClickClose(self):
+        self.Hide()
+
+
+class PassphraseDialog(wx.Frame):
+    def __init__(self, parent, username, label):
+        super(PassphraseDialog, self).__init__(parent=parent,
+                                               title=MAIN_TITLE,
+                                               size=MAIN_FRAME_SIZE,
+                                               style=wx.CLOSE_BOX | wx.CAPTION)
+
+        # Attributes
+        self.panel = PasshphrasePanel(self, username, label)
+        self.main_sizer = wx.BoxSizer(wx.VERTICAL)
+
+        self.InitUI()
+
+    def InitUI(self):
+        self.main_sizer.Add(self.panel)
+
+        self.Layout()
+        self.Center()
+        self.Show()
+
+    @staticmethod
+    def ask(localbox_client):
+        username = localbox_client.authenticator.username
+        label = localbox_client.authenticator.label
+
+        f = PassphraseDialog(None, username=username, label=label)
+        return None

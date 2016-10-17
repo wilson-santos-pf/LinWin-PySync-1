@@ -238,8 +238,7 @@ class LocalBox(object):
         except ValueError:
             getLogger(__name__).exception("call_keys called with a path with excess \"/\"'s: %s", path)
             cryptopath = path[1:]
-        getLogger(__name__).debug(
-            "call_keys on path %s = %s", path, cryptopath)
+        getLogger(__name__).debug("call_keys on path %s = %s", path, cryptopath)
 
         request = Request(url=self.url + 'lox_api/key/' + cryptopath)
         return self._make_call(request)
@@ -280,7 +279,7 @@ class LocalBox(object):
         # should be more robust then this
         return result
 
-    def decode_file(self, path, filename):
+    def decode_file(self, path, filename, passphrase):
         """
         decode a file
         """
@@ -290,23 +289,28 @@ class LocalBox(object):
             if stats['has_keys']:
                 path = quote(path)
                 pgpclient = gpg()
-                site = self.authenticator.label
-                try:
-                    jsontext = self.call_keys(path).read()
-                    keydata = loads(jsontext)
-                    pgpdkeystring = b64decode(keydata['key'])
-                    pgpdivstring = b64decode(keydata['iv'])
-                    keystring = pgpclient.decrypt(pgpdkeystring, site)
-                    ivstring = pgpclient.decrypt(pgpdivstring, site)
 
+                # call the backend to get rsa encrypted key and initialization vector for decoding the file
+                jsontext = self.call_keys(path).read()
+                keydata = loads(jsontext)
+
+                pgpdkeystring = b64decode(keydata['key'])
+                pgpdivstring = b64decode(keydata['iv'])
+
+                keystring = pgpclient.decrypt(pgpdkeystring, passphrase)
+                ivstring = pgpclient.decrypt(pgpdivstring, passphrase)
+
+                try:
                     getLogger(__name__).debug("Decoding %s with key %s", path, getChecksum(keystring))
                     key = AES_Key(keystring, MODE_CFB, ivstring)
-                    with open(filename, 'rb') as content_file:
-                        contents = content_file.read()
-                        result = key.decrypt(contents)
                 except ValueError:
                     getLogger(__name__).info("cannot decode JSON: %s", jsontext)
-                    result = None
+                    return None
+
+                with open(filename, 'rb') as content_file:
+                    contents = content_file.read()
+                    result = key.decrypt(contents)
+
                 return result
             else:
                 getLogger(__name__).error("No keys found for %s", path)

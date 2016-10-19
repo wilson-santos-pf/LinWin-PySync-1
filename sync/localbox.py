@@ -2,6 +2,7 @@
 localbox client library
 """
 
+import os
 import errno
 import hashlib
 from Crypto.Cipher.AES import MODE_CFB
@@ -17,7 +18,7 @@ from socket import error as SocketError
 from sync import defaults
 from sync.auth import Authenticator, AlreadyAuthenticatedError
 from sync.controllers.localbox_ctrl import SyncsController
-from .gpg import gpg
+from sync.gpg import gpg
 
 try:
     from urllib2 import HTTPError, URLError
@@ -54,22 +55,6 @@ class LocalBox(object):
     """
     object representing localbox
     """
-
-    """
-
-    """
-    _instance = dict()
-
-    def __new__(cls, *args, **kwargs):
-        server = args[0]
-        m = hashlib.md5()
-        m.update(server)
-        server_hash = m.digest()
-
-        if not server_hash in cls._instance.keys():
-            cls._instance[server_hash] = super(LocalBox, cls).__new__(
-                cls, *args, **kwargs)
-        return cls._instance[server_hash]
 
     def __init__(self, url, label):
         if url[-1] != '/':
@@ -178,7 +163,7 @@ class LocalBox(object):
         except HTTPError:
             getLogger(__name__).error("Error remote deleting '%s'", path)
 
-    def upload_file(self, path, localpath):
+    def upload_file(self, path, localpath, passphrase):
         """
         upload a file to localbox
         """
@@ -189,10 +174,11 @@ class LocalBox(object):
         openfile = open(localpath, 'rb')
         contents = openfile.read(stats.st_size)
         openfile.flush()
-        clen = len(contents)
 
         try:
-            contents = self.encode_file(path, contents)
+            contents = gpg.add_pkcs7_padding(contents)
+            clen = len(contents)
+            contents = self.encode_file(path, contents, passphrase)
         except BadStatusLine as error:
             getLogger(__name__).exception(error)
             # TODO: make sure files get encrypted
@@ -232,16 +218,42 @@ class LocalBox(object):
         """
         do the keys call
         """
-        try:
-            index = path[1:].index('/')
-            cryptopath = path[1:index + 1]
-        except ValueError:
-            getLogger(__name__).exception("call_keys called with a path with excess \"/\"'s: %s", path)
-            cryptopath = path[1:]
+        # try:
+        #     index = path[1:].index('/')
+        #     cryptopath = path[1:index + 1]
+        # except ValueError:
+        #     getLogger(__name__).exception("call_keys called with a path with excess \"/\"'s: %s", path)
+        #     cryptopath = path[1:]
+        cryptopath = LocalBox.get_keys_path(path)
         getLogger(__name__).debug("call_keys on path %s = %s", path, cryptopath)
 
         request = Request(url=self.url + 'lox_api/key/' + cryptopath)
         return self._make_call(request)
+
+    @staticmethod
+    def get_keys_path(localbox_path):
+        """
+        Get the keys location for this localbox path.
+
+        >>> LocalBox.get_keys_path('/a/b/c')
+        'a/b'
+        >>> LocalBox.get_keys_path('a')
+        'a'
+        >>> LocalBox.get_keys_path('/a/b/c/')
+        'a/b/c'
+        >>> LocalBox.get_keys_path('a/b')
+        'a'
+
+        :param localbox_path:
+        :return: it returns the parent 'directory'
+        """
+        slash_count = localbox_path.count('/')
+        if slash_count > 1:
+            return os.path.dirname(localbox_path).lstrip('/')
+        elif slash_count == 1 and localbox_path.index('/') > 0:
+            return os.path.dirname(localbox_path).lstrip('/')
+        else:
+            return localbox_path
 
     def get_all_users(self):
         """
@@ -302,7 +314,7 @@ class LocalBox(object):
 
                 try:
                     getLogger(__name__).debug("Decoding %s with key %s", path, getChecksum(keystring))
-                    key = AES_Key(keystring, MODE_CFB, ivstring)
+                    key = AES_Key(keystring, MODE_CFB, ivstring, segment_size=128)
                 except ValueError:
                     getLogger(__name__).info("cannot decode JSON: %s", jsontext)
                     return None
@@ -311,7 +323,7 @@ class LocalBox(object):
                     contents = content_file.read()
                     result = key.decrypt(contents)
 
-                return result
+                return gpg.remove_pkcs7_padding(result)
             else:
                 getLogger(__name__).error("No keys found for %s", path)
                 return None
@@ -319,16 +331,15 @@ class LocalBox(object):
             getLogger(__name__).info("HTTPError: %s", error)
             return None
 
-    def encode_file(self, path, contents):
+    def encode_file(self, path, contents, passphrase):
         """
         encode a file
         """
         pgpclient = gpg()
-        site = self.authenticator.label
         try:
             keydata = loads(self.call_keys(path).read())
-            key = pgpclient.decrypt(b64decode(keydata['key']), site)
-            iv = pgpclient.decrypt(b64decode(keydata['iv']), site)
+            key = pgpclient.decrypt(b64decode(keydata['key']), passphrase)
+            iv = pgpclient.decrypt(b64decode(keydata['iv']), passphrase)
         except (HTTPError, TypeError, ValueError):
             getLogger(__name__).debug("path '%s' is without key, generating one.", path)
             # generate keys if they don't exist
@@ -336,7 +347,7 @@ class LocalBox(object):
             iv = CryptoRandom().read(16)
             self.save_key(path, key, iv)
         getLogger(__name__).debug("Encoding %s with key %s", path, getChecksum(key))
-        key = AES_Key(key, MODE_CFB, iv)
+        key = AES_Key(key, MODE_CFB, iv, segment_size=128)
         result = key.encrypt(contents)
         return result
 
@@ -362,3 +373,9 @@ class InvalidLocalboxError(Exception):
     URL for localbox backend is invalid or is unreachable
     """
     pass
+
+
+if __name__ == "__main__":
+    import doctest
+
+    doctest.testmod()

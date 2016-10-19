@@ -1,4 +1,5 @@
 import json
+import urllib2
 from logging import getLogger
 
 from sync.gpg import gpg
@@ -11,10 +12,9 @@ class LoginController(object):
         return cls.instance
 
     def __init__(self):
-        self._logged_in = False
-        self._username = None
-        self._passphrase = dict()
-        self._keys = dict()
+        if not hasattr(self, '_passphrase'):
+            self._logged_in = False
+            self._passphrase = dict()
 
     def store_keys(self, localbox_client, pubkey, privkey, passphrase):
         username = localbox_client.authenticator.username
@@ -42,15 +42,34 @@ class LoginController(object):
             # register key data
             result = localbox_client.call_user(data_json)
 
-        self._username = username
-        self._passphrase[label] = passphrase
+        if result is not None:
+            self._passphrase[label] = passphrase
         return result
 
-    def get_passphrase(self, label):
-        try:
-            return self._passphrase[label]
-        except KeyError:
-            return None
+    def get_passphrase(self, label, remote=False):
+        """
+        Get passphrase from memory.
+
+        :param label:
+        :param remote: if True and passphrase does not exist, try to via HTTP (localhost)
+        :return:
+        """
+        if remote:
+            try:
+                # TODO: prop for URL
+                passphrase = urllib2.urlopen('http://localhost:9090/%s' % label).read()
+                getLogger(__name__).debug('got passphrase %s' % passphrase)
+
+                return passphrase
+            except urllib2.URLError:
+                getLogger(__name__).error('Sync client is not running. Failed to get passphrase from client.')
+
+                return None
+        else:
+            try:
+                return self._passphrase[label]
+            except KeyError:
+                return None
 
     def is_passphrase_valid(self, passphrase, label, user):
         if gpg().is_passphrase_valid(passphrase=passphrase,

@@ -1,18 +1,14 @@
 import os
-from wx import wx
-
-import psutil
 import subprocess
 import sys
 from logging import getLogger
-
-import time
 
 from desktop_utils.controllers import openfiles_ctrl
 from loxcommon import os_utils
 from sync import defaults
 from sync.controllers.localbox_ctrl import ctrl as sync_ctrl
 from sync.controllers.login_ctrl import LoginController
+from sync.gui import gui_utils
 from sync.gui.gui_wx import PassphraseDialog
 from sync.localbox import LocalBox
 from version import VERSION
@@ -56,14 +52,6 @@ def unhide_file(filename):
     change_file_attribute(filename, FILE_ATTRIBUTE_NORMAL)
 
 
-def is_file_opened(filename):
-    for proc in psutil.process_iter():
-        cmd = proc.cmdline()
-        if filename in cmd:
-            return True
-    return False
-
-
 try:
     if __name__ == '__main__':
         getLogger(__name__).info("LocalBox Desktop Utils Version: %s", VERSION)
@@ -96,18 +84,14 @@ try:
                 exit(1)
 
             # get passphrase
-            ctrl = LoginController()
-            passphrase = ctrl.get_passphrase(localbox_client.authenticator.label)
-            if passphrase is None:
-                app = wx.App()
-                passphrase = PassphraseDialog.ask(localbox_client)
-                app.MainLoop()
-
-            passphrase = ctrl.get_passphrase(localbox_client.authenticator.label)
-            if passphrase is None:
-                app = wx.App()
-                # show error
-                app.MainLoop()
+            label = localbox_client.authenticator.label
+            passphrase = LoginController().get_passphrase(label, remote=True)
+            if not passphrase:
+                gui_utils.ask_passphrase(localbox_client, PassphraseDialog)
+                passphrase = LoginController().get_passphrase(label, remote=False)
+                if not passphrase:
+                    getLogger(__name__).error('failed to get passphrase for label: %s. Exiting..' % label)
+                    exit(1)
 
             # decode file
             decoded_contents = localbox_client.decode_file(localbox_filename, filename, passphrase)

@@ -78,7 +78,7 @@ def database_execute(command, params=None):
     @param params a list of tuple of values to substitute in command
     @returns a list of dictionaries representing the sql result
     """
-    getLogger(__name__).info("database_execute(" + command + ", " +
+    getLogger(__name__).debug("database_execute(" + command + ", " +
                              str(params) + ")", extra=get_sql_log_dict())
     parser = ConfigParser()
     parser.read(SYNCINI_PATH)

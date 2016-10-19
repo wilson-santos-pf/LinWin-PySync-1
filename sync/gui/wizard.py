@@ -205,20 +205,13 @@ class LoginWizardPage(wx.wizard.WizardPageSimple):
                         success = self.parent.localbox_client.authenticator.authenticate_with_password(
                             self.username,
                             self.password)
-                        is_exception = False
                     except Exception as error:
                         success = False
-                        is_exception = True
-                        getLogger(__name__).error('Problem authenticating with password: %s' % error)
+                        getLogger(__name__).exception('Problem authenticating with password: %s-%s' % (error.__class__, error))
 
                     if not success:
-                        if not is_exception:
-                            title = _('Error')
-                            error_msg = _("Username/Password incorrect")
-                        else:
-                            title = _('Invalid credentials')
-                            error_msg = _(
-                                "Authentication problem. Please check the logs and send them to the develop team.")
+                        title = _('Error')
+                        error_msg = _("Username/Password incorrect")
 
                         gui_utils.show_error_dialog(message=error_msg, title=title)
                         event.Veto()
@@ -309,7 +302,7 @@ class PassphraseWizardPage(wx.wizard.WizardPageSimple):
                         label=self.parent.box_label,
                         direction='sync',
                         path=self.parent.path,
-                        user=self.parent.username)
+                        user=self.parent.localbox_client.authenticator.username)
         self.parent.ctrl.add(item)
         self.parent.ctrl.save()
         getLogger(__name__).debug("new sync saved")

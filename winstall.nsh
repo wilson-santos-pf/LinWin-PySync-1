@@ -119,6 +119,7 @@ Section Install
   CreateDirectory "$APPDATA\localbox\"
   CreateShortcut "$SMPROGRAMS\LocalBox\LocalBox sync.lnk" "$INSTDIR\pythonw.exe" "-m sync" "$INSTDIR\localbox\localbox.ico"
   CreateShortcut "$SMPROGRAMS\LocalBox\LocalBox log.lnk" "$APPDATA\localbox\localbox-sync.log"
+  CreateShortcut "$SMPROGRAMS\LocalBox\LocalBox Uninstaller.lnk" "$INSTDIR\LocalBoxUninstaller.exe"
 
   CreateDirectory $INSTDIR\Lib\site-packages\sync\locale\nl\LC_MESSAGES
   File "/oname=$INSTDIR\Lib\site-packages\sync\locale\nl\LC_MESSAGES\localboxsync.mo" sync/locale/nl/LC_MESSAGES/localboxsync.mo 
@@ -131,9 +132,9 @@ Section Install
   WriteUninstaller $INSTDIR\LocalBoxUninstaller.exe
 
   ExecWait 'msiexec.exe /i $TEMP\python.msi TARGETDIR="$INSTDIR" ALLUSERS=1 ADDLOCAL=DefaultFeature,Extensions,TclTk,Tools /quiet'
-  ExecWait "$TEMP\wxpython.exe /silent"
-  ExecWait "$TEMP\pycrypto.exe"
-  ExecWait "$TEMP\LocalBoxSync.exe"
+  ExecWait "$TEMP\wxpython.exe /silent /quiet"
+  ExecWait "$TEMP\pycrypto.exe /quiet /silent"
+  ExecWait "$TEMP\LocalBoxSync.exe /quiet /silent"
   #ExecWait '$INSTDIR\install-pip.bat "$INSTDIR" > c:\install_pip.log'
 
   ${registerExtension} "$INSTDIR\run.bat" ".lox" "LocalBox_File"

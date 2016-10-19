@@ -4,6 +4,17 @@ from sysconfig import get_path
 
 from sync.version import VERSION
 
+MAIN_FRAME_SIZE = (550, 550)
+MAIN_PANEL_SIZE = (MAIN_FRAME_SIZE[0], 350)
+PASSPHRASE_DIALOG_SIZE = (500, 300)
+NEW_SYNC_DIALOG_SIZE = (500, 240)
+NEW_SYNC_WIZARD_SIZE = (500, 100)
+NEW_SYNC_PANEL_SIZE = (NEW_SYNC_DIALOG_SIZE[0], 145)
+MAIN_TITLE = 'YourLocalBox %s' % VERSION
+PASSPHRASE_TITLE = 'YourLocalBox %s - Enter Passphrase' % VERSION
+NEW_SYNC_DIALOG_TITLE = 'Add new sync'
+DEFAULT_BORDER = 10
+
 
 def iconpath():
     """
@@ -20,26 +31,10 @@ def show_error_dialog(message, title):
     wx.MessageBox(message, title, wx.OK | wx.ICON_ERROR)
 
 
-MAIN_FRAME_SIZE = (550, 550)
-MAIN_PANEL_SIZE = (MAIN_FRAME_SIZE[0], 350)
-NEW_SYNC_DIALOG_SIZE = (500, 240)
-NEW_SYNC_WIZARD_SIZE=(500, 100)
-NEW_SYNC_PANEL_SIZE = (NEW_SYNC_DIALOG_SIZE[0], 145)
-MAIN_TITLE = 'YourLocalBox %s' % VERSION
-NEW_SYNC_DIALOG_TITLE = 'Add new sync'
-DEFAULT_BORDER = 10
+def ask_passphrase(localbox_client, dialog):
+    username = localbox_client.authenticator.username
+    label = localbox_client.authenticator.label
 
-
-class WizardStep():
-    def __init__(self, next_panel, next_function):
-        self.next_panel = next_panel
-        self.next_function = next_function
-
-    def show_next_panel(self):
-        self.next_panel.Show()
-
-    def show_previous_panel(self):
-        self.next_panel.Hide()
-
-    def call_next_function(self):
-        return self.next_function()
+    app = wx.App()
+    dialog.show(username=username, label=label)
+    app.MainLoop()

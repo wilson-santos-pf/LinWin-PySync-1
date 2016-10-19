@@ -238,7 +238,7 @@ class Authenticator(object):
             getLogger(__name__).debug(error.message)
             if hasattr(error, 'code') and error.code == 400:
                 getLogger(__name__).debug('Authentication Problem')
-                raise AuthenticationError()
+                raise AuthenticationError('Invalid credentials')
             else:
                 getLogger(__name__).debug('Other (connection) Problem')
                 raise error
@@ -250,8 +250,7 @@ class Authenticator(object):
         """
         if self.access_token is None and self.client_id is None and \
                         self.client_secret is None:
-            raise AuthenticationError("Please authenticate with "
-                                      "resource owner credentials first")
+            raise AuthenticationError('Please authenticate with resource owner credentials first')
         if time() > self.expires:
             getLogger(__name__).debug("Token expired. Reauthenticating")
             self.authenticate_with_client_secret()

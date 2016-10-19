@@ -1,4 +1,4 @@
-from .database import database_execute
+from sync.database import database_execute
 from logging import getLogger
 from gnupg import GPG
 from os.path import join
@@ -81,7 +81,9 @@ class gpg(object):
             sql = 'SELECT fingerprint FROM keys where site = ? and user = ?'
             fingerprint = database_execute(sql, (label, user))[0][0]
 
-        return self.gpg.sign("test", keyid=fingerprint, passphrase=passphrase) != ''
+        sign_result = self.gpg.sign("test", keyid=fingerprint, passphrase=passphrase)
+
+        return sign_result.data != ''
 
     def generate(self, passphrase, site, user):
         """
@@ -126,3 +128,56 @@ class gpg(object):
                                        passphrase=passphrase,
                                        always_trust=True)
         return str(result)
+
+    @staticmethod
+    def add_pkcs7_padding(contents):
+        # Input strings must be a multiple of the segment size 16 in length
+        segment_size = 16
+
+        # calculate how much padding is needed
+        old_contents_length = len(contents)
+        next_mult = old_contents_length + (segment_size - old_contents_length % segment_size)
+        getLogger(__name__).debug('old contents length %s || new contents length %s' % (old_contents_length, next_mult))
+
+        # do the padding
+        padding_byte = chr(next_mult - old_contents_length)
+        contents = contents.ljust(next_mult, padding_byte)
+
+        return contents
+
+    @staticmethod
+    def remove_pkcs7_padding(contents):
+        """
+        Remove PKCS#7 padding bytes
+
+        >>> gpg.remove_pkcs7_padding('some_content'.ljust(16, chr(4)))
+        'some_content'
+
+        >>> gpg.remove_pkcs7_padding('some_content')
+        'some_content'
+
+        >>> gpg.remove_pkcs7_padding('')
+        ''
+
+        :param contents:
+        :return: contents without padding
+        """
+        if len(contents) < 1:
+            getLogger(__name__).debug('contents is empty. No PKCS#7 padding removed')
+            return contents
+
+        bytes_to_remove = ord(contents[-1])  # will work up to 255 bytes
+
+        # check if contents have valid PKCS#7 padding
+        if bytes_to_remove > 1 and contents[-2] != contents[-1]:
+            getLogger(__name__).debug('no PKCS#7 padding detected')
+            return contents
+
+        getLogger(__name__).debug('removing %s bytes of PKCS#7 padding' % bytes_to_remove)
+        return contents[0:(len(contents) - bytes_to_remove)]
+
+
+if __name__ == '__main__':
+    import doctest
+
+    doctest.testmod()

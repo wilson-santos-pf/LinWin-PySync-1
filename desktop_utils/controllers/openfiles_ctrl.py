@@ -5,6 +5,7 @@ from desktop_utils.defaults import LOCALBOX_OPENFILES
 
 
 def add(filename):
+    getLogger(__name__).debug('adding %s to opened files' % filename)
     openfiles_list = load()
     if not openfiles_list:
         openfiles_list = list()
@@ -15,13 +16,14 @@ def add(filename):
 
 def save(openfiles_list):
     pickle.dump(openfiles_list, open(LOCALBOX_OPENFILES, 'wb'))
+    getLogger(__name__).debug('saved opened files: %s' % openfiles_list)
 
 
 def load():
     try:
         with open(LOCALBOX_OPENFILES, 'rb') as f:
             openfiles_list = pickle.load(f)
-            getLogger(__name__).debug('found this openned files: %s' % openfiles_list)
+            getLogger(__name__).debug('found this opened files: %s' % openfiles_list)
             return openfiles_list
     except IOError:
         openfiles_list = list()

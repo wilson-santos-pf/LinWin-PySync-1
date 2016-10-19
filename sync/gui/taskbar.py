@@ -1,9 +1,12 @@
 """
 Modulemanaging a Windows Taskbar icon
 """
+from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 from logging import getLogger
+from threading import Thread
 
 from sync import language
+from sync.controllers.login_ctrl import LoginController
 from sync.controllers.preferences_ctrl import ctrl as preferences_ctrl
 from sync.gui.gui_wx import Gui
 from sync.defaults import SITESINI_PATH, LOCALE_PATH, VERSION
@@ -139,6 +142,39 @@ class LocalBoxIcon(wx.TaskBarIcon):
         # menu.Destroy()
 
 
+# TODO: prop for port, perhaps put it on configuration file
+PORT_NUMBER = 9090
+
+
+# This class will handles any incoming request from
+# the browser
+class PassphraseHandler(BaseHTTPRequestHandler):
+    # Handler for the GET requests
+    def do_GET(self):
+        getLogger(__name__).debug('Got passphrase request for path=%s' % self.path)
+        self.send_response(200)
+        self.send_header('Content-type', 'text/plain')
+        self.end_headers()
+        # Send the html message
+        passphrase = LoginController().get_passphrase(self.get_label(self.path))
+        self.wfile.write(passphrase)
+        return
+
+    def get_label(self, path):
+        if path.startswith('/'):
+            path = path[1:]
+
+        return path.split('/')[0]
+
+
+def passphrase_server():
+    server = HTTPServer(('', PORT_NUMBER), PassphraseHandler)
+    getLogger(__name__).info('Started passhphrase server on port %s' % PORT_NUMBER)
+
+    # Wait forever for incoming htto requests
+    server.serve_forever()
+
+
 def taskbarmain(waitevent=None, sites=None):
     """
     main function to run to get the taskbar started
@@ -146,5 +182,10 @@ def taskbarmain(waitevent=None, sites=None):
     app = wx.App(False)
     language.set_language(preferences_ctrl.get_language_abbr())
     icon = LocalBoxIcon(waitevent, sites=sites)
-    icon.start_gui(None)
+    # icon.start_gui(None)
+
+    MAIN = Thread(target=passphrase_server)
+    MAIN.daemon = True
+    MAIN.start()
+
     app.MainLoop()

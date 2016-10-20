@@ -68,7 +68,6 @@ class Syncer(object):
 
     def populate_filepath_metadata(self, path='/', parent=None):
         path = path.lstrip('.').rstrip("/\\")
-        getLogger(__name__).debug('populate_filepath_metadata: %s' % path)
         if path == '':
             realpath = self.filepath
         else:

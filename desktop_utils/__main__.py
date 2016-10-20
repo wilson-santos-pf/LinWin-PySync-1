@@ -59,12 +59,11 @@ try:
         if len(sys.argv) < 2:
             getLogger(__name__).error("No file supplied")
         else:
-            filename = sys.argv[1]
+            filename = ' '.join(sys.argv[1:])
             getLogger(__name__).info("File: %s" % filename)
 
             # verify if the file belongs to any of the configured syncs
             sync_list = sync_ctrl.list
-            getLogger(__name__).info('sync list: %s' % sync_list)
 
             cur_sync_item = None
             localbox_client = None

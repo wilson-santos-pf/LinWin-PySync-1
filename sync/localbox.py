@@ -5,6 +5,7 @@ localbox client library
 import os
 import errno
 import hashlib
+import urllib
 from Crypto.Cipher.AES import MODE_CFB
 from Crypto.Cipher.AES import new as AES_Key
 from Crypto.Random import new as CryptoRandom
@@ -25,7 +26,7 @@ try:
     from urllib2 import Request
     from urllib2 import urlopen
     from urllib import urlencode
-    from urllib import quote
+    from urllib import quote_plus
     from httplib import BadStatusLine
     from ConfigParser import ConfigParser
 except ImportError:
@@ -113,7 +114,7 @@ class LocalBox(object):
         """
         do the meta call
         """
-        metapath = quote(path).strip('/')
+        metapath = quote_plus(path).strip('/')
         request = Request(url=self.url + "lox_api/meta/" + metapath)
         getLogger(__name__).debug('calling lox_api/meta/%s' % metapath)
         json_text = self._make_call(request).read()
@@ -123,7 +124,7 @@ class LocalBox(object):
         """
         do the file call
         """
-        metapath = quote(path).strip('/')
+        metapath = quote_plus(path).strip('/')
         request = Request(url=self.url + "lox_api/files/" + metapath)
         webdata = self._make_call(request)
         websize = webdata.headers.get('content-length', -1)
@@ -167,7 +168,7 @@ class LocalBox(object):
         """
         upload a file to localbox
         """
-        metapath = quote(path)
+        metapath = quote_plus(path)
         # contents = open(localpath).read()
         # larger version
         stats = stat(localpath)
@@ -224,14 +225,15 @@ class LocalBox(object):
         # except ValueError:
         #     getLogger(__name__).exception("call_keys called with a path with excess \"/\"'s: %s", path)
         #     cryptopath = path[1:]
-        cryptopath = LocalBox.get_keys_path(path)
-        getLogger(__name__).debug("call_keys on path %s = %s", path, cryptopath)
+        keys_path = LocalBox.get_keys_path(path)
+        keys_path = urllib.quote_plus(keys_path)
+        getLogger(__name__).debug("call lox_api/key on path %s = %s", path, keys_path)
 
-        request = Request(url=self.url + 'lox_api/key/' + cryptopath)
+        request = Request(url=self.url + 'lox_api/key/' + keys_path)
         return self._make_call(request)
 
     @staticmethod
-    def get_keys_path(localbox_path):
+    def get_keys_path_v2(localbox_path):
         """
         Get the keys location for this localbox path.
 
@@ -249,11 +251,39 @@ class LocalBox(object):
         """
         slash_count = localbox_path.count('/')
         if slash_count > 1:
-            return os.path.dirname(localbox_path).lstrip('/')
+            keys_path = os.path.dirname(localbox_path).lstrip('/')
         elif slash_count == 1 and localbox_path.index('/') > 0:
-            return os.path.dirname(localbox_path).lstrip('/')
+            keys_path = os.path.dirname(localbox_path).lstrip('/')
         else:
-            return localbox_path
+            keys_path = localbox_path
+
+        getLogger(__name__).debug('keys_path for localbox_path "%s" is "%s"' % (localbox_path, keys_path))
+        return keys_path
+
+    @staticmethod
+    def get_keys_path(localbox_path):
+        """
+        Get the keys location for this localbox path.
+
+        >>> LocalBox.get_keys_path('/a/b/c')
+        'a'
+        >>> LocalBox.get_keys_path('a')
+        'a'
+        >>> LocalBox.get_keys_path('/a/b/c/')
+        'a'
+        >>> LocalBox.get_keys_path('a/b')
+        'a'
+
+        :param localbox_path:
+        :return: it returns the parent 'directory'
+        """
+        if localbox_path.startswith('/'):
+            localbox_path = localbox_path[1:]
+
+        keys_path = localbox_path.split('/')[0]
+
+        getLogger(__name__).debug('keys_path for localbox_path "%s" is "%s"' % (localbox_path, keys_path))
+        return keys_path
 
     def get_all_users(self):
         """
@@ -267,15 +297,16 @@ class LocalBox(object):
         """
         saves an encrypted key on the localbox server
         """
-        try:
-            index = path[1:].index('/')
-            cryptopath = path[1:index + 1]
-            getLogger(__name__).warning(
-                "Trying to save a key for an entry in a subdirectory. Saving the key for the subdir instead")
-        except ValueError:
-            cryptopath = path[1:]
+        # try:
+        #     index = path[1:].index('/')
+        #     cryptopath = path[1:index + 1]
+        #     getLogger(__name__).warning(
+        #         "Trying to save a key for an entry in a subdirectory. Saving the key for the subdir instead")
+        # except ValueError:
+        #     cryptopath = path[1:]
+        cryptopath = LocalBox.get_keys_path(path)
+        cryptopath = quote_plus(cryptopath)
 
-        cryptopath = quote(cryptopath)
         site = self.authenticator.label
         ctrl = SyncsController()
         user = ctrl.get(site).user
@@ -299,7 +330,6 @@ class LocalBox(object):
             path = path.replace('\\', '/')
             stats = self.get_meta(path)
             if stats['has_keys']:
-                path = quote(path)
                 pgpclient = gpg()
 
                 # call the backend to get rsa encrypted key and initialization vector for decoding the file
@@ -313,7 +343,7 @@ class LocalBox(object):
                 ivstring = pgpclient.decrypt(pgpdivstring, passphrase)
 
                 try:
-                    getLogger(__name__).debug("Decoding %s with key %s", path, getChecksum(keystring))
+                    getLogger(__name__).debug('Decoding "%s" with key "%s"', path, getChecksum(keystring))
                     key = AES_Key(keystring, MODE_CFB, ivstring, segment_size=128)
                 except ValueError:
                     getLogger(__name__).info("cannot decode JSON: %s", jsontext)

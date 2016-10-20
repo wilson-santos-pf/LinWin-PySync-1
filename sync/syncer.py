@@ -221,7 +221,7 @@ class Syncer(object):
                         getLogger(__name__).info("Uploading %s:  %s", newest.path, localpath)
 
                         self.localbox.upload_file(path, localpath, passphrase)
-                    elif path != '/':
+                    elif path != '/' and path not in self.localbox_metadata.get_paths():
                         self.localbox.create_directory(path)
                     continue
                 if newest == remotefile:

@@ -27,7 +27,9 @@ def is_valid_input(value):
     return value is not None and value.strip()
 
 
-def show_error_dialog(message, title):
+def show_error_dialog(message, title, standalone=False):
+    if standalone:
+        app = wx.App()
     wx.MessageBox(message, title, wx.OK | wx.ICON_ERROR)
 
 

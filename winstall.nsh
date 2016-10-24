@@ -132,6 +132,7 @@ Section Install
   WriteUninstaller $INSTDIR\LocalBoxUninstaller.exe
 
   ExecWait 'msiexec.exe /i $TEMP\python.msi TARGETDIR="$INSTDIR" ALLUSERS=1 ADDLOCAL=DefaultFeature,Extensions,TclTk,Tools /quiet'
+  #ExecWait 'msiexec.exe /f $TEMP\python.msi TARGETDIR="$INSTDIR" /quiet'
   ExecWait "$TEMP\wxpython.exe /silent /quiet"
   ExecWait "$TEMP\pycrypto.exe /quiet /silent"
   ExecWait "$TEMP\LocalBoxSync.exe /quiet /silent"

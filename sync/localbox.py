@@ -114,9 +114,9 @@ class LocalBox(object):
         """
         do the meta call
         """
-        metapath = quote_plus(path).strip('/')
-        request = Request(url=self.url + "lox_api/meta/" + metapath)
-        getLogger(__name__).debug('calling lox_api/meta/%s' % metapath)
+        metapath = quote_plus(path)
+        request = Request(url=self.url + 'lox_api/meta', data=dumps({'path': path}))
+        getLogger(__name__).debug('calling lox_api/meta for path: %s' % metapath)
         json_text = self._make_call(request).read()
         return loads(json_text)
 
@@ -125,7 +125,7 @@ class LocalBox(object):
         do the file call
         """
         metapath = quote_plus(path).strip('/')
-        request = Request(url=self.url + "lox_api/files/" + metapath)
+        request = Request(url=self.url + "lox_api/files", data=dumps({'path': metapath}))
         webdata = self._make_call(request)
         websize = webdata.headers.get('content-length', -1)
         data = webdata.read()
@@ -200,8 +200,8 @@ class LocalBox(object):
         getLogger(__name__).info("Uploading %s: Statsize: %d, readsize: %d cryptosize: %d", localpath, stats.st_size,
                                  clen, len(contents))
 
-        request = Request(url=self.url + 'lox_api/files/' + metapath,
-                          data=contents)
+        request = Request(url=self.url + 'lox_api/files',
+                          data=dumps({'contents': b64encode(contents), 'path': metapath}))
         return self._make_call(request)
 
     def call_user(self, send_data=None):
@@ -231,6 +231,11 @@ class LocalBox(object):
 
         request = Request(url=self.url + 'lox_api/key/' + keys_path)
         return self._make_call(request)
+
+    def call_create_share(self):
+        request = Request(url=self.url + 'lox_api/create_share/' + keys_path, data=data)
+        return self._make_call(request)
+
 
     @staticmethod
     def get_keys_path_v2(localbox_path):

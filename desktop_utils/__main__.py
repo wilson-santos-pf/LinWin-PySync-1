@@ -2,6 +2,7 @@ import os
 import subprocess
 import sys
 from logging import getLogger
+from gettext import gettext as _
 
 from desktop_utils.controllers import openfiles_ctrl
 from loxcommon import os_utils
@@ -79,6 +80,7 @@ try:
                     break
 
             if not localbox_client or not localbox_filename:
+                gui_utils.show_error_dialog(_('%s does not belong to any localbox') % filename, 'Error', True)
                 getLogger(__name__).error('%s does not belong to any localbox' % filename)
                 exit(1)
 
@@ -89,14 +91,13 @@ try:
                 gui_utils.ask_passphrase(localbox_client, PassphraseDialog)
                 passphrase = LoginController().get_passphrase(label, remote=False)
                 if not passphrase:
+                    gui_utils.show_error_dialog(_('Failed to get passphrase for label: %s.') % label, 'Error', True)
                     getLogger(__name__).error('failed to get passphrase for label: %s. Exiting..' % label)
                     exit(1)
 
             # decode file
             decoded_contents = localbox_client.decode_file(localbox_filename, filename, passphrase)
             if decoded_contents is not None:
-                # getLogger(__name__).info('decoded contents: %s' % decoded_contents)
-
                 # write file
                 tmp_decoded_filename = os_utils.remove_extension(filename, defaults.LOCALBOX_EXTENSION)
                 getLogger(__name__).info('tmp_decoded_filename: %s' % tmp_decoded_filename)
@@ -116,6 +117,7 @@ try:
 
                 openfiles_ctrl.add(tmp_decoded_filename)
             else:
+                gui_utils.show_error_dialog(_('Failed to decode contents'), 'Error', True)
                 getLogger(__name__).info('failed to decode contents. aborting')
 
 except Exception as ex:

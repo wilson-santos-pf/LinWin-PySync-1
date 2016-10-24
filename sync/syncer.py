@@ -53,9 +53,7 @@ class Syncer(object):
     def populate_localbox_metadata(self, path='/', parent=None):
         node = self.localbox.get_meta(path)
         getLogger(__name__).debug('populate_localbox_metadata node: %s' % node)
-        splittime = node['modified_at'].split('.', 1)
-        modtime = mktime(strptime(splittime[0], "%Y-%m-%dT%H:%M:%S")) + \
-                  float("0." + splittime[1])
+        modtime = node['modified_at']
         getLogger(__name__).debug('%s remote modification time: %s' % (path, modtime))
         vfsnode = MetaVFS(modtime, node['path'], node['is_dir'])
         for child in node['children']:
@@ -191,10 +189,15 @@ class Syncer(object):
                 getLogger(__name__).debug(
                     "====Local %s, Remote %s, Old %s ====", localfile, remotefile, oldfile)
 
+                # hammer time :(
+                # to fixed directory deletion issue
+                if localfile is None and oldfile is not None:
+                    oldfile.modified_at = remotefile.modified_at
+
                 # if remotefile == oldfile and self.get_file_path(metavfs)is None:
                 if remotefile == oldfile and localfile is None:
-                    self.localbox.delete(metavfs)
                     getLogger(__name__).info("Deleting remote %s", path)
+                    self.localbox.delete(metavfs)
                     continue
                 # if localfile == oldfile and self.get_url_path(metavfs) is None:
                 if localfile == oldfile and remotefile is None:
@@ -213,10 +216,6 @@ class Syncer(object):
 
                 localpath = self.get_file_path(metavfs)
                 if newest == localfile and os.path.exists(localpath):
-                    # TODO: Only create directorieswhen needed, preferably not.
-                    if dirname(path) not in self.localbox_metadata.get_paths():
-                        self.localbox.create_directory(dirname(path))
-
                     if not isdir(self.get_file_path(metavfs)):
                         getLogger(__name__).info("Uploading %s:  %s", newest.path, localpath)
 

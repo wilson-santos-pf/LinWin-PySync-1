@@ -141,6 +141,8 @@ class LocalBox(object):
         metapath = urlencode({'path': path})
         request = Request(url=self.url + 'lox_api/operations/create_folder/',
                           data=metapath)
+
+        getLogger(__name__).debug("Creating directory: %s" % path)
         try:
             self._make_call(request)
             if path.count('/') == 1:
@@ -219,12 +221,6 @@ class LocalBox(object):
         """
         do the keys call
         """
-        # try:
-        #     index = path[1:].index('/')
-        #     cryptopath = path[1:index + 1]
-        # except ValueError:
-        #     getLogger(__name__).exception("call_keys called with a path with excess \"/\"'s: %s", path)
-        #     cryptopath = path[1:]
         keys_path = LocalBox.get_keys_path(path)
         keys_path = urllib.quote_plus(keys_path)
         getLogger(__name__).debug("call lox_api/key on path %s = %s", path, keys_path)
@@ -302,13 +298,6 @@ class LocalBox(object):
         """
         saves an encrypted key on the localbox server
         """
-        # try:
-        #     index = path[1:].index('/')
-        #     cryptopath = path[1:index + 1]
-        #     getLogger(__name__).warning(
-        #         "Trying to save a key for an entry in a subdirectory. Saving the key for the subdir instead")
-        # except ValueError:
-        #     cryptopath = path[1:]
         cryptopath = LocalBox.get_keys_path(path)
         cryptopath = quote_plus(cryptopath)
 

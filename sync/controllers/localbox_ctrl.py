@@ -51,12 +51,11 @@ class SyncsController:
 
 
 class SyncItem:
-    def __init__(self, label=None, url=None, path=None, direction=None, passphrase=None, user=None):
+    def __init__(self, label=None, url=None, path=None, direction=None, user=None):
         self._label = label
         self._url = url
         self._path = path
         self._direction = direction
-        self._passphrase = passphrase
         self._user = user
 
     @property
@@ -90,14 +89,6 @@ class SyncItem:
     @direction.setter
     def direction(self, value):
         self._direction = value
-
-    @property
-    def passphrase(self):
-        return self._passphrase
-
-    @passphrase.setter
-    def passphrase(self, value):
-        self._passphrase = value
 
     @property
     def user(self):

@@ -1,15 +1,16 @@
 import os
-import psutil
 import subprocess
 import sys
 from logging import getLogger
-
-import time
+from gettext import gettext as _
 
 from desktop_utils.controllers import openfiles_ctrl
 from loxcommon import os_utils
 from sync import defaults
 from sync.controllers.localbox_ctrl import ctrl as sync_ctrl
+from sync.controllers.login_ctrl import LoginController
+from sync.gui import gui_utils
+from sync.gui.gui_wx import PassphraseDialog
 from sync.localbox import LocalBox
 from version import VERSION
 
@@ -52,14 +53,6 @@ def unhide_file(filename):
     change_file_attribute(filename, FILE_ATTRIBUTE_NORMAL)
 
 
-def is_file_opened(filename):
-    for proc in psutil.process_iter():
-        cmd = proc.cmdline()
-        if filename in cmd:
-            return True
-    return False
-
-
 try:
     if __name__ == '__main__':
         getLogger(__name__).info("LocalBox Desktop Utils Version: %s", VERSION)
@@ -67,12 +60,11 @@ try:
         if len(sys.argv) < 2:
             getLogger(__name__).error("No file supplied")
         else:
-            filename = sys.argv[1]
+            filename = ' '.join(sys.argv[1:])
             getLogger(__name__).info("File: %s" % filename)
 
             # verify if the file belongs to any of the configured syncs
             sync_list = sync_ctrl.list
-            getLogger(__name__).info('sync list: %s' % sync_list)
 
             cur_sync_item = None
             localbox_client = None
@@ -88,14 +80,24 @@ try:
                     break
 
             if not localbox_client or not localbox_filename:
+                gui_utils.show_error_dialog(_('%s does not belong to any localbox') % filename, 'Error', True)
                 getLogger(__name__).error('%s does not belong to any localbox' % filename)
                 exit(1)
 
-            # decode file
-            decoded_contents = localbox_client.decode_file(localbox_filename, filename)
-            if decoded_contents is not None:
-                # getLogger(__name__).info('decoded contents: %s' % decoded_contents)
+            # get passphrase
+            label = localbox_client.authenticator.label
+            passphrase = LoginController().get_passphrase(label, remote=True)
+            if not passphrase:
+                gui_utils.ask_passphrase(localbox_client, PassphraseDialog)
+                passphrase = LoginController().get_passphrase(label, remote=False)
+                if not passphrase:
+                    gui_utils.show_error_dialog(_('Failed to get passphrase for label: %s.') % label, 'Error', True)
+                    getLogger(__name__).error('failed to get passphrase for label: %s. Exiting..' % label)
+                    exit(1)
 
+            # decode file
+            decoded_contents = localbox_client.decode_file(localbox_filename, filename, passphrase)
+            if decoded_contents is not None:
                 # write file
                 tmp_decoded_filename = os_utils.remove_extension(filename, defaults.LOCALBOX_EXTENSION)
                 getLogger(__name__).info('tmp_decoded_filename: %s' % tmp_decoded_filename)
@@ -115,6 +117,7 @@ try:
 
                 openfiles_ctrl.add(tmp_decoded_filename)
             else:
+                gui_utils.show_error_dialog(_('Failed to decode contents'), 'Error', True)
                 getLogger(__name__).info('failed to decode contents. aborting')
 
 except Exception as ex:

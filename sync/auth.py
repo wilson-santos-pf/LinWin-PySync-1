@@ -63,7 +63,7 @@ class Authenticator(object):
         self.expires = 0
         self.scope = None
         self.username = None
-        # todo:
+
         self.refresh_token = None
         self.load_client_data()
 
@@ -112,6 +112,7 @@ class Authenticator(object):
             raise AuthenticationError("Do not call init_authenticate w"
                                       "hen client_id and client_secret"
                                       " are already set")
+        self.username = username
         self.client_id = generate_client_id()
         self.client_secret = generate_client_secret()
         authdata = {'grant_type': 'password', 'username': username,
@@ -176,6 +177,8 @@ class Authenticator(object):
             self.client_secret = generate_client_secret()
             getLogger(__name__).debug('Created new credentials, cliend_id=%s' % self.client_id)
 
+        self.username = username
+
         authdata = {'grant_type': 'password',
                     'username': username,
                     'password': password,
@@ -235,7 +238,7 @@ class Authenticator(object):
             getLogger(__name__).debug(error.message)
             if hasattr(error, 'code') and error.code == 400:
                 getLogger(__name__).debug('Authentication Problem')
-                raise AuthenticationError()
+                raise AuthenticationError('Invalid credentials')
             else:
                 getLogger(__name__).debug('Other (connection) Problem')
                 raise error
@@ -247,8 +250,7 @@ class Authenticator(object):
         """
         if self.access_token is None and self.client_id is None and \
                         self.client_secret is None:
-            raise AuthenticationError("Please authenticate with "
-                                      "resource owner credentials first")
+            raise AuthenticationError('Please authenticate with resource owner credentials first')
         if time() > self.expires:
             getLogger(__name__).debug("Token expired. Reauthenticating")
             self.authenticate_with_client_secret()

@@ -10,7 +10,7 @@ import errno
 import sync.gui.gui_utils as gui_utils
 import sync.auth as auth
 from sync.controllers.localbox_ctrl import SyncItem
-from sync.gpg import gpg
+from sync.controllers.login_ctrl import LoginController
 from sync.localbox import LocalBox
 
 
@@ -205,20 +205,13 @@ class LoginWizardPage(wx.wizard.WizardPageSimple):
                         success = self.parent.localbox_client.authenticator.authenticate_with_password(
                             self.username,
                             self.password)
-                        is_exception = False
                     except Exception as error:
                         success = False
-                        is_exception = True
-                        getLogger(__name__).error('Problem authenticating with password: %s' % error)
+                        getLogger(__name__).exception('Problem authenticating with password: %s-%s' % (error.__class__, error))
 
                     if not success:
-                        if not is_exception:
-                            title = _('Error')
-                            error_msg = _("Username/Password incorrect")
-                        else:
-                            title = _('Invalid credentials')
-                            error_msg = _(
-                                "Authentication problem. Please check the logs and send them to the develop team.")
+                        title = _('Error')
+                        error_msg = _("Username/Password incorrect")
 
                         gui_utils.show_error_dialog(message=error_msg, title=title)
                         event.Veto()
@@ -273,10 +266,6 @@ class PassphraseWizardPage(wx.wizard.WizardPageSimple):
             response = self.parent.localbox_client.call_user()
             result = json.loads(response.read())
 
-            if self.parent.username is None:
-                getLogger(__name__).debug("username is None")
-                self.parent.username = result['user']
-
             if 'private_key' in result and 'public_key' in result:
                 getLogger(__name__).debug("private key and public key found")
                 label = _('Give Passphrase')
@@ -295,26 +284,14 @@ class PassphraseWizardPage(wx.wizard.WizardPageSimple):
                 # going forward
                 # step #4
                 getLogger(__name__).debug("wizard next_4")
-                # set up gpg
-                keys = gpg()
-                if self.pubkey is not None and self.privkey is not None:
-                    getLogger(__name__).debug("private key found and public key found")
 
-                    result = keys.add_keypair(self.pubkey, self.privkey,
-                                              self.parent.box_label, self.parent.username,
-                                              self.passphrase)
-                    if result is None:
-                        getLogger(__name__).debug("could not add keypair")
-                        return gui_utils.show_error_dialog(message=_('Wrong passphase'), title=_('Error'))
-                else:
-                    getLogger(__name__).debug("public keys not found. generating...")
-                    fingerprint = keys.generate(self.passphrase,
-                                                self.parent.box_label, self.parent.username)
-                    data = {'private_key': keys.get_key(fingerprint, True),
-                            'public_key': keys.get_key(fingerprint, False)}
-                    data_json = json.dumps(data)
-                    # register key data
-                    self.parent.localbox_client.call_user(data_json)
+                if not LoginController().store_keys(localbox_client=self.parent.localbox_client,
+                                                    pubkey=self.pubkey,
+                                                    privkey=self.privkey,
+                                                    passphrase=self.passphrase):
+                    gui_utils.show_error_dialog(message=_('Wrong passphase'), title=_('Error'))
+                    event.Veto()
+                    return
 
                 self.add_new_sync_item()
             else:
@@ -325,8 +302,7 @@ class PassphraseWizardPage(wx.wizard.WizardPageSimple):
                         label=self.parent.box_label,
                         direction='sync',
                         path=self.parent.path,
-                        user=self.parent.username,
-                        passphrase=self.passphrase)
+                        user=self.parent.localbox_client.authenticator.username)
         self.parent.ctrl.add(item)
         self.parent.ctrl.save()
         getLogger(__name__).debug("new sync saved")

@@ -33,7 +33,7 @@ except ImportError:
 
 from .localbox import LocalBox
 from .auth import Authenticator
-from .localbox import AlreadyAuthenticatedError
+from sync.auth import AlreadyAuthenticatedError
 from .gpg import gpg
 from .defaults import SITESINI_PATH
 from .syncer import Syncer

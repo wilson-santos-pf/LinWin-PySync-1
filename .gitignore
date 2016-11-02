@@ -9,4 +9,6 @@ dist
 localbox-log-file.log
 localbox.pickle
 syncdatabase.sqlite3
-
+.idea
+*bak
+*.exe

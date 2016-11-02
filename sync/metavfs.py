@@ -7,6 +7,8 @@ try:
 except ImportError:
     from pickle import dump, load
 
+import sync.defaults as defaults
+
 
 def normalize_path(path):
     if path == '':
@@ -31,9 +33,6 @@ class MetaVFS(object):
                  children=None):
         path=path.encode('utf-8')
         self.path = normalize_path(path)
-        if self.path != path:
-            getLogger(__name__).debug(
-                "MetaVFS writing %s as %s", path, self.path)
         self.is_dir = is_dir
         self.modified_at = modified_at
         self.children = children
@@ -72,7 +71,7 @@ class MetaVFS(object):
         return not self.__eq__(other)
 
     def gen(self):
-        getLogger(__name__).debug("Yielding %s", self)
+        #getLogger(__name__).debug("Yielding %s", self)
         yield self
         for child in self.children:
             for entry in child.gen():

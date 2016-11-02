@@ -11,6 +11,7 @@ Icon "localbox.ico"
 !include MUI2.nsh
 !addincludedir .
 !include EnumUsersReg.nsh
+!include "FileAssociation.nsh"
 
 #trimming based on http://nsis.sourceforge.net/Remove_leading_and_trailing_whitespaces_from_a_string
 !define Trim "!insertmacro Trim"
@@ -118,16 +119,26 @@ Section Install
   CreateDirectory "$APPDATA\localbox\"
   CreateShortcut "$SMPROGRAMS\LocalBox\LocalBox sync.lnk" "$INSTDIR\pythonw.exe" "-m sync" "$INSTDIR\localbox\localbox.ico"
   CreateShortcut "$SMPROGRAMS\LocalBox\LocalBox log.lnk" "$APPDATA\localbox\localbox-sync.log"
+  CreateShortcut "$SMPROGRAMS\LocalBox\LocalBox Uninstaller.lnk" "$INSTDIR\LocalBoxUninstaller.exe"
 
   CreateDirectory $INSTDIR\Lib\site-packages\sync\locale\nl\LC_MESSAGES
   File "/oname=$INSTDIR\Lib\site-packages\sync\locale\nl\LC_MESSAGES\localboxsync.mo" sync/locale/nl/LC_MESSAGES/localboxsync.mo 
+  CreateDirectory $INSTDIR\Lib\site-packages\sync\locale\en\LC_MESSAGES
+  File "/oname=$INSTDIR\Lib\site-packages\sync\locale\en\LC_MESSAGES\localboxsync.mo" sync/locale/en/LC_MESSAGES/localboxsync.mo 
+  File "/oname=$INSTDIR\run.bat" run.bat
+  File "/oname=$INSTDIR\get-pip.py" get-pip.py
+  File "/oname=$INSTDIR\install-pip.bat" install_pip.bat
 
   WriteUninstaller $INSTDIR\LocalBoxUninstaller.exe
 
   ExecWait 'msiexec.exe /i $TEMP\python.msi TARGETDIR="$INSTDIR" ALLUSERS=1 ADDLOCAL=DefaultFeature,Extensions,TclTk,Tools /quiet'
-  ExecWait "$TEMP\wxpython.exe /silent"
-  ExecWait "$TEMP\pycrypto.exe"
-  ExecWait "$TEMP\LocalBoxSync.exe"
+  #ExecWait 'msiexec.exe /f $TEMP\python.msi TARGETDIR="$INSTDIR" /quiet'
+  ExecWait "$TEMP\wxpython.exe /silent /quiet"
+  ExecWait "$TEMP\pycrypto.exe /quiet /silent"
+  ExecWait "$TEMP\LocalBoxSync.exe /quiet /silent"
+  #ExecWait '$INSTDIR\install-pip.bat "$INSTDIR" > c:\install_pip.log'
+
+  ${registerExtension} "$INSTDIR\run.bat" ".lox" "LocalBox_File"
 SectionEnd
 
 SectionGroup "un.uninstall"
@@ -144,12 +155,25 @@ SectionEnd
 Section "un.AppData"
     ${un.EnumUsersReg} un.DelAppData localbox
 SectionEnd
+
+Section "un.Python"
+    ExecWait 'msiexec.exe /x $TEMP\python.msi'
+SectionEnd
+
+Section "un.Clean Registry"
+    DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\LocalBoxSync-py2.7"
+    DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\pycrypto-py2.7"
+    DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\wxPython3.0-py27_is1"
+SectionEnd
+
 SectionGroupEnd
 
 Function un.DelAppData
     Pop $0
     ReadRegStr $0 HKU "$0\Volatile Environment" "AppData"
     rmDir /r /REBOOTOK $0\localbox
+
+    ${unregisterExtension} ".lox" "LocalBox_File"
 FunctionEnd
 
 

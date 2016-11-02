@@ -11,6 +11,7 @@ from os.path import exists
 from os.path import expandvars
 from os.path import dirname
 from os import makedirs
+
 try:
     from ConfigParser import ConfigParser
     from ConfigParser import NoSectionError
@@ -29,6 +30,14 @@ except ImportError:
 from sqlite3 import Error as SQLiteError
 from sqlite3 import connect as sqlite_connect
 
+WARNINGS_ENABLED = False
+
+
+def warning_no_database_section(error):
+    if WARNINGS_ENABLED:
+        getLogger(__name__).warning("%s in '%s'",
+                                    error.message, SYNCINI_PATH)
+
 
 class DatabaseError(Exception):
     """
@@ -46,16 +55,14 @@ def get_sql_log_dict():
     try:
         dbtype = parser.get('database', 'type')
     except (NoSectionError, NoOptionError) as error:
-        getLogger(__name__).warning("%s in '%s'",
-                                    error.message, SYNCINI_PATH)
+        warning_no_database_section(error)
 
         dbtype = "sqlite"
     if dbtype in ['sqlite', 'sqlite3']:
         try:
             ip_address = parser.get('database', 'filename')
         except (NoSectionError, NoOptionError) as error:
-            getLogger(__name__).warning("%s in '%s'",
-                                        error.message, SYNCINI_PATH)
+            warning_no_database_section(error)
             ip_address = DATABASE_PATH
     else:
         ip_address = parser.get('database', 'hostname')
@@ -71,15 +78,14 @@ def database_execute(command, params=None):
     @param params a list of tuple of values to substitute in command
     @returns a list of dictionaries representing the sql result
     """
-    getLogger(__name__).info("database_execute(" + command + ", " +
+    getLogger(__name__).debug("database_execute(" + command + ", " +
                              str(params) + ")", extra=get_sql_log_dict())
     parser = ConfigParser()
     parser.read(SYNCINI_PATH)
     try:
         dbtype = parser.get('database', 'type')
     except (NoSectionError, NoOptionError) as error:
-        getLogger(__name__).warning("%s in '%s'",
-                                    error.message, SYNCINI_PATH)
+        warning_no_database_section(error)
         dbtype = 'sqlite'
 
     if dbtype == "mysql":
@@ -104,16 +110,13 @@ def sqlite_execute(command, params=None):
     @returns a list of dictionaries representing the sql result
     """
     # NOTE mostly copypasta'd from mysql_execute, may be a better way
-    getLogger(__name__).debug("sqlite_execute(" + command + ", " +
-                              str(params) + ")", extra=get_sql_log_dict())
     try:
         parser = ConfigParser()
         parser.read(SYNCINI_PATH)
         try:
             filename = parser.get('database', 'filename')
         except (NoSectionError, NoOptionError) as error:
-            getLogger(__name__).warning("%s in '%s'",
-                                        error.message, SYNCINI_PATH)
+            warning_no_database_section(error)
             filename = DATABASE_PATH
 
         init_db = not exists(expandvars(filename))
@@ -165,8 +168,6 @@ def mysql_execute(command, params=None):
     @param params a list of tuple of values to substitute in command
     @returns a list of dictionaries representing the sql result
     """
-    getLogger(__name__).debug("mysql_execute(" + command + ", " + str(params)
-                              + ")", extra=get_sql_log_dict())
     parser = ConfigParser()
     parser.read(SYNCINI_PATH)
     try:

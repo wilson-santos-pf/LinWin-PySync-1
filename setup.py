@@ -58,7 +58,9 @@ try:
 except NameError:
    print "this is not windows"
 
-data_files = [('localbox', ['localbox.ico'])]
+data_files = [
+    ('localbox', ['localbox.ico'])
+]
 
 if system() == 'Windows' or system().startswith('CYGWIN'):
     data_files += [('gpg', ['libs/iconv.dll', 'libs/gpg.exe'])]
@@ -83,5 +85,9 @@ setup(
     description="",
     license="all rights reserved",
     url="http://box.yourlocalbox.org",
-    data_files=data_files
+    data_files=data_files,
+    package_data={'sync': ['resources/images/*.png']},
+    install_requires = [
+        'pkg_resources'
+    ]
 )

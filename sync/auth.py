@@ -1,8 +1,10 @@
 """
 Authentication module for LocalBox/loauth
 """
+from _ssl import PROTOCOL_TLSv1_2
 from json import loads
 from time import time
+
 from .database import database_execute
 from logging import getLogger
 from ssl import SSLContext, PROTOCOL_TLSv1  # pylint: disable=E0611
@@ -10,7 +12,7 @@ from httplib import BadStatusLine
 
 try:
     from urllib import urlencode  # pylint: disable=E0611
-    from urllib2 import urlopen
+    from urllib2 import urlopen, HTTPError, URLError
     from urllib2 import HTTPError
     from urllib2 import URLError
 except ImportError:
@@ -19,7 +21,6 @@ except ImportError:
     from urllib.error import HTTPError  # pylint: disable=F0401,E0611
     from urllib.error import URLError  # pylint: disable=F0401,E0611
 from random import randint
-
 
 # Time to take away from the expiration date before reauthenticating
 # If zero, reauthentication will only happen when the token has expired
@@ -63,7 +64,7 @@ class Authenticator(object):
         self.expires = 0
         self.scope = None
         self.username = None
-        # todo:
+
         self.refresh_token = None
         self.load_client_data()
 
@@ -73,7 +74,7 @@ class Authenticator(object):
         the database
         """
         sql = "insert into sites (site, user, client_id, client_secret) " \
-            "values (?, ?, ?, ?);"
+              "values (?, ?, ?, ?);"
         database_execute(
             sql, (self.label, self.username, self.client_id, self.client_secret))
 
@@ -84,7 +85,7 @@ class Authenticator(object):
         sql = "select client_id, client_secret, user from sites where site = ?;"
         result = database_execute(sql, (self.label,))
         if result != [] and result is not None:
-            getLogger(__name__).debug("loading data")
+            getLogger(__name__).debug("loading client data for label: %s" % self.label)
             self.client_id = str(result[0][0])
             self.client_secret = str(result[0][1])
             self.username = str(result[0][2])
@@ -112,6 +113,7 @@ class Authenticator(object):
             raise AuthenticationError("Do not call init_authenticate w"
                                       "hen client_id and client_secret"
                                       " are already set")
+        self.username = username
         self.client_id = generate_client_id()
         self.client_secret = generate_client_secret()
         authdata = {'grant_type': 'password', 'username': username,
@@ -132,7 +134,7 @@ class Authenticator(object):
         self.client_secret = None
         return False
 
-    def authenticate(self):
+    def authenticate_with_client_secret(self):
         """
         Do authentication with the client credentials.
         """
@@ -145,6 +147,73 @@ class Authenticator(object):
                     'client_secret': self.client_secret}
         self._call_authentication_server(authdata)
 
+    def password_authentication(localbox_client, username, password):
+        error_msg = None
+        is_exception = False
+        try:
+            if localbox_client.authenticator.init_authenticate(username, password):
+                getLogger(__name__).debug("ini authenticate = true")
+            else:
+                getLogger(__name__).debug("ini authenticate = false")
+                error_msg = _("Username/Password incorrect")
+        except AlreadyAuthenticatedError as error:
+            getLogger(__name__).debug("ini authenticate = AlreadyAuthenticatedError")
+            getLogger(__name__).exception(error)
+            error_msg = None
+            is_exception = True
+        except (HTTPError, URLError) as error:
+            getLogger(__name__).debug("Problem connecting to the authentication server")
+            getLogger(__name__).exception(error)
+            error_msg = _('Authentication Problem: %s') % error
+            is_exception = True
+
+        return error_msg, is_exception
+
+    def authenticate_with_password(self, username, password):
+        """
+        Do initial authentication with the resource owner password credentials
+        """
+        if self.client_id is None or self.client_secret is None:
+            self.client_id = generate_client_id()
+            self.client_secret = generate_client_secret()
+            getLogger(__name__).debug('Created new credentials, cliend_id=%s' % self.client_id)
+
+        self.username = username
+
+        authdata = {'grant_type': 'password',
+                    'username': username,
+                    'password': password,
+                    'client_id': self.client_id,
+                    'client_secret': self.client_secret}
+
+        try:
+            self._call_authentication_server(authdata)
+            if self.access_token is not None:
+                getLogger(__name__).debug('Authentication Succesful. Saving Client Data')
+                self.save_client_data()
+                return True
+        except (HTTPError, URLError) as error:
+            getLogger(__name__).exception(error)
+            if hasattr(error, 'code') and error.code != 401:   # HTTP Error 401: Unauthorized
+                raise error
+        # clear credentials on failure
+        self.client_id = None
+        self.client_secret = None
+        return False
+
+    def is_authenticated(self):
+        try:
+            if self.has_client_credentials():
+                is_authenticated = True
+            else:
+                is_authenticated = False
+        except AlreadyAuthenticatedError():
+            is_authenticated = True
+
+        getLogger(__name__).debug("is_authenticated: %s" % is_authenticated)
+
+        return is_authenticated
+
     def _call_authentication_server(self, authdata):
         """
         function responsible for the actual call to the authentication
@@ -152,7 +221,9 @@ class Authenticator(object):
         """
         request_data = urlencode(authdata).encode('utf-8')
         try:
-            non_verifying_context = SSLContext(PROTOCOL_TLSv1)
+            getLogger(__name__).debug(
+                'calling authentication server: %s - %s' % (self.authentication_url, request_data))
+            non_verifying_context = SSLContext(PROTOCOL_TLSv1_2)
             http_request = urlopen(self.authentication_url, request_data,
                                    context=non_verifying_context, timeout=5)
             json_text = http_request.read().decode('utf-8')
@@ -161,14 +232,14 @@ class Authenticator(object):
             self.refresh_token = json.get('refresh_token')
             self.scope = json.get('scope')
             self.expires = time() + json.get('expires_in', 0) - \
-                EXPIRATION_LEEWAY
+                           EXPIRATION_LEEWAY
         except (HTTPError, URLError, BadStatusLine) as error:
             getLogger(__name__).debug('HTTPError when calling '
                                       'the authentication server')
             getLogger(__name__).debug(error.message)
             if hasattr(error, 'code') and error.code == 400:
                 getLogger(__name__).debug('Authentication Problem')
-                raise AuthenticationError()
+                raise AuthenticationError('Invalid credentials')
             else:
                 getLogger(__name__).debug('Other (connection) Problem')
                 raise error
@@ -179,10 +250,16 @@ class Authenticator(object):
         LocalBox server proper.
         """
         if self.access_token is None and self.client_id is None and \
-           self.client_secret is None:
-            raise AuthenticationError("Please authenticate with "
-                                      "resource owner credentials first")
+                        self.client_secret is None:
+            raise AuthenticationError('Please authenticate with resource owner credentials first')
         if time() > self.expires:
-            getLogger(__name__).debug("Reauthenticating")
-            self.authenticate()
+            getLogger(__name__).debug("Token expired. Reauthenticating")
+            self.authenticate_with_client_secret()
         return 'Bearer ' + self.access_token
+
+
+class AlreadyAuthenticatedError(Exception):
+    """
+    authentication has already been done error.
+    """
+    pass

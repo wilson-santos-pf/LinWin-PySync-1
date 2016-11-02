@@ -1,17 +1,16 @@
 """
 listing of values/variables' default values.
 """
-from os.path import exists
-from os.path import join
-from os.path import expandvars
 from os.path import abspath
 from os.path import dirname
-try:
-    from .version import VERSION
-except ImportError:
-    VERSION = "development"
+from os.path import exists
+from os.path import expandvars
+from os.path import join
 
-KEEP_RUNNING = True
+try:
+    from sync.version import VERSION
+except ImportError:
+    VERSION = open('VERSION').readline().strip()
 
 PACKAGEDIR = dirname(abspath(__file__))
 
@@ -24,8 +23,13 @@ else:
 
 SYNCINI_PATH = join(APPDIR, 'sync.ini')
 SITESINI_PATH = join(APPDIR, 'sites.ini')
+LOCALBOX_SITES_PATH = join(APPDIR, 'sites.pickle')
+LOCALBOX_PREFERENCES_PATH = join(APPDIR, 'prefs.pickle')
+LOCALBOX_ACCOUNT_PATH = join(APPDIR, 'account.pickle')
 DATABASE_PATH = join(APPDIR, 'database.sqlite3')
 LOG_PATH = join(APPDIR, 'localbox-sync.log')
 LOCALE_PATH = join(PACKAGEDIR, 'locale')
+DEFAULT_LANGUAGE = 'ENGLISH'
+LOCALBOX_EXTENSION = '.lox'
 
 OLD_SYNC_STATUS = join(APPDIR, 'localbox.pickle.')

@@ -1,6 +1,7 @@
 """
 Authentication module for LocalBox/loauth
 """
+from _ssl import PROTOCOL_TLSv1_2
 from json import loads
 from time import time
 
@@ -193,7 +194,7 @@ class Authenticator(object):
                 return True
         except (HTTPError, URLError) as error:
             getLogger(__name__).exception(error)
-            if error.code != 401:   # HTTP Error 401: Unauthorized
+            if hasattr(error, 'code') and error.code != 401:   # HTTP Error 401: Unauthorized
                 raise error
         # clear credentials on failure
         self.client_id = None
@@ -222,7 +223,7 @@ class Authenticator(object):
         try:
             getLogger(__name__).debug(
                 'calling authentication server: %s - %s' % (self.authentication_url, request_data))
-            non_verifying_context = SSLContext(PROTOCOL_TLSv1)
+            non_verifying_context = SSLContext(PROTOCOL_TLSv1_2)
             http_request = urlopen(self.authentication_url, request_data,
                                    context=non_verifying_context, timeout=5)
             json_text = http_request.read().decode('utf-8')

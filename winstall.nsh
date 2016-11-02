@@ -155,6 +155,17 @@ SectionEnd
 Section "un.AppData"
     ${un.EnumUsersReg} un.DelAppData localbox
 SectionEnd
+
+Section "un.Python"
+    ExecWait 'msiexec.exe /x $TEMP\python.msi'
+SectionEnd
+
+Section "un.Clean Registry"
+    DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\LocalBoxSync-py2.7"
+    DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\pycrypto-py2.7"
+    DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\wxPython3.0-py27_is1"
+SectionEnd
+
 SectionGroupEnd
 
 Function un.DelAppData

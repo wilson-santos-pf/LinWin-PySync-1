@@ -5,12 +5,13 @@ from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 from logging import getLogger
 from threading import Thread
 
+import sync.gui.gui_utils as gui_utils
 from sync import language
+from sync.controllers.localbox_ctrl import SyncsController
 from sync.controllers.login_ctrl import LoginController
 from sync.controllers.preferences_ctrl import ctrl as preferences_ctrl
+from sync.defaults import SITESINI_PATH, VERSION
 from sync.gui.gui_wx import Gui
-from sync.defaults import SITESINI_PATH, LOCALE_PATH, VERSION
-import sync.gui.gui_utils as gui_utils
 
 try:
     import wx
@@ -35,10 +36,11 @@ class LocalBoxIcon(wx.TaskBarIcon):
     TBMENU_SYNC = wx.NewId()
     TBMENU_SYNC2 = wx.NewId()
     TBMENU_VERSION = wx.NewId()
+    TBMENU_STOP = wx.NewId()
     TBMENU_DELETE_DECRYPTED = wx.NewId()
     icon_path = None
 
-    def __init__(self, waitevent=None, sites=None):
+    def __init__(self, main_syncing_thread, sites=None):
         location = SITESINI_PATH
         configparser = ConfigParser()
         configparser.read(location)
@@ -49,9 +51,9 @@ class LocalBoxIcon(wx.TaskBarIcon):
             self.sites = []
         # The purpose of this 'frame' is to keep the mainloop of wx alive
         # (which checks for living wx thingies)
-        self.frame = Gui(None)
+        self.frame = Gui(None, main_syncing_thread.waitevent, main_syncing_thread)
         self.frame.Show(False)
-        self.event = waitevent
+        self._main_syncing_thread = main_syncing_thread
 
         # Set the image
         self.taskbar_icon = wx.Icon(gui_utils.iconpath())
@@ -62,6 +64,7 @@ class LocalBoxIcon(wx.TaskBarIcon):
         self.Bind(wx.EVT_MENU, self.OnTaskBarClose, id=self.TBMENU_CLOSE)
         self.Bind(wx.EVT_MENU, self.start_gui, id=self.TBMENU_GUI)
         self.Bind(wx.EVT_MENU, self.start_sync, id=self.TBMENU_SYNC)
+        self.Bind(wx.EVT_MENU, self.stop_sync, id=self.TBMENU_STOP)
         self.Bind(wx.EVT_MENU, self.delete_decrypted, id=self.TBMENU_DELETE_DECRYPTED)
         self.Bind(wx.EVT_TASKBAR_LEFT_DOWN, self.OnTaskBarClick)
         self.Bind(wx.EVT_TASKBAR_RIGHT_DOWN, self.OnTaskBarClick)
@@ -78,10 +81,10 @@ class LocalBoxIcon(wx.TaskBarIcon):
         """
         tell the syncer the system is ready to sync
         """
-        if not self.event.is_set():
-            self.event.set()
-        else:
-            getLogger(__name__).debug("Pressing start sync whilst sync in progress")
+        self._main_syncing_thread.sync()
+
+    def stop_sync(self, wx_event):
+        self._main_syncing_thread.stop()
 
     def delete_decrypted(self, event):
         import sync
@@ -97,13 +100,19 @@ class LocalBoxIcon(wx.TaskBarIcon):
         getLogger(__name__).debug("create_popup_menu")
         menu = wx.Menu()
         menu.Append(self.TBMENU_GUI, _("Settings"))
-        # TODO: 'force sync'/'wait sync' dependant on lock status
         menu.AppendSeparator()
-        if self.event.is_set():
+        if self._main_syncing_thread.is_running():
             menu.Append(self.TBMENU_SYNC2, _("Sync in progress"))
             menu.Enable(id=self.TBMENU_SYNC2, enable=False)
         else:
             menu.Append(self.TBMENU_SYNC, _("Force Sync"))
+            # only enable option if label list is not empty
+            menu.Enable(id=self.TBMENU_SYNC, enable=len(SyncsController().list) > 0)
+
+        menu.Append(self.TBMENU_STOP, _('Stop'))
+        menu.Enable(id=self.TBMENU_STOP, enable=self._main_syncing_thread.is_running())
+
+        menu.AppendSeparator()
 
         menu.Append(self.TBMENU_DELETE_DECRYPTED, _("Delete decrypted files"))
         import desktop_utils.controllers.openfiles_ctrl as openfiles_ctrl
@@ -156,11 +165,12 @@ class PassphraseHandler(BaseHTTPRequestHandler):
         self.send_header('Content-type', 'text/plain')
         self.end_headers()
         # Send the html message
-        passphrase = LoginController().get_passphrase(self.get_label(self.path))
+        passphrase = LoginController().get_passphrase(self.get_label())
         self.wfile.write(passphrase)
         return
 
-    def get_label(self, path):
+    def get_label(self):
+        path = self.path
         if path.startswith('/'):
             path = path[1:]
 
@@ -175,13 +185,13 @@ def passphrase_server():
     server.serve_forever()
 
 
-def taskbarmain(waitevent=None, sites=None):
+def taskbarmain(main_syncing_thread, sites=None):
     """
     main function to run to get the taskbar started
     """
     app = wx.App(False)
     language.set_language(preferences_ctrl.get_language_abbr())
-    icon = LocalBoxIcon(waitevent, sites=sites)
+    icon = LocalBoxIcon(main_syncing_thread, sites=sites)
     # icon.start_gui(None)
 
     MAIN = Thread(target=passphrase_server)

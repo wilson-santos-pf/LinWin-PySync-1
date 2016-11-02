@@ -17,16 +17,17 @@ from sync.language import LANGUAGES
 
 
 class Gui(wx.Frame):
-    def __init__(self, parent):
+    def __init__(self, parent, event, main_syncing_thread):
         super(Gui, self).__init__(parent,
                                   title=MAIN_TITLE,
                                   size=MAIN_FRAME_SIZE,
                                   style=wx.CLOSE_BOX | wx.CAPTION)
 
         # Attributes
+        self._main_syncing_thread = main_syncing_thread
+        self.event = event
         self.toolbar_panels = dict()
-        # self.panel_login = FirstLoginPanel(self)
-        self.panel_syncs = SyncsPanel(self)
+        self.panel_syncs = SyncsPanel(self, event, main_syncing_thread)
         self.panel_account = AccountPanel(self)
         self.panel_preferences = PreferencesPanel(self)
         self.panel_bottom = BottomPanel(self)
@@ -40,7 +41,6 @@ class Gui(wx.Frame):
 
         bSizer1 = wx.BoxSizer(wx.VERTICAL)
         bSizer1.Add(self.panel_line, 0, wx.EXPAND, border=10)
-        # bSizer1.Add(self.panel_login, 0, wx.EXPAND, 10)
         bSizer1.Add(self.panel_syncs, 0, wx.EXPAND, 10)
         bSizer1.Add(self.panel_account, 0, wx.EXPAND, 10)
         bSizer1.Add(self.panel_preferences, 0, wx.EXPAND, 10)
@@ -163,9 +163,12 @@ class SyncsPanel(wx.Panel):
     Custom Panel containing a ListCtrl to list the syncs/localboxes
     """
 
-    def __init__(self, parent):
+    def __init__(self, parent, event, main_syncing_thread):
         wx.Panel.__init__(self, parent, id=wx.ID_ANY, size=MAIN_PANEL_SIZE)
+
         # Attributes
+        self._main_syncing_thread = main_syncing_thread
+        self.event = event
         self.ctrl = LocalboxListCtrl(self)
         self.btn_add_localbox = wx.Button(self, label=_('Add'), size=(70, 30))
         self.btn_delete = wx.Button(self, label=_('Delete'), size=(70, 30))
@@ -175,7 +178,7 @@ class SyncsPanel(wx.Panel):
 
         # Bind events
         self.Bind(wx.EVT_BUTTON, self.newSyncDialog, self.btn_add_localbox)
-        self.Bind(wx.EVT_BUTTON, self.ctrl.delete, self.btn_delete)
+        self.Bind(wx.EVT_BUTTON, self.delete_localbox, self.btn_delete)
 
         # Setup
         self.ctrl.populate_list()
@@ -199,9 +202,13 @@ class SyncsPanel(wx.Panel):
 
         self.SetSizer(vbox)
 
-    def newSyncDialog(self, event):
-        # NewSyncDialog(parent=self, ctrl=self.ctrl).Show()
-        wizard = NewSyncWizard(self.ctrl)
+    def newSyncDialog(self, wx_event):
+        NewSyncWizard(self.ctrl, self.event)
+
+    def delete_localbox(self, wx_event):
+        labels_deleted = self.ctrl.delete()
+        for label in labels_deleted:
+            self._main_syncing_thread.stop(label)
 
 
 class AccountPanel(wx.Panel):
@@ -397,17 +404,20 @@ class LocalboxListCtrl(wx.ListCtrl):
         self.Append((item.label, item.path, item.url))
         self.ctrl.add(item)
 
-    def delete(self, event):
+    def delete(self):
         idx = 0
+        labels_removed = []
         while idx > -1:
             idx = self.GetNextSelected(-1)
 
             if idx > -1:
                 getLogger(__name__).debug('Delete item: #%d' % idx)
                 self.DeleteItem(idx)
-                self.ctrl.delete(idx)
+                label = self.ctrl.delete(idx)
+                labels_removed.append(label)
 
         self.save()
+        return labels_removed
 
     def save(self):
         getLogger(__name__).info('Sync list ctrl save()')

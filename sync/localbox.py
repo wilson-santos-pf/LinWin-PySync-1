@@ -9,6 +9,7 @@ import urllib
 from Crypto.Cipher.AES import MODE_CFB
 from Crypto.Cipher.AES import new as AES_Key
 from Crypto.Random import new as CryptoRandom
+from _ssl import PROTOCOL_TLSv1_2
 from base64 import b64decode
 from base64 import b64encode
 from logging import getLogger
@@ -77,7 +78,7 @@ class LocalBox(object):
             return self._authentication_url
         else:
             try:
-                non_verifying_context = SSLContext(PROTOCOL_TLSv1)
+                non_verifying_context = SSLContext(PROTOCOL_TLSv1_2)
                 getLogger(__name__).debug("validating localbox server: %s" % self.url)
                 urlopen(self.url, context=non_verifying_context)
             except BadStatusLine as error:
@@ -107,7 +108,7 @@ class LocalBox(object):
         """
         request.add_header('Authorization',
                            self.authenticator.get_authorization_header())
-        non_verifying_context = SSLContext(PROTOCOL_TLSv1)
+        non_verifying_context = SSLContext(PROTOCOL_TLSv1_2)
         return urlopen(request, context=non_verifying_context)
 
     def get_meta(self, path=''):
@@ -146,10 +147,7 @@ class LocalBox(object):
         try:
             self._make_call(request)
             if path.count('/') == 1:
-                getLogger(__name__).debug("Creating a key for folder " + path)
-                key = CryptoRandom().read(16)
-                iv = CryptoRandom().read(16)
-                self.save_key(path, key, iv)
+                create_key_and_iv(self, path)
         except HTTPError as error:
             getLogger(__name__).warning("'%s' whilst creating directory %s. %s", error, path, error.message)
             # TODO: make directory encrypted
@@ -166,45 +164,52 @@ class LocalBox(object):
         except HTTPError:
             getLogger(__name__).error("Error remote deleting '%s'", path)
 
-    def upload_file(self, path, localpath, passphrase):
+    def upload_file(self, path, fs_path, passphrase):
         """
         upload a file to localbox
+
+        :param path: path relative to localbox location. eg: /some_folder/image.jpg
+        :param fs_path: file system path. eg: /home/user/localbox/some_folder/image.jpg
+        :param passphrase: used to encrypt file
+        :return:
         """
         metapath = quote_plus(path)
-        # contents = open(localpath).read()
-        # larger version
-        stats = stat(localpath)
-        openfile = open(localpath, 'rb')
-        contents = openfile.read(stats.st_size)
-        openfile.flush()
 
         try:
+            # read plain file
+            stats = stat(fs_path)
+            openfile = open(fs_path, 'rb')
+            contents = openfile.read(stats.st_size)
+            openfile.flush()
+
+            # encrypt file
             contents = gpg.add_pkcs7_padding(contents)
             clen = len(contents)
             contents = self.encode_file(path, contents, passphrase)
-        except BadStatusLine as error:
-            getLogger(__name__).exception(error)
-            # TODO: make sure files get encrypted
-        except HTTPError as error:
-            getLogger(__name__).exception(error)
 
-        # remove plain file and save encryted
-        openfile.close()
-        try:
-            remove(localpath)
-        except Exception as error:
-            getLogger(__name__).error('Failed to remove decrypted file: %s, %s' % (localpath, error))
+            # save encrypted file
+            encrypted_file = open(fs_path + defaults.LOCALBOX_EXTENSION, 'wb')
+            encrypted_file.write(contents)
+            encrypted_file.close()
 
-        encrypted_file = open(localpath + defaults.LOCALBOX_EXTENSION, 'wb')
-        encrypted_file.write(contents)
-        encrypted_file.close()
+            openfile.close()
 
-        getLogger(__name__).info("Uploading %s: Statsize: %d, readsize: %d cryptosize: %d", localpath, stats.st_size,
-                                 clen, len(contents))
+            # remove plain file
+            remove(fs_path)
 
-        request = Request(url=self.url + 'lox_api/files',
-                          data=dumps({'contents': b64encode(contents), 'path': metapath}))
-        return self._make_call(request)
+            # upload encrypted file
+            getLogger(__name__).info("Uploading %s: Statsize: %d, readsize: %d cryptosize: %d",
+                                     fs_path, stats.st_size, clen, len(contents))
+
+            request = Request(url=self.url + 'lox_api/files',
+                              data=dumps({'contents': b64encode(contents), 'path': metapath}))
+
+            return self._make_call(request)
+
+        except (BadStatusLine, HTTPError, OSError) as error:
+            getLogger(__name__).error('Failed to upload file: %s' % (path, error))
+
+        return None
 
     def call_user(self, send_data=None):
         """
@@ -227,11 +232,6 @@ class LocalBox(object):
 
         request = Request(url=self.url + 'lox_api/key/' + keys_path)
         return self._make_call(request)
-
-    def call_create_share(self):
-        request = Request(url=self.url + 'lox_api/create_share/' + keys_path, data=data)
-        return self._make_call(request)
-
 
     @staticmethod
     def get_keys_path_v2(localbox_path):
@@ -297,6 +297,11 @@ class LocalBox(object):
     def save_key(self, path, key, iv):
         """
         saves an encrypted key on the localbox server
+
+        :param path: path relative to localbox location. eg: /some_folder/image.jpg
+        :param key:
+        :param iv:
+        :return:
         """
         cryptopath = LocalBox.get_keys_path(path)
         cryptopath = quote_plus(cryptopath)
@@ -322,56 +327,21 @@ class LocalBox(object):
         """
         try:
             path = path.replace('\\', '/')
-            stats = self.get_meta(path)
-            if stats['has_keys']:
-                pgpclient = gpg()
+            key = get_aes_key(self, path, passphrase)
 
-                # call the backend to get rsa encrypted key and initialization vector for decoding the file
-                jsontext = self.call_keys(path).read()
-                keydata = loads(jsontext)
+            with open(filename, 'rb') as content_file:
+                contents = content_file.read()
+                result = key.decrypt(contents)
 
-                pgpdkeystring = b64decode(keydata['key'])
-                pgpdivstring = b64decode(keydata['iv'])
-
-                keystring = pgpclient.decrypt(pgpdkeystring, passphrase)
-                ivstring = pgpclient.decrypt(pgpdivstring, passphrase)
-
-                try:
-                    getLogger(__name__).debug('Decoding "%s" with key "%s"', path, getChecksum(keystring))
-                    key = AES_Key(keystring, MODE_CFB, ivstring, segment_size=128)
-                except ValueError:
-                    getLogger(__name__).info("cannot decode JSON: %s", jsontext)
-                    return None
-
-                with open(filename, 'rb') as content_file:
-                    contents = content_file.read()
-                    result = key.decrypt(contents)
-
-                return gpg.remove_pkcs7_padding(result)
-            else:
-                getLogger(__name__).error("No keys found for %s", path)
-                return None
-        except HTTPError as error:
-            getLogger(__name__).info("HTTPError: %s", error)
-            return None
+            return gpg.remove_pkcs7_padding(result)
+        except NoKeysFoundError as error:
+            getLogger(__name__).exception('Failed to decode file %s, %s', filename, error)
 
     def encode_file(self, path, contents, passphrase):
         """
         encode a file
         """
-        pgpclient = gpg()
-        try:
-            keydata = loads(self.call_keys(path).read())
-            key = pgpclient.decrypt(b64decode(keydata['key']), passphrase)
-            iv = pgpclient.decrypt(b64decode(keydata['iv']), passphrase)
-        except (HTTPError, TypeError, ValueError):
-            getLogger(__name__).debug("path '%s' is without key, generating one.", path)
-            # generate keys if they don't exist
-            key = CryptoRandom().read(16)
-            iv = CryptoRandom().read(16)
-            self.save_key(path, key, iv)
-        getLogger(__name__).debug("Encoding %s with key %s", path, getChecksum(key))
-        key = AES_Key(key, MODE_CFB, iv, segment_size=128)
+        key = get_aes_key(self, path, passphrase, should_create=True)
         result = key.encrypt(contents)
         return result
 
@@ -392,11 +362,47 @@ class LocalBox(object):
             return False
 
 
+def create_key_and_iv(localbox_client, path):
+    getLogger(__name__).debug('Creating a key for path: %s', path)
+    key = CryptoRandom().read(16)
+    iv = CryptoRandom().read(16)
+    localbox_client.save_key(path, key, iv)
+
+
+def get_aes_key(localbox_client, path, passphrase, should_create=False):
+    pgp_client = gpg()
+    key = None
+    iv = None
+    try:
+        key_data = loads(localbox_client.call_keys(path).read())
+        key = pgp_client.decrypt(b64decode(key_data['key']), passphrase)
+        iv = pgp_client.decrypt(b64decode(key_data['iv']), passphrase)
+        getLogger(__name__).debug("Got key %s for path %s", getChecksum(key), path)
+    except (HTTPError, TypeError, ValueError):
+        if should_create:
+            getLogger(__name__).debug("path '%s' is without key, generating one.", path)
+            # generate keys if they don't exist
+            create_key_and_iv(localbox_client, path)
+        else:
+            raise NoKeysFoundError(message='No keys found for %s' % path)
+
+    return AES_Key(key, MODE_CFB, iv, segment_size=128) if key else None
+
+
 class InvalidLocalboxError(Exception):
     """
     URL for localbox backend is invalid or is unreachable
     """
     pass
+
+
+class NoKeysFoundError(Exception):
+    """
+    Failed to get keys for file
+    """
+
+    def __init__(self, *args, **kwargs):  # real signature unknown
+        pass
 
 
 if __name__ == "__main__":

@@ -2,6 +2,7 @@ import json
 import pickle
 from logging import getLogger
 
+import sync.models.label_model as label_model
 from sync.defaults import LOCALBOX_SITES_PATH
 
 
@@ -21,9 +22,12 @@ class SyncsController:
         :param index:
         :return:
         """
+        label = self._list[index].label
+        label_model.delete_client_data(label)
         del self._list[index]
         if save:
             self.save()
+        return label
 
     def save(self):
         pickle.dump(self._list, open(LOCALBOX_SITES_PATH, 'wb'))

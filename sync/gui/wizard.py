@@ -15,10 +15,11 @@ from sync.localbox import LocalBox
 
 
 class NewSyncWizard(wx.wizard.Wizard):
-    def __init__(self, sync_list_ctrl):
+    def __init__(self, sync_list_ctrl, event):
         wx.wizard.Wizard.__init__(self, None, -1, _(gui_utils.NEW_SYNC_DIALOG_TITLE))
 
         # Attributes
+        self.event = event
         self.localbox_client = None
         self.ctrl = sync_list_ctrl
         self.username = None
@@ -100,7 +101,6 @@ class NewSyncInputsWizardPage(wx.wizard.WizardPageSimple):
         dialog.Destroy()
 
     def validate_new_sync_inputs(self, event):
-        getLogger(__name__).debug('nextPage: %s' % self.GetNext())
         # step 1
         label = self.label
         url = self.url
@@ -283,7 +283,7 @@ class PassphraseWizardPage(wx.wizard.WizardPageSimple):
             if gui_utils.is_valid_input(self.passphrase):
                 # going forward
                 # step #4
-                getLogger(__name__).debug("wizard next_4")
+                getLogger(__name__).debug("storing keys")
 
                 if not LoginController().store_keys(localbox_client=self.parent.localbox_client,
                                                     pubkey=self.pubkey,
@@ -305,4 +305,5 @@ class PassphraseWizardPage(wx.wizard.WizardPageSimple):
                         user=self.parent.localbox_client.authenticator.username)
         self.parent.ctrl.add(item)
         self.parent.ctrl.save()
+        self.parent.event.set()
         getLogger(__name__).debug("new sync saved")

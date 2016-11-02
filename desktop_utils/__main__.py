@@ -71,7 +71,8 @@ try:
             localbox_filename = None
             for sync_item in sync_list:
                 getLogger(__name__).debug('sync path: %s' % sync_item.path)
-                if filename.startswith(sync_item.path):
+                sync_path = sync_item.path if sync_item.path.endswith('/') else sync_item.path + os.path.sep
+                if filename.startswith(sync_path):
                     found = True
                     cur_sync_item = sync_item
                     localbox_filename = os_utils.remove_extension(filename.replace(sync_item.path, ''),
@@ -80,8 +81,9 @@ try:
                     break
 
             if not localbox_client or not localbox_filename:
-                gui_utils.show_error_dialog(_('%s does not belong to any localbox') % filename, 'Error', True)
-                getLogger(__name__).error('%s does not belong to any localbox' % filename)
+                gui_utils.show_error_dialog(_('%s does not belong to any configured localbox') % filename, 'Error',
+                                            True)
+                getLogger(__name__).error('%s does not belong to any configured localbox' % filename)
                 exit(1)
 
             # get passphrase

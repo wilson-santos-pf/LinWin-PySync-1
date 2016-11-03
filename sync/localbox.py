@@ -364,7 +364,7 @@ class LocalBox(object):
 
 def create_key_and_iv(localbox_client, path):
     getLogger(__name__).debug('Creating a key for path: %s', path)
-    key = CryptoRandom().read(16)
+    key = CryptoRandom().read(32)
     iv = CryptoRandom().read(16)
     localbox_client.save_key(path, key, iv)
 

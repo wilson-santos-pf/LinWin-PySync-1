@@ -41,16 +41,6 @@ class gpg(object):
         key = self.gpg.export_keys(fingerprint, private, armor=False)
         return b64encode(key.encode('ISO8859-1'))
 
-    def add_pubkey(self, public_key, site, user):
-        """
-        add a public key to the key database
-        """
-        result = self.gpg.import_keys(public_key)
-        fingerprint = result.fingerprints[0]
-        sql = "INSERT INTO keys (site, user, fingerprint) VALUES (?, ?, ?);"
-        database_execute(sql, (site, user, fingerprint))
-        return fingerprint
-
     def add_keypair(self, public_key, private_key, site, user, passphrase):
         """
         add a keypair into the gpg key database
@@ -131,7 +121,7 @@ class gpg(object):
 
     @staticmethod
     def add_pkcs7_padding(contents):
-        # Input strings must be a multiple of the segment size 16 in length
+        # Input strings must be a multiple of the segment size 16 bytes in length
         segment_size = 16
 
         # calculate how much padding is needed

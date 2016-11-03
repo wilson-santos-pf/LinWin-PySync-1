@@ -12,3 +12,4 @@ syncdatabase.sqlite3
 .idea
 *bak
 *.exe
+docs/_diagrams/gen

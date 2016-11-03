@@ -19,6 +19,10 @@ Download
 ========
 The latest version is available at (ftp or Http) software.yourlocalbox.org/clients
 
+Documentation
+=============
+The complete documentation for the LocalBox desktop client is `here <https://2ek.github.io/LinWin-PySync/>`_
+
 User Manual
 ===========
 The user manual is available at GitHub Pages, `here <https://2ek.github.io/LinWin-PySync/source/usermanual.html>`_

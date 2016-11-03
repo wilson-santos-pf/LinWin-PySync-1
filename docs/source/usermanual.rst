@@ -14,6 +14,19 @@ Execute the installer (eg. LocalBoxInstaller.exe)
 * If all goes well there is a completed window, and you can than click [Close]
 * Reboot or not (yep... it's Windows) or try to start the program, and you see in the taskbar a new localbox icon
 
+
+Explaning LocalBox
+==================
+
+The LocalBox user can setup a directory on his computer to be stored securely on a remote server.
+Using the same account the user can synchronize the same files with other devices / computers.
+Each user has his own LocalBox directory on the server. All the files inside this directory are encrypted.
+When the files are downloaded to the computer they are encrypted.
+When the file are uploaded to the server they are encrypted.
+
+.. image:: ../_diagrams/gen/current_scenario.svg
+
+
 Creating your first localbox
 ============================
 

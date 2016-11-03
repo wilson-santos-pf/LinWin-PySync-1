@@ -11,8 +11,8 @@ Contents:
 .. toctree::
     :maxdepth: 2
     
-    source/includeme.rst
-    source/usermanual.rst
+    docs/source/includeme.rst
+    docs/source/usermanual.rst
 
 Indices and tables
 ==================

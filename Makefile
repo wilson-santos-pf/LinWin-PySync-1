@@ -7,6 +7,9 @@ BUILDDIR      = ../LinWin-PySync-docs
 PDFBUILDDIR	  = /tmp
 PDF 		  = ../manual.pdf
 APIDOCDIR	  = docs/_apidoc
+DOCSDIR       = docs
+DIAGRAMSDIR   = $(DOCSDIR)/_diagrams
+SCRIPT_DIA_EXPORT = ../LoxCommon/scripts/dia_export.sh
 
 # Internal variables.
 PAPEROPT_a4     = -D latex_paper_size=a4
@@ -18,7 +21,7 @@ I18NSPHINXOPTS  = $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
 all: winstall
 
 sync/version.py:
-	echo VERSION=\'`cat VERSION``git log | grep -c ^commit`\' >> sync/version.py
+	echo VERSION=\'`cat VERSION``git log | grep -c ^commit`\' > sync/version.py
 
 clean:
 	find . -name "*.pyc" -exec rm {} \;
@@ -27,7 +30,7 @@ clean:
 winstall: clean  installer
 
 installer: exe
-	makensis winstall.nsh
+	makensis -DVERSION=`cat VERSION``git log | grep -c ^commit` winstall.nsh
 
 exe: sync/version.py
 	wine python.exe setup.py bdist_wininst
@@ -70,15 +73,18 @@ help:
 	@echo "  coverage   to run coverage check of the documentation (if enabled)"
 	@echo "  dummy      to check syntax errors of document sources"
 
-.PHONY: clean
-clean:
-	rm -rf $(BUILDDIR)/*
+#.PHONY: clean
+#clean:
+#	rm -rf $(BUILDDIR)/*
 
 apidoc:
 	$(SPHINXAPIDOC) -o $(APIDOCDIR) sync
 
+diagrams:
+	chmod +x $(SCRIPT_DIA_EXPORT) && $(SCRIPT_DIA_EXPORT) $(DIAGRAMSDIR)
+
 .PHONY: html
-html: apidoc
+html: apidoc    diagrams
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."

@@ -12,6 +12,8 @@ Contents:
     :maxdepth: 2
     
     docs/source/includeme.rst
+    docs/source/specification.rst
+    docs/source/nextsteps.rst
     docs/source/usermanual.rst
 
 Indices and tables

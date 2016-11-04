@@ -178,4 +178,4 @@ FunctionEnd
 
 
 
-OutFile LocalBoxInstaller.exe
+OutFile LocalBoxInstaller-${VERSION}.exe

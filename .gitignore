@@ -13,3 +13,4 @@ syncdatabase.sqlite3
 *bak
 *.exe
 docs/_diagrams/gen
+docs/_diagrams/*.svg

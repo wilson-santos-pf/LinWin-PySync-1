@@ -25,17 +25,20 @@ sync/version.py:
 
 clean:
 	find . -name "*.pyc" -exec rm {} \;
-	rm -rf build sync/__pycache__ LocalBoxSync-0.1a*.win32.exe LocalBoxInstaller.exe dist/* sync/version.py
+	rm -rf deb_dist dist build sync/__pycache__ LocalBoxSync*win32.exe LocalBoxInstaller*.exe LocalBoxSync.egg-info sync/version.py
 
 winstall: clean  installer
 
-installer: exe
-	makensis -DVERSION=`cat VERSION``git log | grep -c ^commit` winstall.nsh
+deb:    clean
+	python setup.py --command-packages=stdeb.command bdist_deb
 
-exe: sync/version.py
+installer: exe
+	makensis -DVERSION=`python -c 'from sync._version import __version__; print __version__' | tail -1` winstall.nsh
+
+exe: #sync/version.py
 	wine python.exe setup.py bdist_wininst
 	#python setup.py bdist_wininst
-	cp dist/LocalBoxSync-0.1a*.win32.exe .
+	cp dist/LocalBoxSync-*.win32.exe .
 
 translatefile:
 	pygettext -o localboxsync.pot -k lgettext -k translate sync

@@ -1,7 +1,7 @@
 import pickle
 from logging import getLogger
 
-from desktop_utils.defaults import LOCALBOX_OPENFILES
+from sync.defaults import LOCALBOX_OPENFILES
 
 
 def add(filename):

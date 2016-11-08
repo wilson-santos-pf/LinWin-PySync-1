@@ -1,23 +1,11 @@
-from setuptools import setup, find_packages
-from platform import system
-from distutils.sysconfig import get_python_lib
-from subprocess import check_output
-
-#
-# script to register Python 2.0 or later for use with win32all
-# and other extensions that require Python registry settings
-#
-# written by Joakim Low for Secret Labs AB / PythonWare
-#
-# source:
-# http://www.pythonware.com/products/works/articles/regpy20.htm
-
 import sys
+from platform import system
+from setuptools import setup, find_packages
 
 try:
-   from _winreg import *
+    from _winreg import *
 except ImportError:
-   print "this is not windows"
+    print "this is not windows"
 
 # tweak as necessary
 version = sys.version[:3]
@@ -29,6 +17,7 @@ pythonkey = "PythonPath"
 pythonpath = "%s;%s\\Lib\\;%s\\DLLs\\" % (
     installpath, installpath, installpath
 )
+
 
 def RegisterPy():
     try:
@@ -45,7 +34,7 @@ def RegisterPy():
         print "--- Python", version, "is now registered!"
         return
     if (QueryValue(reg, installkey) == installpath and
-        QueryValue(reg, pythonkey) == pythonpath):
+                QueryValue(reg, pythonkey) == pythonpath):
         CloseKey(reg)
         print "=== Python", version, "is already registered!"
         return
@@ -53,31 +42,27 @@ def RegisterPy():
     print "*** Unable to register!"
     print "*** You probably have another Python installation!"
 
+
 try:
- RegisterPy()
+    RegisterPy()
 except NameError:
-   print "this is not windows"
+    print "this is not windows"
 
 data_files = [
-    ('localbox', ['localbox.ico'])
+    ('localbox', ['data/icon/localbox.ico',
+                  'data/icon/localbox.png',
+                  'data/x-localbox.xml']),
+    ('/usr/share/applications/', ['data/localbox.desktop'])
 ]
 
 if system() == 'Windows' or system().startswith('CYGWIN'):
     data_files += [('gpg', ['libs/iconv.dll', 'libs/gpg.exe'])]
 
-try:
-    git_number = len([elem for elem in check_output(
-        ['git', 'log']).split("\n") if elem.startswith('commit ')])
-    if git_number != 0:
-        versionno = "0.1a" + str(git_number)
-except WindowsError:
-    print "Sorry; git executable needed for a version number"
-    versionno = "0.1a.nogit"
-
+from sync import __version__
 
 setup(
     name="LocalBoxSync",
-    version=versionno,
+    version=__version__,
     packages=find_packages(),
     py_modules=['gnupg'],
     author="Letshare Holding B.V.",
@@ -86,8 +71,5 @@ setup(
     license="all rights reserved",
     url="http://box.yourlocalbox.org",
     data_files=data_files,
-    package_data={'sync': ['resources/images/*.png']},
-    install_requires = [
-        'pkg_resources'
-    ]
+    include_package_data=True,
 )

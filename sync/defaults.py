@@ -1,16 +1,11 @@
 """
 listing of values/variables' default values.
 """
-from os.path import abspath
+from os.path import abspath, join
 from os.path import dirname
 from os.path import exists
 from os.path import expandvars
 from os.path import join
-
-try:
-    from sync.version import VERSION
-except ImportError:
-    VERSION = open('VERSION').readline().strip()
 
 PACKAGEDIR = dirname(abspath(__file__))
 
@@ -33,3 +28,4 @@ DEFAULT_LANGUAGE = 'ENGLISH'
 LOCALBOX_EXTENSION = '.lox'
 
 OLD_SYNC_STATUS = join(APPDIR, 'localbox.pickle.')
+LOCALBOX_OPENFILES = join(APPDIR, 'openfiles.pickle')

@@ -22,3 +22,31 @@ Upon application exit the client will delete these files.
 The user has the option to delete these files at any time:
 
 .. image:: ../_static/usermanual/localbox-delete-decrypted.*
+
+Lox extension
+-------------
+
+In order to open then encrypted file we have to create a new file type and register it to open with the LocalBox application.
+
+Linux
++++++
+
+1. On Linux first we have to create the mime type:
+
+.. code:: bash
+
+    sudo xdg-mime install --mode system /usr/localbox/applications/x-localbox.xml
+
+2. Then set the LocalBox application as the default for this mime type:
+
+    Edit ``[Default Applications]`` section of ``/etc/xdg/mimeapps.list`` adding:
+
+        application/x-localbox=localbox.desktop
+
+Translations
+============
+
+TODO: location, how to extract, how to compile, how to add more
+
+
+

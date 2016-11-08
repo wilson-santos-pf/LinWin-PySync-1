@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+    <mime-type type="application/x-localbox">
+        <comment>LocalBox file</comment>
+        <icon name="application-x-localbox"/>
+        <glob-deleteall/>
+        <glob pattern="*.lox"/>
+    </mime-type>
+</mime-info>

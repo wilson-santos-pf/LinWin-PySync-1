@@ -448,7 +448,7 @@ class PasshphrasePanel(wx.Panel):
         self.parent = parent
         self._username = username
         self._label = label
-        self._label_template = 'Hi {0}, please provide the passphrase for {1}'
+        self._label_template = 'Hi {0}, please provide the passphrase for unlocking {1}'
         label_text = _(self._label_template.format(username, label))
         self.label = wx.StaticText(self, label=label_text)
         self._passphrase = wx.TextCtrl(self, style=wx.TE_PASSWORD)
@@ -474,6 +474,7 @@ class PasshphrasePanel(wx.Panel):
         main_sizer.Add(wx.StaticText(self, label=''), 0, wx.ALL | wx.EXPAND)
 
         # Event Handlers
+
         self.Bind(wx.EVT_BUTTON, self.OnClickOk, id=self._btn_ok.Id)
         self.Bind(wx.EVT_BUTTON, self.OnClickClose, id=self._btn_close.Id)
 
@@ -506,12 +507,19 @@ class PassphraseDialog(wx.Dialog):
 
         self.InitUI()
 
+        self.Bind(wx.EVT_CLOSE, self.OnClickClose)
+
     def InitUI(self):
         self.main_sizer.Add(self.panel)
 
         self.Layout()
         self.Center()
         self.Show()
+
+    def OnClickClose(self, wx_event):
+        self.Destroy()
+        import sys
+        sys.exit(0)
 
     @staticmethod
     def show(username, label):

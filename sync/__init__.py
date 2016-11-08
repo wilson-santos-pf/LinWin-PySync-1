@@ -1,8 +1,18 @@
-import logging, signal
-from ConfigParser import SafeConfigParser
+"""
+LocalBox synchronization client.
+"""
 
-from sync.defaults import SYNCINI_PATH, LOG_PATH
+__version__ = '1.6.2b'
+
+import signal
+from ConfigParser import SafeConfigParser
+from logging import getLogger, ERROR
+from os import mkdir
+from os.path import exists
+
 from loxcommon.log import prepare_logging
+from sync.defaults import SYNCINI_PATH, LOG_PATH, APPDIR
+from ._version import __version__, git_version
 
 configparser = SafeConfigParser()
 configparser.read(SYNCINI_PATH)
@@ -12,18 +22,18 @@ if not configparser.has_section('logging'):
     configparser.set('logging', 'console', 'True')
 
 prepare_logging(configparser, log_path=LOG_PATH)
-logging.getLogger('gnupg').setLevel(logging.ERROR)
+getLogger('gnupg').setLevel(ERROR)
 
 
 def remove_decrypted_files(signum=None, frame=None):
-    import os, desktop_utils.controllers.openfiles_ctrl as ctrl
+    import os, sync.controllers.openfiles_ctrl as ctrl
 
-    logging.getLogger(__name__).info('removing decrypted files')
+    getLogger(__name__).info('removing decrypted files')
     for filename in ctrl.load():
         try:
             os.remove(filename)
         except Exception as ex:
-            logging.getLogger(__name__).error('could not remove file %s, %s' % (filename, ex))
+            getLogger(__name__).error('could not remove file %s, %s' % (filename, ex))
 
     ctrl.save([])
 
@@ -35,3 +45,8 @@ try:
     signal.signal(signal.CTRL_C_EVENT, remove_decrypted_files)
 except:
     pass
+
+getLogger(__name__).info("LocalBox Sync Version: %s (%s)", __version__, git_version)
+
+if not exists(APPDIR):
+    mkdir(APPDIR)

@@ -6,11 +6,11 @@ from logging import getLogger
 from threading import Thread
 
 import sync.gui.gui_utils as gui_utils
-from sync import language
+from sync import language, __version__
 from sync.controllers.localbox_ctrl import SyncsController
 from sync.controllers.login_ctrl import LoginController
 from sync.controllers.preferences_ctrl import ctrl as preferences_ctrl
-from sync.defaults import SITESINI_PATH, VERSION
+from sync.defaults import SITESINI_PATH
 from sync.gui.gui_wx import Gui
 
 try:
@@ -115,13 +115,13 @@ class LocalBoxIcon(wx.TaskBarIcon):
         menu.AppendSeparator()
 
         menu.Append(self.TBMENU_DELETE_DECRYPTED, _("Delete decrypted files"))
-        import desktop_utils.controllers.openfiles_ctrl as openfiles_ctrl
+        import sync.controllers.openfiles_ctrl as openfiles_ctrl
         if not openfiles_ctrl.load():
             menu.Enable(id=self.TBMENU_DELETE_DECRYPTED, enable=False)
 
         menu.AppendSeparator()
 
-        menu.Append(self.TBMENU_VERSION, _("Version: %s") % VERSION)
+        menu.Append(self.TBMENU_VERSION, _("Version: %s") % __version__)
         menu.Enable(id=self.TBMENU_VERSION, enable=False)
 
         menu.AppendSeparator()

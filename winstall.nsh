@@ -111,7 +111,7 @@ Section Install
   File /oname=$TEMP\python.msi win/python-2.7.11.msi
   File /oname=$TEMP\wxpython.exe win/wxPython3.0-win32-3.0.2.0-py27.exe
   File /oname=$TEMP\pycrypto.exe win/pycrypto-2.6.win32-py2.7.exe
-  File /oname=$TEMP\localBoxSync.exe LocalBoxSync-0.1a*.win32.exe
+  File /oname=$TEMP\localBoxSync.exe LocalBoxSync*.win32.exe
 
   CreateShortcut "$SMSTARTUP\LocalBox.lnk" "$INSTDIR\pythonw.exe" "-m sync" "$INSTDIR\localbox\localbox.ico"
 

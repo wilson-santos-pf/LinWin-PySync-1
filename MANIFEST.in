@@ -1,1 +1,6 @@
-include localbox.ico
+include README.rst
+include sync/locale/*/LC_MESSAGES/*.mo
+include sync/resources/images/*.png
+include data/localbox.desktop
+include data/icon/localbox.*
+include data/x-localbox.xml

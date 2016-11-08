@@ -1,8 +1,9 @@
 import wx
-from os.path import join
+from sys import prefix as sys_prefix
+from os.path import join, exists
 from sysconfig import get_path
 
-from sync.version import VERSION
+from sync._version import __version__
 
 MAIN_FRAME_SIZE = (550, 550)
 MAIN_PANEL_SIZE = (MAIN_FRAME_SIZE[0], 350)
@@ -10,8 +11,8 @@ PASSPHRASE_DIALOG_SIZE = (500, 300)
 NEW_SYNC_DIALOG_SIZE = (500, 240)
 NEW_SYNC_WIZARD_SIZE = (500, 100)
 NEW_SYNC_PANEL_SIZE = (NEW_SYNC_DIALOG_SIZE[0], 145)
-MAIN_TITLE = 'YourLocalBox %s' % VERSION
-PASSPHRASE_TITLE = 'YourLocalBox %s - Enter Passphrase' % VERSION
+MAIN_TITLE = 'YourLocalBox %s' % __version__
+PASSPHRASE_TITLE = 'YourLocalBox %s - Enter Passphrase' % __version__
 NEW_SYNC_DIALOG_TITLE = 'Add new sync'
 DEFAULT_BORDER = 10
 
@@ -20,7 +21,11 @@ def iconpath():
     """
     returns the path for the icon related to this widget
     """
-    return join(get_path('data'), 'localbox', 'localbox.ico')
+    ico_path = join(sys_prefix, 'localbox', 'localbox.ico')
+    if exists(ico_path):
+        return ico_path
+    else:
+        return 'localbox.ico'
 
 
 def is_valid_input(value):

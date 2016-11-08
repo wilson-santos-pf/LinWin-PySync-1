@@ -24,7 +24,7 @@ Each user has his own LocalBox directory on the server. All the files inside thi
 When the files are downloaded to the computer they are encrypted.
 When the file are uploaded to the server they are encrypted.
 
-.. image:: ../_diagrams/gen/current_scenario.svg
+.. image:: ../_diagrams/current_scenario.svg
 
 
 Creating your first localbox
@@ -70,3 +70,40 @@ By default the syncing progress only runs once an hour so feel free to use the â
 .. image:: ../_static/usermanual/localbox-force-sync.jpeg
 
 andâ€¦ we are done! The files are up in the serve
+
+
+Syncing your files
+==================
+
+To sync your files, place them inside the directory you configured as your localbox.
+The syncing process periodically, but you can force it by right-clicking the tray icon and selecting 'Force sync'.
+
+.. image:: ../_static/usermanual/localbox-force-sync.*
+
+If you wish, you are able to stop the syncing at any time:
+
+.. image:: ../_static/usermanual/localbox-stop-sync.*
+
+Securing your files
+===================
+
+Your files are stored encrypted on the server.
+The client downloads the files and stores them locally also encrypted.
+
+.. image:: ../_static/usermanual/localbox-encrypted-files.*
+
+If the client is running (see the tray icon?), then it already knows the passphrase and will decrypt and open the file
+when you try open it.
+
+If the client is not running, it will ask you the passphrase to access the file.
+
+.. image:: ../_static/usermanual/localbox-ask-passphrase.*
+
+After that your file will be opened with the default application.
+
+When the files are uploaded to the server, the original unencrypted files are locally deleted.
+The files that the client decrypts can also be deleted by selecting the option 'Delete decrypted files' after right-clicking
+the tray icon.
+
+.. image:: ../_static/usermanual/localbox-delete-decrypted.*
+

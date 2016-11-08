@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" "http://www.w3.org/TR/2001/PR-SVG-20010719/DTD/svg10.dtd">
+<svg width="22cm" height="15cm" viewBox="165 84 439 298" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <g>
+    <rect style="fill: #ffffff" x="166.4" y="85.8" width="74.15" height="36"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="166.4" y="85.8" width="74.15" height="36"/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="203.475" y="107.7">
+      <tspan x="203.475" y="107.7">backend</tspan>
+    </text>
+    <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #000000" x1="176.4" y1="110.7" x2="230.55" y2="110.7"/>
+  </g>
+  <g>
+    <rect style="fill: #ffffff" x="313.696" y="85.8" width="55.15" height="36"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="313.696" y="85.8" width="55.15" height="36"/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="341.271" y="107.7">
+      <tspan x="341.271" y="107.7">client</tspan>
+    </text>
+    <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #000000" x1="323.696" y1="110.7" x2="358.846" y2="110.7"/>
+  </g>
+  <g>
+    <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke-dasharray: 8; stroke: #000000" x1="203.476" y1="121.8" x2="203.476" y2="161.8"/>
+    <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke-dasharray: 8; stroke: #000000" x1="203.476" y1="241.8" x2="203.476" y2="378"/>
+    <rect style="fill: #ffffff" x="196.476" y="161.8" width="14" height="80"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="196.476" y="161.8" width="14" height="80"/>
+  </g>
+  <g>
+    <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke-dasharray: 8; stroke: #000000" x1="341.272" y1="121.8" x2="341.272" y2="161.8"/>
+    <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke-dasharray: 8; stroke: #000000" x1="341.272" y1="241.8" x2="341.272" y2="325.8"/>
+    <rect style="fill: #ffffff" x="334.272" y="161.8" width="14" height="80"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="334.272" y="161.8" width="14" height="80"/>
+  </g>
+  <g>
+    <line style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x1="227.476" y1="181.8" x2="334.272" y2="181.8"/>
+    <polygon style="fill: #000000" points="227.476,176.8 211.476,181.8 227.476,186.8 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="227.476,176.8 211.476,181.8 227.476,186.8 "/>
+    <text font-size="12.7998" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="272.374" y="191.8">download file</text>
+  </g>
+  <g>
+    <line style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x1="317.272" y1="221.8" x2="210.476" y2="221.8"/>
+    <polygon style="fill: #000000" points="317.272,226.8 333.272,221.8 317.272,216.8 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="317.272,226.8 333.272,221.8 317.272,216.8 "/>
+  </g>
+  <g>
+    <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke-dasharray: 8; stroke: #000000" x1="341.272" y1="241.8" x2="341.272" y2="281.8"/>
+    <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke-dasharray: 8; stroke: #000000" x1="341.272" y1="341.8" x2="341.272" y2="381.8"/>
+    <rect style="fill: #ffffff" x="334.272" y="281.8" width="14" height="60"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="334.272" y="281.8" width="14" height="60"/>
+  </g>
+  <g>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="348.272,296.8 369.272,296.8 369.272,326.8 358.008,326.8 "/>
+    <polygon style="fill: #000000" points="350.508,326.8 360.508,321.8 358.008,326.8 360.508,331.8 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="350.508,326.8 360.508,321.8 358.008,326.8 360.508,331.8 "/>
+  </g>
+  <g>
+    <polygon style="fill: #ffffff" points="376.502,284.178 590.402,284.178 602.402,296.178 602.402,334.178 376.502,334.178 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="376.502,284.178 590.402,284.178 602.402,296.178 602.402,334.178 376.502,334.178 "/>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #000000" points="590.402,284.178 590.402,296.178 602.402,296.178 "/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="383.502" y="309.078">
+      <tspan x="383.502" y="309.078">add localbox file extension</tspan>
+      <tspan x="383.502" y="325.078">store encrypted file</tspan>
+    </text>
+  </g>
+  <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="348.272" y="181.8">
+    <tspan x="348.272" y="181.8"></tspan>
+  </text>
+</svg>

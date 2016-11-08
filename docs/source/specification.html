@@ -1,0 +1,157 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Specification &#8212; LoxPySync 1.6.2b documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.6.2b',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="top" title="LoxPySync 1.6.2b documentation" href="../../index.html" />
+    <link rel="next" title="Next Steps" href="nextsteps.html" />
+    <link rel="prev" title="Localbox Sync Client" href="includeme.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="specification">
+<h1>Specification<a class="headerlink" href="#specification" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="client-side-encryption">
+<h2>Client Side Encryption<a class="headerlink" href="#client-side-encryption" title="Permalink to this headline">¶</a></h2>
+<p>The user&#8217;s files are download and stored encrypted on disk.
+Because the files eventually will be opened they have to be decrypted somehow.
+When the files are downloaded from the server a custom file extension (.lox) is added to the files.
+The .lox file extension is understood by the LocalBox client.</p>
+<img alt="../../_images/encryption_client_side_download.svg" src="../../_images/encryption_client_side_download.svg" /><p>When the user wants to open the encrypted files, the operating system asks the LocalBox client to open them.
+The client decrypts them (asking for the passphrase if necessary).
+Once decrypted the client gives control to the operating system to open the decrypted files.</p>
+<img alt="../../_images/encryption_client_side_usage.svg" src="../../_images/encryption_client_side_usage.svg" /><p>The client keeps track of all the decrypted files.
+Upon application exit the client will delete these files.
+The user has the option to delete these files at any time:</p>
+<img alt="../../_images/localbox-delete-decrypted.jpg" src="../../_images/localbox-delete-decrypted.jpg" />
+<div class="section" id="lox-extension">
+<h3>Lox extension<a class="headerlink" href="#lox-extension" title="Permalink to this headline">¶</a></h3>
+<p>In order to open then encrypted file we have to create a new file type and register it to open with the LocalBox application.</p>
+<div class="section" id="linux">
+<h4>Linux<a class="headerlink" href="#linux" title="Permalink to this headline">¶</a></h4>
+<ol class="arabic simple">
+<li>On Linux first we have to create the mime type:</li>
+</ol>
+<div class="code bash highlight-default"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">xdg</span><span class="o">-</span><span class="n">mime</span> <span class="n">install</span> <span class="o">--</span><span class="n">mode</span> <span class="n">system</span> <span class="o">/</span><span class="n">usr</span><span class="o">/</span><span class="n">localbox</span><span class="o">/</span><span class="n">applications</span><span class="o">/</span><span class="n">x</span><span class="o">-</span><span class="n">localbox</span><span class="o">.</span><span class="n">xml</span>
+</pre></div>
+</div>
+<ol class="arabic" start="2">
+<li><p class="first">Then set the LocalBox application as the default for this mime type:</p>
+<blockquote>
+<div><p>Edit <code class="docutils literal"><span class="pre">[Default</span> <span class="pre">Applications]</span></code> section of <code class="docutils literal"><span class="pre">/etc/xdg/mimeapps.list</span></code> adding:</p>
+<blockquote>
+<div><p>application/x-localbox=localbox.desktop</p>
+</div></blockquote>
+</div></blockquote>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="section" id="translations">
+<h2>Translations<a class="headerlink" href="#translations" title="Permalink to this headline">¶</a></h2>
+<p>TODO: location, how to extract, how to compile, how to add more</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Specification</a><ul>
+<li><a class="reference internal" href="#client-side-encryption">Client Side Encryption</a><ul>
+<li><a class="reference internal" href="#lox-extension">Lox extension</a><ul>
+<li><a class="reference internal" href="#linux">Linux</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#translations">Translations</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="includeme.html" title="previous chapter">Localbox Sync Client</a></li>
+      <li>Next: <a href="nextsteps.html" title="next chapter">Next Steps</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/docs/source/specification.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, 2EK.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="../../_sources/docs/source/specification.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

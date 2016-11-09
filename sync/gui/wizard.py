@@ -16,7 +16,7 @@ from sync.localbox import LocalBox
 
 class NewSyncWizard(wx.wizard.Wizard):
     def __init__(self, sync_list_ctrl, event):
-        wx.wizard.Wizard.__init__(self, None, -1, _(gui_utils.NEW_SYNC_DIALOG_TITLE))
+        wx.wizard.Wizard.__init__(self, None, -1, _('Add new sync'))
 
         # Attributes
         self.event = event

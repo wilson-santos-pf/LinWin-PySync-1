@@ -1,6 +1,8 @@
 """
 LocalBox synchronization client.
 """
+from sync import language
+from sync.controllers.preferences_ctrl import ctrl as preferences_ctrl
 
 __version__ = '1.6.2b'
 
@@ -46,7 +48,10 @@ try:
 except:
     pass
 
+
 getLogger(__name__).info("LocalBox Sync Version: %s (%s)", __version__, git_version)
 
 if not exists(APPDIR):
     mkdir(APPDIR)
+
+#language.set_language(preferences_ctrl.get_language_abbr())

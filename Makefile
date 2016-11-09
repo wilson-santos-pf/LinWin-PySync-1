@@ -25,7 +25,7 @@ sync/version.py:
 
 clean:
 	find . -name "*.pyc" -exec rm {} \;
-	rm -rf deb_dist dist build sync/__pycache__ LocalBoxSync*win32.exe LocalBoxInstaller*.exe LocalBoxSync.egg-info sync/version.py
+	rm -rf deb_dist dist build sync/__pycache__ LocalBoxSync*win32.exe LocalBoxInstaller*.exe LocalBoxSync.egg-info sync/version.py *.pot
 
 winstall: clean  installer
 
@@ -43,8 +43,9 @@ exe: #sync/version.py
 translatefile:
 	pygettext -o localboxsync.pot -k lgettext -k translate sync
 
-translate:
-	msgfmt.py -o sync/locale/nl/LC_MESSAGES/localboxsync.mo localboxsync.po
+.PHONY: translations
+translations:
+	translations/translate.sh
 
 .PHONY: help
 help:

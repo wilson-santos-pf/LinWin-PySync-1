@@ -1,5 +1,5 @@
 """
-Modulemanaging a Windows Taskbar icon
+Module managing a Windows Taskbar icon
 """
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 from logging import getLogger

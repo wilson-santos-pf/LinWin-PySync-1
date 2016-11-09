@@ -2,7 +2,6 @@
 main module for localbox sync
 """
 import os
-from gettext import gettext as _
 from logging import getLogger
 from os import makedirs
 from os.path import dirname

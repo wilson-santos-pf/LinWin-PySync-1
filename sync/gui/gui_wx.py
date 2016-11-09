@@ -1,6 +1,5 @@
 import wx
 import wx.wizard
-from gettext import gettext as _
 from logging import getLogger
 
 import pkg_resources
@@ -448,8 +447,8 @@ class PasshphrasePanel(wx.Panel):
         self.parent = parent
         self._username = username
         self._label = label
-        self._label_template = 'Hi {0}, please provide the passphrase for unlocking {1}'
-        label_text = _(self._label_template.format(username, label))
+        self._label_template = _('Hi {0}, please provide the passphrase for unlocking {1}')
+        label_text = self._label_template.format(username, label)
         self.label = wx.StaticText(self, label=label_text)
         self._passphrase = wx.TextCtrl(self, style=wx.TE_PASSWORD)
         self._btn_ok = wx.Button(self, id=wx.ID_OK, label=_('Ok'))
@@ -490,7 +489,7 @@ class PasshphrasePanel(wx.Panel):
                 self.parent.Destroy()
 
     def OnClickClose(self, event):
-        self.parent.Destroy()
+        self.parent.OnClickClose(event)
 
 
 class PassphraseDialog(wx.Dialog):

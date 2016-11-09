@@ -1,8 +1,8 @@
 User Manual
 ***********
 
-Installation
-============
+Windows Installation
+====================
 Execute the installer (eg. LocalBoxInstaller.exe)
 
 * Agree to the EUPL [I Agree]
@@ -13,6 +13,24 @@ Execute the installer (eg. LocalBoxInstaller.exe)
 * Wait for the installer starts LocalboxSync-xxx start. push or click [Next >] [Next >] [Next >] {Finish}
 * If all goes well there is a completed window, and you can than click [Close]
 * Reboot or not (yep... it's Windows) or try to start the program, and you see in the taskbar a new localbox icon
+
+Ubuntu Installation
+===================
+
+Download: http://software.yourlocalbox.org/clients/Ubuntu/
+
+Install the mime type:
+
+.. code:: bash
+
+    sudo xdg-mime install --mode system /usr/localbox/x-localbox.xml
+
+Add to ``/etc/xdg/mimeapps.list``:
+
+.. code:: bash
+
+    [Default Applications]
+    application/x-localbox=localbox.desktop
 
 
 Explaning LocalBox

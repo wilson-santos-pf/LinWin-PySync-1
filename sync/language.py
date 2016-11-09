@@ -4,8 +4,10 @@ from sync.defaults import LOCALE_PATH
 
 LANGUAGES = {
     'ENGLISH': 'en',
-    'DUTCH': 'nl'
+    'DUTCH': 'nl',
+    'PORTUGUESE': 'pt_PT'
 }
+
 
 def set_language(lang):
     """

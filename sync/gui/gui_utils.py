@@ -13,7 +13,6 @@ NEW_SYNC_WIZARD_SIZE = (500, 100)
 NEW_SYNC_PANEL_SIZE = (NEW_SYNC_DIALOG_SIZE[0], 145)
 MAIN_TITLE = 'YourLocalBox %s' % __version__
 PASSPHRASE_TITLE = 'YourLocalBox %s - Enter Passphrase' % __version__
-NEW_SYNC_DIALOG_TITLE = 'Add new sync'
 DEFAULT_BORDER = 10
 
 
@@ -25,7 +24,7 @@ def iconpath():
     if exists(ico_path):
         return ico_path
     else:
-        return 'localbox.ico'
+        return join('data', 'icon', 'localbox.ico')
 
 
 def is_valid_input(value):

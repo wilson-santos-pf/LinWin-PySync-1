@@ -42,11 +42,3 @@ Linux
     Edit ``[Default Applications]`` section of ``/etc/xdg/mimeapps.list`` adding:
 
         application/x-localbox=localbox.desktop
-
-Translations
-============
-
-TODO: location, how to extract, how to compile, how to add more
-
-
-

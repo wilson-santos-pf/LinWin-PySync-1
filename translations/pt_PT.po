@@ -1,0 +1,267 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR ORGANIZATION
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"POT-Creation-Date: 2016-11-09 10:11+0000\n"
+"PO-Revision-Date: 2016-11-09 17:08+0000\n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: pygettext.py 1.5\n"
+"X-Generator: Poedit 1.8.7.1\n"
+"Last-Translator: \n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: pt_PT\n"
+
+#: sync/__main__.py:72
+msgid "%s does not belong to any configured localbox"
+msgstr "%s não pertence a uma localbox configurada"
+
+#: sync/__main__.py:84
+msgid "Failed to get passphrase for label: %s."
+msgstr "Falha ao obter a passphrase para a label: %s."
+
+#: sync/__main__.py:92
+msgid "Failed to decode contents"
+msgstr "Falha a descodificar os conteúdos"
+
+#: sync/auth.py:158 sync/gui/wizard.py:214
+msgid "Username/Password incorrect"
+msgstr "Utilizador/Palavra-Chave Incorrectos"
+
+#: sync/auth.py:167
+msgid "Authentication Problem: %s"
+msgstr "Problema na autenticação: %s"
+
+#: sync/gui.py:41
+msgid "Authentication Data"
+msgstr "Dados de autenticação"
+
+#: sync/gui.py:44
+msgid "username"
+msgstr "Nome de utilizador"
+
+#: sync/gui.py:48
+msgid "password"
+msgstr "Palavra-Chave"
+
+#: sync/gui.py:52
+msgid "OK"
+msgstr ""
+
+#: sync/gui.py:98
+msgid "add localbox"
+msgstr "Adicionar localbox"
+
+#: sync/gui.py:313
+msgid "settingstitle"
+msgstr ""
+
+#: sync/gui/gui_wx.py:82
+msgid "Syncs"
+msgstr ""
+
+#: sync/gui/gui_wx.py:89
+msgid "Account"
+msgstr "Conta"
+
+#: sync/gui/gui_wx.py:96
+msgid "Preferences"
+msgstr "Preferências"
+
+#: sync/gui/gui_wx.py:173
+msgid "Add"
+msgstr "Adicionar"
+
+#: sync/gui/gui_wx.py:174
+msgid "Delete"
+msgstr "Remover"
+
+#: sync/gui/gui_wx.py:226
+msgid "Hi, User!!!"
+msgstr "Olá, Utilizador!!!"
+
+#: sync/gui/gui_wx.py:249
+msgid "Language"
+msgstr "Língua"
+
+#: sync/gui/gui_wx.py:281 sync/gui/wizard.py:163
+msgid "Username:"
+msgstr "Utilizador:"
+
+#: sync/gui/gui_wx.py:284 sync/gui/wizard.py:166
+msgid "Password:"
+msgstr "Palavra-Chave:"
+
+#: sync/gui/gui_wx.py:310
+msgid "WELCOME"
+msgstr "BEM-VINDO"
+
+#: sync/gui/gui_wx.py:332 sync/gui/gui_wx.py:455
+msgid "Ok"
+msgstr ""
+
+#: sync/gui/gui_wx.py:333
+msgid "Apply"
+msgstr "Aplicar"
+
+#: sync/gui/gui_wx.py:334 sync/gui/gui_wx.py:456
+msgid "Close"
+msgstr "Fechar"
+
+#: sync/gui/gui_wx.py:387
+msgid "Label"
+msgstr "Label"
+
+#: sync/gui/gui_wx.py:388
+msgid "Path"
+msgstr "Caminho"
+
+#: sync/gui/gui_wx.py:389
+msgid "URL"
+msgstr ""
+
+#: sync/gui/gui_wx.py:451
+msgid "Hi {0}, please provide the passphrase for unlocking {1}"
+msgstr "Olá {0}, introduza a passphrase para desbloquear {1}"
+
+#: sync/gui/gui_wx.py:488 sync/gui/wizard.py:213 sync/gui/wizard.py:292
+#: sync/wizard.py:52
+msgid "Error"
+msgstr "Erro"
+
+#: sync/gui/gui_wx.py:488 sync/gui/wizard.py:292
+msgid "Wrong passphase"
+msgstr "Passphrase errada"
+
+#: sync/gui/taskbar.py:102
+msgid "Settings"
+msgstr "Configurações"
+
+#: sync/gui/taskbar.py:105
+msgid "Sync in progress"
+msgstr "Sincronização em progresso"
+
+#: sync/gui/taskbar.py:108
+msgid "Force Sync"
+msgstr "Forçar sincronização"
+
+#: sync/gui/taskbar.py:112
+msgid "Stop"
+msgstr "Parar"
+
+#: sync/gui/taskbar.py:117
+msgid "Delete decrypted files"
+msgstr "Remover ficheiros decifrados"
+
+#: sync/gui/taskbar.py:124
+msgid "Version: %s"
+msgstr "Versão: %s"
+
+#: sync/gui/taskbar.py:129
+msgid "Quit"
+msgstr "Fechar"
+
+#: sync/gui/wizard.py:19
+msgid "Add new sync"
+msgstr "Adicionar localbox"
+
+#: sync/gui/wizard.py:55
+msgid "Select"
+msgstr "Selecionar"
+
+#: sync/gui/wizard.py:75
+msgid "Label:"
+msgstr ""
+
+#: sync/gui/wizard.py:81
+msgid "URL:"
+msgstr ""
+
+#: sync/gui/wizard.py:86
+msgid "Path:"
+msgstr "Caminho:"
+
+#: sync/gui/wizard.py:96
+msgid "Choose a file"
+msgstr "Selecionar ficheiro"
+
+#: sync/gui/wizard.py:130
+msgid "%s is not a valid URL"
+msgstr "%s não é um URL válido"
+
+#: sync/gui/wizard.py:130
+msgid "Invalid URL"
+msgstr "URL inválido"
+
+#: sync/gui/wizard.py:271
+msgid "Give Passphrase"
+msgstr "Introduza passphrase"
+
+#: sync/gui/wizard.py:277
+msgid "New Passphrase"
+msgstr "Nova passphrase"
+
+#: sync/wizard.py:56
+msgid "errorbuttontext"
+msgstr ""
+
+#: sync/wizard.py:78
+msgid "wizardtitle"
+msgstr ""
+
+#: sync/wizard.py:94
+msgid "urltext"
+msgstr ""
+
+#: sync/wizard.py:99
+msgid "labeltext"
+msgstr ""
+
+#: sync/wizard.py:104
+msgid "buttontext"
+msgstr ""
+
+#: sync/wizard.py:130
+msgid "label2text"
+msgstr ""
+
+#: sync/wizard.py:134
+msgid "choosertext"
+msgstr ""
+
+#: sync/wizard.py:137
+msgid "button2text"
+msgstr ""
+
+#: sync/wizard.py:169
+msgid "label3textusername"
+msgstr ""
+
+#: sync/wizard.py:173
+msgid "label3textpass"
+msgstr ""
+
+#: sync/wizard.py:177
+msgid "button3text"
+msgstr ""
+
+#: sync/wizard.py:221
+msgid "give passphrase"
+msgstr ""
+
+#: sync/wizard.py:228
+msgid "new passphrase"
+msgstr ""
+
+#: sync/wizard.py:233
+msgid "passpharsebutton"
+msgstr ""
+
+#: sync/wizard.py:331
+msgid "closebutton"
+msgstr ""

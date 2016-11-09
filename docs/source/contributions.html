@@ -1,0 +1,160 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Contributions &#8212; LoxPySync 1.6.2b documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.6.2b',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="top" title="LoxPySync 1.6.2b documentation" href="../../index.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="contributions">
+<h1>Contributions<a class="headerlink" href="#contributions" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="translations">
+<h2>Translations<a class="headerlink" href="#translations" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="creating-a-new-translation">
+<h3>Creating a new translation<a class="headerlink" href="#creating-a-new-translation" title="Permalink to this headline">¶</a></h3>
+<p>Install Poedit</p>
+<div class="code bash highlight-default"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="n">poedit</span>
+</pre></div>
+</div>
+<p>Create POT file:</p>
+<div class="code bash highlight-default"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="n">translatefile</span>
+</pre></div>
+</div>
+<p>Create translation from POT:</p>
+<img alt="../../_images/create_translation.jpg" src="../../_images/create_translation.jpg" />
+<p>Open POT:</p>
+<img alt="../../_images/open_pot.jpg" src="../../_images/open_pot.jpg" />
+<p>Choose language:</p>
+<img alt="../../_images/pot_choose_language.jpg" src="../../_images/pot_choose_language.jpg" />
+<p>Translate the text and save PO in <code class="docutils literal"><span class="pre">./translations</span></code>:</p>
+<img alt="../../_images/translations_save_po.jpg" src="../../_images/translations_save_po.jpg" />
+<p>Compile to MO:</p>
+<div class="code bash highlight-default"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="n">translations</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="updating-a-translation">
+<h3>Updating a translation<a class="headerlink" href="#updating-a-translation" title="Permalink to this headline">¶</a></h3>
+<p>Lets contemplate the scenario where the developers added more strings / messages to the application. Now we need to
+make a translation for these new strings.</p>
+<p>Create POT file again:</p>
+<div class="code bash highlight-default"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="n">translatefile</span>
+</pre></div>
+</div>
+<p>Open your previous PO file (located in <code class="docutils literal"><span class="pre">./translations</span></code>) and update it from the new POT.</p>
+<img alt="../../_images/translations_update_from_pot.jpg" src="../../_images/translations_update_from_pot.jpg" />
+<p>The new strings are added to the PO file. Translate them, save and compile:</p>
+<div class="code bash highlight-default"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="n">translations</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="adding-translation-to-the-application">
+<h3>Adding translation to the application<a class="headerlink" href="#adding-translation-to-the-application" title="Permalink to this headline">¶</a></h3>
+<p>So your PO file is ready to use, but how?</p>
+<p>Add the name of the language in upper case (it should match <code class="docutils literal"><span class="pre">[A-Z_]+</span></code>) as the key of <code class="docutils literal"><span class="pre">LANGUAGES</span></code> and use the name of
+the PO file (without the extension) as the value:</p>
+<img alt="../../_images/translations_language_py.jpg" src="../../_images/translations_language_py.jpg" />
+<p>After restarting the application the new language is displayed as a choice:</p>
+<img alt="../../_images/translations_app.jpg" src="../../_images/translations_app.jpg" />
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Contributions</a><ul>
+<li><a class="reference internal" href="#translations">Translations</a><ul>
+<li><a class="reference internal" href="#creating-a-new-translation">Creating a new translation</a></li>
+<li><a class="reference internal" href="#updating-a-translation">Updating a translation</a></li>
+<li><a class="reference internal" href="#adding-translation-to-the-application">Adding translation to the application</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/docs/source/contributions.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, 2EK.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="../../_sources/docs/source/contributions.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

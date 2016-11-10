@@ -25,12 +25,11 @@ Install the mime type:
 
     sudo xdg-mime install --mode system /usr/localbox/x-localbox.xml
 
-Add to ``/etc/xdg/mimeapps.list``:
+Run:
 
 .. code:: bash
 
-    [Default Applications]
-    application/x-localbox=localbox.desktop
+    sudo xdg-mime default localbox.desktop application/x-localbox
 
 
 Explaning LocalBox

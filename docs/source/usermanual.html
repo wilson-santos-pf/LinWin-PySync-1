@@ -65,9 +65,8 @@
 <div class="code bash highlight-default"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">xdg</span><span class="o">-</span><span class="n">mime</span> <span class="n">install</span> <span class="o">--</span><span class="n">mode</span> <span class="n">system</span> <span class="o">/</span><span class="n">usr</span><span class="o">/</span><span class="n">localbox</span><span class="o">/</span><span class="n">x</span><span class="o">-</span><span class="n">localbox</span><span class="o">.</span><span class="n">xml</span>
 </pre></div>
 </div>
-<p>Add to <code class="docutils literal"><span class="pre">/etc/xdg/mimeapps.list</span></code>:</p>
-<div class="code bash highlight-default"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">Default</span> <span class="n">Applications</span><span class="p">]</span>
-<span class="n">application</span><span class="o">/</span><span class="n">x</span><span class="o">-</span><span class="n">localbox</span><span class="o">=</span><span class="n">localbox</span><span class="o">.</span><span class="n">desktop</span>
+<p>Run:</p>
+<div class="code bash highlight-default"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">xdg</span><span class="o">-</span><span class="n">mime</span> <span class="n">default</span> <span class="n">localbox</span><span class="o">.</span><span class="n">desktop</span> <span class="n">application</span><span class="o">/</span><span class="n">x</span><span class="o">-</span><span class="n">localbox</span>
 </pre></div>
 </div>
 </div>

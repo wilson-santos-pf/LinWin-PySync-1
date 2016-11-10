@@ -6,12 +6,19 @@ from logging import getLogger
 from sync.defaults import LOCALBOX_PREFERENCES_PATH, DEFAULT_LANGUAGE
 
 
-class PreferencesController:
-    def __init__(self, lazy_load=False):
-        self._prefs = Preferences()
+class PreferencesController(object):
+    def __new__(cls, *args, **kwargs):
+        if not hasattr(cls, 'instance'):
+            cls.instance = super(PreferencesController, cls).__new__(cls)
+            cls.instance._prefs = Preferences()
 
-        if not lazy_load:
-            self.load()
+            try:
+                if not kwargs['lazy_load']:
+                    cls.instance.load()
+            except KeyError:
+                cls.instance.load()
+
+        return cls.instance
 
     def save(self):
         getLogger(__name__).debug('Saving preferences: %s' % self._prefs)
@@ -25,7 +32,7 @@ class PreferencesController:
         except IOError:
             getLogger(__name__).warn('%s does not exist' % LOCALBOX_PREFERENCES_PATH)
             self.prefs.language = DEFAULT_LANGUAGE
-            self.save() # to disable the warning on the following runs
+            self.save()  # to disable the warning on the following runs
         return self._prefs
 
     @property

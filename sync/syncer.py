@@ -29,6 +29,7 @@ from sync.defaults import SITESINI_PATH
 from sync.gui import gui_utils
 from sync.gui.gui_wx import PassphraseDialog
 from sync.localbox import LocalBox
+from sync.profiling import profile
 from .defaults import OLD_SYNC_STATUS
 from .metavfs import MetaVFS
 
@@ -161,6 +162,7 @@ class Syncer(object):
         else:
             getLogger(__name__).error('Failed to download %s' % path)
 
+    @profile
     def syncsync(self):
         label = self.localbox.authenticator.label
         getLogger(__name__).info("Starting syncsync")

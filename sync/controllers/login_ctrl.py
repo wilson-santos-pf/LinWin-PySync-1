@@ -57,7 +57,8 @@ class LoginController(object):
         if remote:
             try:
                 # TODO: prop for URL
-                passphrase = urllib2.urlopen('http://localhost:9090/%s' % label).read()
+                passphrase_server_url = 'http://localhost:9090/%s' % label
+                passphrase = urllib2.urlopen(passphrase_server_url).read()
                 getLogger(__name__).debug('got passphrase %s' % passphrase)
 
                 return passphrase
@@ -71,13 +72,13 @@ class LoginController(object):
             except KeyError:
                 return None
 
-    def is_passphrase_valid(self, passphrase, label, user):
+    def store_passphrase(self, passphrase, label, user):
         if gpg().is_passphrase_valid(passphrase=passphrase,
                                      label=label,
                                      user=user):
             self._passphrase[label] = passphrase
-            return True
-        return False
+        else:
+            raise InvalidPassphraseError
 
     @property
     def logged_in(self):
@@ -86,3 +87,7 @@ class LoginController(object):
     @logged_in.setter
     def logged_in(self, value):
         self._logged_in = value
+
+
+class InvalidPassphraseError(Exception):
+    pass

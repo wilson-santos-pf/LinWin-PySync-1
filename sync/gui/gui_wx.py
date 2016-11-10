@@ -5,7 +5,7 @@ from logging import getLogger
 import pkg_resources
 from sync.controllers.account_ctrl import AccountController
 from sync.controllers.localbox_ctrl import SyncsController
-from sync.controllers.login_ctrl import LoginController
+from sync.controllers.login_ctrl import LoginController, InvalidPassphraseError
 from sync.controllers.preferences_ctrl import ctrl as preferences_ctrl
 from sync.defaults import DEFAULT_LANGUAGE
 from sync.gui import gui_utils
@@ -481,12 +481,17 @@ class PasshphrasePanel(wx.Panel):
 
     def OnClickOk(self, event):
         if event.Id == self._btn_ok.Id:
-            if not LoginController().is_passphrase_valid(passphrase=self._passphrase.Value,
-                                                         user=self._username,
-                                                         label=self._label):
-                gui_utils.show_error_dialog(message=_('Wrong passphase'), title=_('Error'))
-            else:
+            try:
+                LoginController().store_passphrase(passphrase=self._passphrase.Value,
+                                                   user=self._username,
+                                                   label=self._label)
                 self.parent.Destroy()
+            except InvalidPassphraseError:
+                gui_utils.show_error_dialog(message=_('Wrong passphase'), title=_('Error'))
+            except Exception as err:
+                getLogger(__name__).exception(err)
+                gui_utils.show_error_dialog(message=_('Could not authenticate. Please contact the administrator'),
+                                            title=_('Error'))
 
     def OnClickClose(self, event):
         self.parent.OnClickClose(event)

@@ -2,7 +2,7 @@
 LocalBox synchronization client.
 """
 from sync import language
-from sync.controllers.preferences_ctrl import ctrl as preferences_ctrl
+from sync.controllers.preferences_ctrl import PreferencesController
 
 __version__ = '1.6.2b'
 
@@ -15,6 +15,9 @@ from os.path import exists
 from loxcommon.log import prepare_logging
 from sync.defaults import SYNCINI_PATH, LOG_PATH, APPDIR
 from ._version import __version__, git_version
+
+if not exists(APPDIR):
+    mkdir(APPDIR)
 
 configparser = SafeConfigParser()
 configparser.read(SYNCINI_PATH)
@@ -48,10 +51,6 @@ try:
 except:
     pass
 
-
 getLogger(__name__).info("LocalBox Sync Version: %s (%s)", __version__, git_version)
 
-if not exists(APPDIR):
-    mkdir(APPDIR)
-
-#language.set_language(preferences_ctrl.get_language_abbr())
+language.set_language(PreferencesController().get_language_abbr())

@@ -5,12 +5,13 @@ from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 from logging import getLogger
 from threading import Thread
 
+from os.path import exists
+
 import sync.gui.gui_utils as gui_utils
-from sync import language, __version__
+from sync import __version__
 from sync.controllers.localbox_ctrl import SyncsController
 from sync.controllers.login_ctrl import LoginController
-from sync.controllers.preferences_ctrl import ctrl as preferences_ctrl
-from sync.defaults import SITESINI_PATH
+from sync.defaults import LOCALBOX_SITES_PATH
 from sync.gui.gui_wx import Gui
 
 try:
@@ -41,9 +42,6 @@ class LocalBoxIcon(wx.TaskBarIcon):
     icon_path = None
 
     def __init__(self, main_syncing_thread, sites=None):
-        location = SITESINI_PATH
-        configparser = ConfigParser()
-        configparser.read(location)
         wx.TaskBarIcon.__init__(self)
         if sites is not None:
             self.sites = sites
@@ -184,15 +182,18 @@ def passphrase_server():
     # Wait forever for incoming htto requests
     server.serve_forever()
 
+def is_first_run():
+    return not exists(LOCALBOX_SITES_PATH)
 
 def taskbarmain(main_syncing_thread, sites=None):
     """
     main function to run to get the taskbar started
     """
     app = wx.App(False)
-    language.set_language(preferences_ctrl.get_language_abbr())
     icon = LocalBoxIcon(main_syncing_thread, sites=sites)
-    # icon.start_gui(None)
+
+    if is_first_run():
+        icon.start_gui(None)
 
     MAIN = Thread(target=passphrase_server)
     MAIN.daemon = True

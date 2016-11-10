@@ -1,6 +1,62 @@
 Contributions
 *************
 
+Start Developing
+================
+
+.. code:: bash
+
+    # get the code
+    git clone https://github.com/2EK/LinWin-PySync.git
+    # switch to the develop branch
+    git checkout develop
+    # compile the translations
+    make translations
+
+Solving a bug? Create your branch with (replace <ISSUE_NUMBER> with the appropriate number):
+
+.. code:: bash
+
+    git flow bugfix start LOXGUI-<ISSUE_NUMBER>
+
+Creating a new feature ? Create your branch with (replace <ISSUE_NUMBER> with the appropriate number):
+
+.. code:: bash
+
+    git flow feature start LOXGUI-<ISSUE_NUMBER>
+
+
+Documentation
+=============
+
+Want to contribute your knowledge to the cause? Cool.
+
+.. code:: bash
+
+    # get the code
+    git clone https://github.com/2EK/LinWin-PySync.git
+
+    mkdir LinWin-PySync-docs
+    cd LinWin-PySync-docs
+
+    # clone the repo into a dir called html:
+    git clone https://github.com/2EK/LinWin-PySync.git html
+    cd html
+
+    #
+    git checkout gh-pages
+    git symbolic-ref HEAD refs/heads/gh-pages
+    rm .git/index
+    git clean -fdx
+
+    # compile the documentation as HTML
+    cd ../LinWin-PySync
+    make html
+
+Reference: https://daler.github.io/sphinxdoc-test/includeme.html
+
+
+
 Translations
 ============
 

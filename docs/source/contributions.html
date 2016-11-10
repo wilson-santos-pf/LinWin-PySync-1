@@ -26,6 +26,8 @@
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="top" title="LoxPySync 1.6.2b documentation" href="../../index.html" />
+    <link rel="next" title="User Manual" href="usermanual.html" />
+    <link rel="prev" title="Next Steps" href="nextsteps.html" />
    
   <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
   
@@ -43,6 +45,51 @@
             
   <div class="section" id="contributions">
 <h1>Contributions<a class="headerlink" href="#contributions" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="start-developing">
+<h2>Start Developing<a class="headerlink" href="#start-developing" title="Permalink to this headline">¶</a></h2>
+<div class="code bash highlight-default"><div class="highlight"><pre><span></span><span class="c1"># get the code</span>
+<span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="mi">2</span><span class="n">EK</span><span class="o">/</span><span class="n">LinWin</span><span class="o">-</span><span class="n">PySync</span><span class="o">.</span><span class="n">git</span>
+<span class="c1"># switch to the develop branch</span>
+<span class="n">git</span> <span class="n">checkout</span> <span class="n">develop</span>
+<span class="c1"># compile the translations</span>
+<span class="n">make</span> <span class="n">translations</span>
+</pre></div>
+</div>
+<p>Solving a bug? Create your branch with (replace &lt;ISSUE_NUMBER&gt; with the appropriate number):</p>
+<div class="code bash highlight-default"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">flow</span> <span class="n">bugfix</span> <span class="n">start</span> <span class="n">LOXGUI</span><span class="o">-&lt;</span><span class="n">ISSUE_NUMBER</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>Creating a new feature ? Create your branch with (replace &lt;ISSUE_NUMBER&gt; with the appropriate number):</p>
+<div class="code bash highlight-default"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">flow</span> <span class="n">feature</span> <span class="n">start</span> <span class="n">LOXGUI</span><span class="o">-&lt;</span><span class="n">ISSUE_NUMBER</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="documentation">
+<h2>Documentation<a class="headerlink" href="#documentation" title="Permalink to this headline">¶</a></h2>
+<p>Want to contribute your knowledge to the cause? Cool.</p>
+<div class="code bash highlight-default"><div class="highlight"><pre><span></span><span class="c1"># get the code</span>
+<span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="mi">2</span><span class="n">EK</span><span class="o">/</span><span class="n">LinWin</span><span class="o">-</span><span class="n">PySync</span><span class="o">.</span><span class="n">git</span>
+
+<span class="n">mkdir</span> <span class="n">LinWin</span><span class="o">-</span><span class="n">PySync</span><span class="o">-</span><span class="n">docs</span>
+<span class="n">cd</span> <span class="n">LinWin</span><span class="o">-</span><span class="n">PySync</span><span class="o">-</span><span class="n">docs</span>
+
+<span class="c1"># clone the repo into a dir called html:</span>
+<span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="mi">2</span><span class="n">EK</span><span class="o">/</span><span class="n">LinWin</span><span class="o">-</span><span class="n">PySync</span><span class="o">.</span><span class="n">git</span> <span class="n">html</span>
+<span class="n">cd</span> <span class="n">html</span>
+
+<span class="c1">#</span>
+<span class="n">git</span> <span class="n">checkout</span> <span class="n">gh</span><span class="o">-</span><span class="n">pages</span>
+<span class="n">git</span> <span class="n">symbolic</span><span class="o">-</span><span class="n">ref</span> <span class="n">HEAD</span> <span class="n">refs</span><span class="o">/</span><span class="n">heads</span><span class="o">/</span><span class="n">gh</span><span class="o">-</span><span class="n">pages</span>
+<span class="n">rm</span> <span class="o">.</span><span class="n">git</span><span class="o">/</span><span class="n">index</span>
+<span class="n">git</span> <span class="n">clean</span> <span class="o">-</span><span class="n">fdx</span>
+
+<span class="c1"># compile the documentation as HTML</span>
+<span class="n">cd</span> <span class="o">../</span><span class="n">LinWin</span><span class="o">-</span><span class="n">PySync</span>
+<span class="n">make</span> <span class="n">html</span>
+</pre></div>
+</div>
+<p>Reference: <a class="reference external" href="https://daler.github.io/sphinxdoc-test/includeme.html">https://daler.github.io/sphinxdoc-test/includeme.html</a></p>
+</div>
 <div class="section" id="translations">
 <h2>Translations<a class="headerlink" href="#translations" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="creating-a-new-translation">
@@ -104,6 +151,8 @@ the PO file (without the extension) as the value:</p>
   <h3><a href="../../index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Contributions</a><ul>
+<li><a class="reference internal" href="#start-developing">Start Developing</a></li>
+<li><a class="reference internal" href="#documentation">Documentation</a></li>
 <li><a class="reference internal" href="#translations">Translations</a><ul>
 <li><a class="reference internal" href="#creating-a-new-translation">Creating a new translation</a></li>
 <li><a class="reference internal" href="#updating-a-translation">Updating a translation</a></li>
@@ -117,6 +166,8 @@ the PO file (without the extension) as the value:</p>
 <h3>Related Topics</h3>
 <ul>
   <li><a href="../../index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="nextsteps.html" title="previous chapter">Next Steps</a></li>
+      <li>Next: <a href="usermanual.html" title="next chapter">User Manual</a></li>
   </ul></li>
 </ul>
 </div>

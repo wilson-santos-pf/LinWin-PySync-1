@@ -44,8 +44,8 @@
             
   <div class="section" id="user-manual">
 <h1>User Manual<a class="headerlink" href="#user-manual" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="installation">
-<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="windows-installation">
+<h2>Windows Installation<a class="headerlink" href="#windows-installation" title="Permalink to this headline">¶</a></h2>
 <p>Execute the installer (eg. LocalBoxInstaller.exe)</p>
 <ul class="simple">
 <li>Agree to the EUPL [I Agree]</li>
@@ -57,6 +57,19 @@
 <li>If all goes well there is a completed window, and you can than click [Close]</li>
 <li>Reboot or not (yep... it&#8217;s Windows) or try to start the program, and you see in the taskbar a new localbox icon</li>
 </ul>
+</div>
+<div class="section" id="ubuntu-installation">
+<h2>Ubuntu Installation<a class="headerlink" href="#ubuntu-installation" title="Permalink to this headline">¶</a></h2>
+<p>Download: <a class="reference external" href="http://software.yourlocalbox.org/clients/Ubuntu/">http://software.yourlocalbox.org/clients/Ubuntu/</a></p>
+<p>Install the mime type:</p>
+<div class="code bash highlight-default"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">xdg</span><span class="o">-</span><span class="n">mime</span> <span class="n">install</span> <span class="o">--</span><span class="n">mode</span> <span class="n">system</span> <span class="o">/</span><span class="n">usr</span><span class="o">/</span><span class="n">localbox</span><span class="o">/</span><span class="n">x</span><span class="o">-</span><span class="n">localbox</span><span class="o">.</span><span class="n">xml</span>
+</pre></div>
+</div>
+<p>Add to <code class="docutils literal"><span class="pre">/etc/xdg/mimeapps.list</span></code>:</p>
+<div class="code bash highlight-default"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">Default</span> <span class="n">Applications</span><span class="p">]</span>
+<span class="n">application</span><span class="o">/</span><span class="n">x</span><span class="o">-</span><span class="n">localbox</span><span class="o">=</span><span class="n">localbox</span><span class="o">.</span><span class="n">desktop</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="explaning-localbox">
 <h2>Explaning LocalBox<a class="headerlink" href="#explaning-localbox" title="Permalink to this headline">¶</a></h2>
@@ -125,7 +138,8 @@ the tray icon.</p>
   <h3><a href="../../index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">User Manual</a><ul>
-<li><a class="reference internal" href="#installation">Installation</a></li>
+<li><a class="reference internal" href="#windows-installation">Windows Installation</a></li>
+<li><a class="reference internal" href="#ubuntu-installation">Ubuntu Installation</a></li>
 <li><a class="reference internal" href="#explaning-localbox">Explaning LocalBox</a></li>
 <li><a class="reference internal" href="#creating-your-first-localbox">Creating your first localbox</a></li>
 <li><a class="reference internal" href="#syncing-your-files">Syncing your files</a></li>

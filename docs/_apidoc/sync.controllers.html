@@ -155,6 +155,12 @@
 </div>
 <div class="section" id="module-sync.controllers.login_ctrl">
 <span id="sync-controllers-login-ctrl-module"></span><h2>sync.controllers.login_ctrl module<a class="headerlink" href="#module-sync.controllers.login_ctrl" title="Permalink to this headline">¶</a></h2>
+<dl class="exception">
+<dt id="sync.controllers.login_ctrl.InvalidPassphraseError">
+<em class="property">exception </em><code class="descclassname">sync.controllers.login_ctrl.</code><code class="descname">InvalidPassphraseError</code><a class="headerlink" href="#sync.controllers.login_ctrl.InvalidPassphraseError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">exceptions.Exception</span></code></p>
+</dd></dl>
+
 <dl class="class">
 <dt id="sync.controllers.login_ctrl.LoginController">
 <em class="property">class </em><code class="descclassname">sync.controllers.login_ctrl.</code><code class="descname">LoginController</code><a class="headerlink" href="#sync.controllers.login_ctrl.LoginController" title="Permalink to this definition">¶</a></dt>
@@ -180,11 +186,6 @@
 </table>
 </dd></dl>
 
-<dl class="method">
-<dt id="sync.controllers.login_ctrl.LoginController.is_passphrase_valid">
-<code class="descname">is_passphrase_valid</code><span class="sig-paren">(</span><em>passphrase</em>, <em>label</em>, <em>user</em><span class="sig-paren">)</span><a class="headerlink" href="#sync.controllers.login_ctrl.LoginController.is_passphrase_valid" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
 <dl class="attribute">
 <dt id="sync.controllers.login_ctrl.LoginController.logged_in">
 <code class="descname">logged_in</code><a class="headerlink" href="#sync.controllers.login_ctrl.LoginController.logged_in" title="Permalink to this definition">¶</a></dt>
@@ -193,6 +194,11 @@
 <dl class="method">
 <dt id="sync.controllers.login_ctrl.LoginController.store_keys">
 <code class="descname">store_keys</code><span class="sig-paren">(</span><em>localbox_client</em>, <em>pubkey</em>, <em>privkey</em>, <em>passphrase</em><span class="sig-paren">)</span><a class="headerlink" href="#sync.controllers.login_ctrl.LoginController.store_keys" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="sync.controllers.login_ctrl.LoginController.store_passphrase">
+<code class="descname">store_passphrase</code><span class="sig-paren">(</span><em>passphrase</em>, <em>label</em>, <em>user</em><span class="sig-paren">)</span><a class="headerlink" href="#sync.controllers.login_ctrl.LoginController.store_passphrase" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>

@@ -1,5 +1,8 @@
 import json
 import pickle
+
+from os.path import exists
+
 from sync.language import LANGUAGES
 from logging import getLogger
 
@@ -22,7 +25,8 @@ class PreferencesController(object):
 
     def save(self):
         getLogger(__name__).debug('Saving preferences: %s' % self._prefs)
-        pickle.dump(self._prefs, open(LOCALBOX_PREFERENCES_PATH, 'wb'))
+        if exists(LOCALBOX_PREFERENCES_PATH):
+            pickle.dump(self._prefs, open(LOCALBOX_PREFERENCES_PATH, 'wb'))
 
     def load(self):
         getLogger(__name__).debug('Loading preferences: %s' % self._prefs)

@@ -12,7 +12,7 @@ from sync import __version__
 from sync.controllers.localbox_ctrl import SyncsController
 from sync.controllers.login_ctrl import LoginController
 from sync.defaults import LOCALBOX_SITES_PATH
-from sync.gui.gui_wx import Gui
+from sync.gui.gui_wx import Gui, LocalBoxApp
 
 try:
     import wx
@@ -175,28 +175,36 @@ class PassphraseHandler(BaseHTTPRequestHandler):
         return path.split('/')[0]
 
 
-def passphrase_server():
-    server = HTTPServer(('', PORT_NUMBER), PassphraseHandler)
+def passphrase_server(server):
     getLogger(__name__).info('Started passhphrase server on port %s' % PORT_NUMBER)
 
     # Wait forever for incoming htto requests
     server.serve_forever()
 
+
 def is_first_run():
     return not exists(LOCALBOX_SITES_PATH)
+
 
 def taskbarmain(main_syncing_thread, sites=None):
     """
     main function to run to get the taskbar started
     """
-    app = wx.App(False)
+    app = LocalBoxApp(False)
+
+    try:
+        server = HTTPServer(('', PORT_NUMBER), PassphraseHandler)
+    except:
+        getLogger(__name__).exception('Failed to start passphrase server')
+        return 1
+
+    MAIN = Thread(target=passphrase_server, args=[server])
+    MAIN.daemon = True
+    MAIN.start()
+
     icon = LocalBoxIcon(main_syncing_thread, sites=sites)
 
     if is_first_run():
         icon.start_gui(None)
-
-    MAIN = Thread(target=passphrase_server)
-    MAIN.daemon = True
-    MAIN.start()
 
     app.MainLoop()

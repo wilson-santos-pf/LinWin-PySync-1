@@ -4,8 +4,6 @@ LocalBox synchronization client.
 from sync import language
 from sync.controllers.preferences_ctrl import PreferencesController
 
-__version__ = '1.6.2b'
-
 import signal
 from ConfigParser import SafeConfigParser
 from logging import getLogger, ERROR

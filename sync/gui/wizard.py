@@ -237,6 +237,8 @@ class PassphraseWizardPage(wx.wizard.WizardPageSimple):
         self.privkey = None
         self._label = wx.StaticText(self, label='')
         self._entry_passphrase = wx.TextCtrl(self, style=wx.TE_PASSWORD)
+        self._label_repeat = wx.StaticText(self, label='Repeat passphrase')
+        self._entry_repeat_passphrase = wx.TextCtrl(self, style=wx.TE_PASSWORD)
 
         # Layout
         main_sizer = wx.BoxSizer(wx.VERTICAL)
@@ -244,6 +246,8 @@ class PassphraseWizardPage(wx.wizard.WizardPageSimple):
         input_sizer = wx.BoxSizer(wx.VERTICAL)
         input_sizer.Add(self._label, 0, flag=wx.EXPAND | wx.ALL)
         input_sizer.Add(self._entry_passphrase, 0, flag=wx.EXPAND | wx.ALL)
+        input_sizer.Add(self._label_repeat, 0, flag=wx.EXPAND | wx.ALL)
+        input_sizer.Add(self._entry_repeat_passphrase, 0, flag=wx.EXPAND | wx.ALL)
 
         main_sizer.Add(input_sizer, 1, flag=wx.EXPAND | wx.ALL, border=gui_utils.DEFAULT_BORDER)
 
@@ -257,6 +261,10 @@ class PassphraseWizardPage(wx.wizard.WizardPageSimple):
     def passphrase(self):
         return self._entry_passphrase.GetValue()
 
+    @property
+    def repeat_passphrase(self):
+        return self._entry_repeat_passphrase.GetValue()
+
     def setup_passphrase_panel(self, event):
         # step #3
 
@@ -269,6 +277,10 @@ class PassphraseWizardPage(wx.wizard.WizardPageSimple):
             if 'private_key' in result and 'public_key' in result:
                 getLogger(__name__).debug("private key and public key found")
                 label = _('Give Passphrase')
+
+                self._label_repeat.Hide()
+                self._entry_repeat_passphrase.Hide()
+
                 self.privkey = result['private_key']
                 self.pubkey = result['public_key']
             else:
@@ -279,23 +291,32 @@ class PassphraseWizardPage(wx.wizard.WizardPageSimple):
             self._label.SetLabel(label)
 
     def store_keys(self, event):
-        if event.GetDirection():
-            if gui_utils.is_valid_input(self.passphrase):
-                # going forward
-                # step #4
-                getLogger(__name__).debug("storing keys")
-
-                if not LoginController().store_keys(localbox_client=self.parent.localbox_client,
-                                                    pubkey=self.pubkey,
-                                                    privkey=self.privkey,
-                                                    passphrase=self.passphrase):
-                    gui_utils.show_error_dialog(message=_('Wrong passphase'), title=_('Error'))
+        try:
+            if event.GetDirection():
+                if self._entry_repeat_passphrase.IsShown() and self.passphrase != self.repeat_passphrase:
+                    gui_utils.show_error_dialog(message=_('Passphrases are not equal'), title=_('Error'))
                     event.Veto()
                     return
 
-                self.add_new_sync_item()
-            else:
-                event.Veto()
+                if gui_utils.is_valid_input(self.passphrase):
+                    # going forward
+                    # step #4
+                    getLogger(__name__).debug("storing keys")
+
+                    if not LoginController().store_keys(localbox_client=self.parent.localbox_client,
+                                                        pubkey=self.pubkey,
+                                                        privkey=self.privkey,
+                                                        passphrase=self.passphrase):
+                        gui_utils.show_error_dialog(message=_('Wrong passphase'), title=_('Error'))
+                        event.Veto()
+                        return
+
+                    self.add_new_sync_item()
+                else:
+                    event.Veto()
+        except Exception as err:
+            getLogger(__name__).exception('Error storing keys %s' % err)
+
 
     def add_new_sync_item(self):
         item = SyncItem(url=self.parent.localbox_client.url,

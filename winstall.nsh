@@ -3,7 +3,7 @@ RequestExecutionLevel admin
 
 LicenseData "LICENSE"
 Name "LocalBox"
-Icon "localbox.ico"
+Icon "data/icon/localbox.ico"
 
 !include textlog.nsh
 
@@ -113,13 +113,10 @@ Section Install
   File /oname=$TEMP\pycrypto.exe win/pycrypto-2.6.win32-py2.7.exe
   File /oname=$TEMP\localBoxSync.exe LocalBoxSync*.win32.exe
 
-  CreateShortcut "$SMSTARTUP\LocalBox.lnk" "$INSTDIR\pythonw.exe" "-m sync" "$INSTDIR\localbox\localbox.ico"
+
 
   CreateDirectory "$SMPROGRAMS\LocalBox\"
   CreateDirectory "$APPDATA\localbox\"
-  CreateShortcut "$SMPROGRAMS\LocalBox\LocalBox sync.lnk" "$INSTDIR\pythonw.exe" "-m sync" "$INSTDIR\localbox\localbox.ico"
-  CreateShortcut "$SMPROGRAMS\LocalBox\LocalBox log.lnk" "$APPDATA\localbox\localbox-sync.log"
-  CreateShortcut "$SMPROGRAMS\LocalBox\LocalBox Uninstaller.lnk" "$INSTDIR\LocalBoxUninstaller.exe"
 
   CreateDirectory $INSTDIR\Lib\site-packages\sync\locale\nl\LC_MESSAGES
   File "/oname=$INSTDIR\Lib\site-packages\sync\locale\nl\LC_MESSAGES\localboxsync.mo" sync/locale/nl/LC_MESSAGES/localboxsync.mo 
@@ -136,16 +133,23 @@ Section Install
   ExecWait "$TEMP\wxpython.exe /silent /quiet"
   ExecWait "$TEMP\pycrypto.exe /quiet /silent"
   ExecWait "$TEMP\LocalBoxSync.exe /quiet /silent"
-  #ExecWait '$INSTDIR\install-pip.bat "$INSTDIR" > c:\install_pip.log'
+  ExecWait '$INSTDIR\install-pip.bat "$INSTDIR" > c:\install_pip.log'
+
+  CreateShortcut "$SMSTARTUP\LocalBox.lnk" "$INSTDIR\pythonw.exe" "-m sync" "$INSTDIR\localbox\localbox.ico"
+  CreateShortcut "$desktop\LocalBox.lnk" "$INSTDIR\pythonw.exe" "-m sync" "$INSTDIR\localbox\localbox.ico"
+  CreateShortcut "$SMPROGRAMS\LocalBox\LocalBox sync.lnk" "$INSTDIR\pythonw.exe" "-m sync" "$INSTDIR\localbox\localbox.ico"
+  CreateShortcut "$SMPROGRAMS\LocalBox\LocalBox log.lnk" "$APPDATA\localbox\localbox-sync.log"
+  CreateShortcut "$SMPROGRAMS\LocalBox\LocalBox Uninstaller.lnk" "$INSTDIR\LocalBoxUninstaller.exe"
 
   ${registerExtension} "$INSTDIR\run.bat" ".lox" "LocalBox_File"
 SectionEnd
 
 SectionGroup "un.uninstall"
-Section "un.Start Menu"
+Section "un.Shortcuts"
     delete "$SMSTARTUP\LocalBox.lnk"
     delete "$SMPROGRAMS\LocalBox\LocalBox sync.lnk"
     delete "$SMPROGRAMS\LocalBox\LocalBox log.lnk"
+    delete "$SMSTARTUP\LocalBox.lnk"
 SectionEnd
 
 Section "un.Program Files"

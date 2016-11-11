@@ -51,25 +51,27 @@ except NameError:
 data_files = [
     ('localbox', ['data/icon/localbox.ico',
                   'data/icon/localbox.png',
-                  'data/x-localbox.xml']),
-    ('/usr/share/applications/', ['data/localbox.desktop'])
+                  'data/x-localbox.xml'])
 ]
+
+if system() == 'Linux':
+    data_files += [('/usr/share/applications/', ['data/localbox.desktop'])]
 
 if system() == 'Windows' or system().startswith('CYGWIN'):
     data_files += [('gpg', ['libs/iconv.dll', 'libs/gpg.exe'])]
 
-from sync import __version__
+from sync._version import __version__
 
 setup(
     name="LocalBoxSync",
     version=__version__,
     packages=find_packages(),
     py_modules=['gnupg'],
-    author="Letshare Holding B.V.",
-    author_email="ivo@libbit.eu",
+    author="",
+    author_email="info@yourlocalbox.org",
     description="",
     license="all rights reserved",
-    url="http://box.yourlocalbox.org",
+    url="http://yourlocalbox.org",
     data_files=data_files,
     include_package_data=True,
 )

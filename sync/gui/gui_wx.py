@@ -15,6 +15,27 @@ from sync.gui.wizard import NewSyncWizard
 from sync.language import LANGUAGES
 
 
+class LocalBoxApp(wx.App):
+    """
+    class that extends wx.App and only permits a single running instance.
+    """
+
+    def OnInit(self):
+        """
+        wx.App init function that returns False if the app is already running.
+        """
+        self.name = "LocalBoxApp-%s".format(wx.GetUserId())
+        self.instance = wx.SingleInstanceChecker(self.name)
+        if self.instance.IsAnotherRunning():
+            wx.MessageBox(
+                "An instance of the application is already running",
+                "Error",
+                wx.OK | wx.ICON_WARNING
+            )
+            return False
+        return True
+
+
 class Gui(wx.Frame):
     def __init__(self, parent, event, main_syncing_thread):
         super(Gui, self).__init__(parent,
@@ -450,6 +471,7 @@ class PasshphrasePanel(wx.Panel):
         self._label_template = _('Hi {0}, please provide the passphrase for unlocking {1}')
         label_text = self._label_template.format(username, label)
         self.label = wx.StaticText(self, label=label_text)
+        self.label.Wrap(parent.Size[0] - 50)
         self._passphrase = wx.TextCtrl(self, style=wx.TE_PASSWORD)
         self._btn_ok = wx.Button(self, id=wx.ID_OK, label=_('Ok'))
         self._btn_close = wx.Button(self, id=wx.ID_CLOSE, label=_('Close'))

@@ -30,6 +30,9 @@ Run:
 .. code:: bash
 
     sudo xdg-mime default localbox.desktop application/x-localbox
+    xdg-icon-resource install --size 32 --context mimetypes /usr/localbox/localbox.png application-x-localbox
+    xdg-icon-resource install --size 48 --context mimetypes /usr/localbox/localbox.png application-x-localbox
+    xdg-icon-resource install --size 64 --context mimetypes /usr/localbox/localbox.png application-x-localbox
 
 
 Explaning LocalBox

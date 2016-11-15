@@ -30,10 +30,12 @@ The user manual is available at GitHub Pages, `here <https://2ek.github.io/LinWi
 Related projects
 ================
 
-* `Loauth <https://github.com/2EK/loauth>`_
+* `Loauth <https://github.com/yourlocalbox/loauth>`_
     OAuth2 authentication for LocalBox.
-* `LoxBox15 <https://github.com/2EK/LoxBox15/>`_
-    Desktop client for LocalBox.
+* `LoxBox15 <https://github.com/yourlocalbox/LoxBox15/>`_
+    API implementation of LocalBox (backend).
+* `LoxCommon <https://github.com/yourlocalbox/LoxCommon/>`_
+    Common code between the LocalBox projects.
 
 
 

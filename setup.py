@@ -65,13 +65,12 @@ from sync._version import __version__
 setup(
     name="LocalBoxSync",
     version=__version__,
+    description='Desktop Client for the LocalBox',
     packages=find_packages(),
     py_modules=['gnupg'],
-    author="",
-    author_email="info@yourlocalbox.org",
-    description="",
-    license="all rights reserved",
-    url="http://yourlocalbox.org",
     data_files=data_files,
     include_package_data=True,
+    author="De Staat der Nederlanden",
+    author_email="info@yourlocalbox.org",
+    url="https://yourlocalbox.org",
 )

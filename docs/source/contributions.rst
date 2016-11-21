@@ -7,7 +7,7 @@ Start Developing
 .. code:: bash
 
     # get the code
-    git clone https://github.com/2EK/LinWin-PySync.git
+    git clone https://github.com/yourlocalbox/LinWin-PySync.git
     # switch to the develop branch
     git checkout develop
     # compile the translations
@@ -34,13 +34,13 @@ Want to contribute your knowledge to the cause? Cool.
 .. code:: bash
 
     # get the code
-    git clone https://github.com/2EK/LinWin-PySync.git
+    git clone https://github.com/yourlocalbox/LinWin-PySync.git
 
     mkdir LinWin-PySync-docs
     cd LinWin-PySync-docs
 
     # clone the repo into a dir called html:
-    git clone https://github.com/2EK/LinWin-PySync.git html
+    git clone https://github.com/yourlocalbox/LinWin-PySync.git html
     cd html
 
     #

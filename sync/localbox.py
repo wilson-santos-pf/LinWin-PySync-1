@@ -222,16 +222,26 @@ class LocalBox(object):
             request = Request(url, data=send_data)
         return self._make_call(request)
 
-    def call_keys(self, path):
+    def call_keys(self, path, passphrase):
         """
         do the keys call
+
+        :return: the key for symmetric encryption in the form: (key, iv)
         """
+        pgp_client = gpg()
         keys_path = LocalBox.get_keys_path(path)
         keys_path = urllib.quote_plus(keys_path)
         getLogger(__name__).debug("call lox_api/key on path %s = %s", path, keys_path)
 
         request = Request(url=self.url + 'lox_api/key/' + keys_path)
-        return self._make_call(request)
+        result = self._make_call(request)
+
+        key_data = loads(result.read())
+        key = pgp_client.decrypt(b64decode(key_data['key']), passphrase)
+        iv = pgp_client.decrypt(b64decode(key_data['iv']), passphrase)
+        getLogger(__name__).debug("Got key %s for path %s", getChecksum(key), path)
+
+        return key, iv
 
     @staticmethod
     def get_keys_path_v2(localbox_path):
@@ -294,24 +304,54 @@ class LocalBox(object):
         result = self._make_call(request).read()
         return loads(result)
 
-    def save_key(self, path, key, iv):
+    def create_share(self, localbox_path, passphrase, user_list):
+        """
+        Share directory with users
+        :return:
+        """
+        data = dict()
+        data['identities'] = user_list
+
+        request = Request(url=self.url + 'lox_api/share_create/' + localbox_path, data=dumps(data))
+
+        try:
+            result = self._make_call(request).read()
+            key, iv = self.call_keys(localbox_path, passphrase)
+
+            # import public key in the user_list
+            for user in user_list:
+                public_key = user['public_key']
+                username = user['username']
+
+                gpg().add_public_key(self.url, username, public_key)
+                self.save_key(username, localbox_path, key, iv)
+
+        except Exception as error:
+            getLogger(__name__).exception(error)
+
+
+    def save_key(self, user, path, key, iv):
         """
         saves an encrypted key on the localbox server
 
         :param path: path relative to localbox location. eg: /some_folder/image.jpg
         :param key:
         :param iv:
+        :param site: localbox label
+        :param user:
         :return:
         """
         cryptopath = LocalBox.get_keys_path(path)
         cryptopath = quote_plus(cryptopath)
 
         site = self.authenticator.label
-        ctrl = SyncsController()
-        user = ctrl.get(site).user
+
         pgpclient = gpg()
-        encodedata = {'key': b64encode(pgpclient.encrypt(key, site, user)), 'iv': b64encode(
-            pgpclient.encrypt(iv, site, user)), 'user': user}
+        encodedata = {
+            'key': b64encode(pgpclient.encrypt(key, site, user)),
+            'iv': b64encode(pgpclient.encrypt(iv, site, user)),
+            'user': user
+        }
         data = dumps(encodedata)
         request = Request(
             url=self.url + 'lox_api/key/' + cryptopath, data=data)
@@ -370,14 +410,10 @@ def create_key_and_iv(localbox_client, path):
 
 
 def get_aes_key(localbox_client, path, passphrase, should_create=False):
-    pgp_client = gpg()
     key = None
     iv = None
     try:
-        key_data = loads(localbox_client.call_keys(path).read())
-        key = pgp_client.decrypt(b64decode(key_data['key']), passphrase)
-        iv = pgp_client.decrypt(b64decode(key_data['iv']), passphrase)
-        getLogger(__name__).debug("Got key %s for path %s", getChecksum(key), path)
+        key, iv = localbox_client.call_keys(path, passphrase)
     except (HTTPError, TypeError, ValueError):
         if should_create:
             getLogger(__name__).debug("path '%s' is without key, generating one.", path)

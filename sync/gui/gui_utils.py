@@ -2,10 +2,11 @@ import wx
 from sys import prefix as sys_prefix
 from os.path import join, exists
 from sysconfig import get_path
+from os import getcwd
 
 from sync._version import __version__
 
-MAIN_FRAME_SIZE = (550, 550)
+MAIN_FRAME_SIZE = (700, 550)
 MAIN_PANEL_SIZE = (MAIN_FRAME_SIZE[0], 350)
 PASSPHRASE_DIALOG_SIZE = (500, 300)
 NEW_SYNC_DIALOG_SIZE = (500, 240)
@@ -44,3 +45,13 @@ def ask_passphrase(localbox_client, dialog):
     app = wx.App()
     dialog.show(username=username, label=label)
     app.MainLoop()
+
+
+def select_directory():
+    dialog = wx.DirDialog(None, _("Choose a file"), style=wx.DD_DEFAULT_STYLE, defaultPath=getcwd(),
+                          pos=(10, 10))
+    if dialog.ShowModal() == wx.ID_OK:
+        selected_dir = dialog.GetPath()
+        return selected_dir
+
+    dialog.Destroy()

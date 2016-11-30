@@ -1,4 +1,4 @@
-from sync.database import database_execute
+from sync.database import database_execute, DatabaseError
 from logging import getLogger
 from gnupg import GPG
 from os.path import join
@@ -65,6 +65,22 @@ class gpg(object):
             return fingerprint
         else:
             return None
+
+    def add_public_key(self, site, user, public_key):
+        """
+        add a public key into the gpg key database
+        """
+        try:
+            result1 = self.gpg.import_keys(b64decode(public_key))
+            fingerprint = result1.fingerprints[0]
+
+            sql = "INSERT INTO keys (site, user, fingerprint) VALUES (?, ?, ?)"
+            database_execute(sql, (site, user, fingerprint))
+            return fingerprint
+        except TypeError as error:
+            getLogger(__name__).critical("add_public_key TypeError " + str(error))
+        except DatabaseError as error:
+            getLogger(__name__).critical("add_public_key DatabaseError " + str(error))
 
     def is_passphrase_valid(self, passphrase, label=None, user=None, fingerprint=None):
         if not fingerprint:

@@ -7,6 +7,7 @@ from sync.controllers.account_ctrl import AccountController
 from sync.controllers.localbox_ctrl import SyncsController
 from sync.controllers.login_ctrl import LoginController, InvalidPassphraseError
 from sync.controllers.preferences_ctrl import ctrl as preferences_ctrl
+from sync.controllers.shares_ctrl import SharesController
 from sync.defaults import DEFAULT_LANGUAGE
 from sync.gui import gui_utils
 from sync.gui.gui_utils import MAIN_FRAME_SIZE, MAIN_PANEL_SIZE, \
@@ -48,6 +49,7 @@ class Gui(wx.Frame):
         self.event = event
         self.toolbar_panels = dict()
         self.panel_syncs = SyncsPanel(self, event, main_syncing_thread)
+        self.panel_shares = SharesPanel(self)
         self.panel_account = AccountPanel(self)
         self.panel_preferences = PreferencesPanel(self)
         self.panel_bottom = BottomPanel(self)
@@ -62,6 +64,7 @@ class Gui(wx.Frame):
         bSizer1 = wx.BoxSizer(wx.VERTICAL)
         bSizer1.Add(self.panel_line, 0, wx.EXPAND, border=10)
         bSizer1.Add(self.panel_syncs, 0, wx.EXPAND, 10)
+        bSizer1.Add(self.panel_shares, 0, wx.EXPAND, 10)
         bSizer1.Add(self.panel_account, 0, wx.EXPAND, 10)
         bSizer1.Add(self.panel_preferences, 0, wx.EXPAND, 10)
         bSizer1.Add(self.panel_bottom, 0, wx.ALIGN_BOTTOM, 10)
@@ -105,6 +108,13 @@ class Gui(wx.Frame):
                 wx.BITMAP_TYPE_PNG
             )
         ))
+        stream = pkg_resources.resource_stream('sync.resources.images', 'share.png')
+        bt_toolbar_shares = self.toolbar.AddLabelTool(wx.ID_ANY, _('Shares'), wx.BitmapFromImage(
+            wx.ImageFromStream(
+                stream,
+                wx.BITMAP_TYPE_PNG
+            )
+        ))
         stream = pkg_resources.resource_stream('sync.resources.images', 'user.png')
         bt_toolbar_account = self.toolbar.AddLabelTool(wx.ID_ANY, _('Account'), wx.BitmapFromImage(
             wx.ImageFromStream(
@@ -126,15 +136,18 @@ class Gui(wx.Frame):
         self.toolbar.EnableTool(bt_toolbar_localboxes.Id, False)
 
         self.toolbar_panels[bt_toolbar_localboxes.Id] = self.panel_syncs
+        self.toolbar_panels[bt_toolbar_shares.Id] = self.panel_shares
         self.toolbar_panels[bt_toolbar_account.Id] = self.panel_account
         self.toolbar_panels[bt_toolbar_preferences.Id] = self.panel_preferences
 
         self.Bind(wx.EVT_TOOL, self.OnToolbarLocalboxesClick, id=bt_toolbar_localboxes.Id)
+        self.Bind(wx.EVT_TOOL, self.OnToolbarLocalboxesClick, id=bt_toolbar_shares.Id)
         self.Bind(wx.EVT_TOOL, self.OnToolbarLocalboxesClick, id=bt_toolbar_account.Id)
         self.Bind(wx.EVT_TOOL, self.OnToolbarLocalboxesClick, id=bt_toolbar_preferences.Id)
 
     def show_first_panels(self):
         self.panel_syncs.Show()
+        self.panel_shares.Hide()
         self.panel_account.Hide()
         self.panel_preferences.Hide()
 
@@ -229,6 +242,54 @@ class SyncsPanel(wx.Panel):
         labels_deleted = self.ctrl.delete()
         for label in labels_deleted:
             self._main_syncing_thread.stop(label)
+
+
+class SharesPanel(wx.Panel):
+    """
+    """
+
+    def __init__(self, parent):
+        wx.Panel.__init__(self, parent, id=wx.ID_ANY, size=MAIN_PANEL_SIZE)
+
+        # Attributes
+        self.ctrl = SharesListCtrl(self)
+        self.btn_add = wx.Button(self, label=_('Add'), size=(70, 30))
+        self.btn_delete = wx.Button(self, label=_('Delete'), size=(70, 30))
+
+        # Layout
+        self._DoLayout()
+
+        # Bind events
+        self.Bind(wx.EVT_BUTTON, self.create_share, self.btn_add)
+        self.Bind(wx.EVT_BUTTON, self.delete_share, self.btn_delete)
+
+        # Setup
+        self.ctrl.populate_list()
+
+    def _DoLayout(self):
+        vbox = wx.BoxSizer(wx.VERTICAL)
+
+        hbox3 = wx.BoxSizer(wx.HORIZONTAL)
+        hbox3.Add(self.ctrl, proportion=1, flag=wx.EXPAND)
+        vbox.Add(hbox3, proportion=1, flag=wx.LEFT | wx.RIGHT | wx.EXPAND,
+                 border=10)
+
+        vbox.Add((-1, 25))
+
+        hbox4 = wx.BoxSizer(wx.HORIZONTAL)
+        hbox4.Add(self.btn_add)
+        hbox4.Add(self.btn_delete)
+        vbox.Add(hbox4, flag=wx.ALIGN_RIGHT | wx.RIGHT, border=10)
+
+        vbox.Add((-1, 25))
+
+        self.SetSizer(vbox)
+
+    def create_share(self, wx_event):
+        NewShareDialog(self)
+
+    def delete_share(self, wx_event):
+        pass
 
 
 class AccountPanel(wx.Panel):
@@ -444,6 +505,42 @@ class LocalboxListCtrl(wx.ListCtrl):
         self.ctrl.save()
 
 
+class SharesListCtrl(wx.ListCtrl):
+    """
+    This class behaves like a bridge between the GUI components and the real syncs controller.
+    """
+
+    def __init__(self, parent):
+        super(SharesListCtrl, self).__init__(parent,
+                                             style=wx.LC_REPORT)
+
+        self.ctrl = SharesController()
+
+        # Add three columns to the list
+        self.InsertColumn(0, _("Label"))
+        self.InsertColumn(1, _("Path"))
+        self.InsertColumn(2, _("URL"))
+
+        self.SetColumnWidth(0, 100)
+        self.SetColumnWidth(1, 250)
+        self.SetColumnWidth(2, 200)
+
+    def populate_list(self):
+        """
+        Read the syncs list from the controller
+        """
+        pass
+
+    def add(self, item):
+        pass
+
+    def delete(self):
+        pass
+
+    def save(self):
+        pass
+
+
 # ----------------------------------- #
 # ----         Dialogs           ---- #
 # ----------------------------------- #
@@ -550,3 +647,78 @@ class PassphraseDialog(wx.Dialog):
     @staticmethod
     def show(username, label):
         PassphraseDialog(None, username=username, label=label)
+
+
+class NewShareDialog(wx.Dialog):
+    def __init__(self, parent):
+        super(NewShareDialog, self).__init__(parent=parent,
+                                             title=PASSPHRASE_TITLE,
+                                             size=PASSPHRASE_DIALOG_SIZE,
+                                             style=wx.CLOSE_BOX | wx.CAPTION)
+
+        # Attributes
+        self.panel = NewSharePanel(self)
+        self.main_sizer = wx.BoxSizer(wx.VERTICAL)
+
+        self.InitUI()
+
+        self.Bind(wx.EVT_CLOSE, self.OnClickClose)
+
+    def InitUI(self):
+        self.main_sizer.Add(self.panel)
+
+        self.Layout()
+        self.Center()
+        self.Show()
+
+    def OnClickClose(self, wx_event):
+        self.Destroy()
+        import sys
+        sys.exit(0)
+
+
+class NewSharePanel(wx.Panel):
+    def __init__(self, parent):
+        super(NewSharePanel, self).__init__(parent=parent)
+
+        self.parent = parent
+
+        self._selected_dir = wx.TextCtrl(self, style=wx.TE_READONLY)
+        self.btn_select_dir = wx.Button(self, label=_('Select'), size=(95, 30))
+
+        self._btn_ok = wx.Button(self, id=wx.ID_OK, label=_('Ok'))
+        self._btn_close = wx.Button(self, id=wx.ID_CLOSE, label=_('Close'))
+
+        # Layout
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(self._selected_dir, 0, wx.ALL | wx.EXPAND, border=DEFAULT_BORDER)
+        sizer.Add(self.btn_select_dir, 0, wx.ALL | wx.EXPAND, border=DEFAULT_BORDER)
+
+        btn_szr = wx.StdDialogButtonSizer()
+
+        btn_szr.AddButton(self._btn_ok)
+        btn_szr.AddButton(self._btn_close)
+
+        btn_szr.Realize()
+
+        main_sizer = wx.BoxSizer(wx.VERTICAL)
+        main_sizer.Add(sizer, 1, wx.ALL | wx.EXPAND, border=DEFAULT_BORDER)
+        main_sizer.Add(wx.StaticLine(self, -1), 0, wx.ALL | wx.EXPAND, border=DEFAULT_BORDER)
+        main_sizer.Add(btn_szr, border=DEFAULT_BORDER)
+        main_sizer.Add(wx.StaticText(self, label=''), 0, wx.ALL | wx.EXPAND)
+
+        # Event Handlers
+        self.Bind(wx.EVT_BUTTON, self.select_dir, self.btn_select_dir)
+        self.Bind(wx.EVT_BUTTON, self.OnClickOk, id=self._btn_ok.Id)
+        self.Bind(wx.EVT_BUTTON, self.OnClickClose, id=self._btn_close.Id)
+
+        self.SetSizer(main_sizer)
+
+    def OnClickOk(self, event):
+        pass
+
+    def OnClickClose(self, event):
+        self.parent.OnClickClose(event)
+
+    def select_dir(self, wx_event):
+        self._selected_dir.SetValue(gui_utils.select_directory())

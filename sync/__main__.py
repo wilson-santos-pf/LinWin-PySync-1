@@ -16,6 +16,7 @@ from sync.controllers import openfiles_ctrl
 from sync.controllers.localbox_ctrl import ctrl as sync_ctrl
 from sync.controllers.login_ctrl import LoginController
 from sync.gui import gui_utils
+from sync.gui import gui_wx
 from sync.gui.gui_wx import PassphraseDialog
 from sync.gui.taskbar import taskbarmain
 from sync.localbox import LocalBox
@@ -77,7 +78,7 @@ def run_file_decryption(filename):
         label = localbox_client.authenticator.label
         passphrase = LoginController().get_passphrase(label, remote=True)
         if not passphrase:
-            gui_utils.ask_passphrase(localbox_client, PassphraseDialog)
+            gui_wx.ask_passphrase(localbox_client.username, label)
             passphrase = LoginController().get_passphrase(label, remote=False)
             if not passphrase:
                 gui_utils.show_error_dialog(_('Failed to get passphrase for label: %s.') % label, 'Error', True)

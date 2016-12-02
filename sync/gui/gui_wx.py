@@ -1,8 +1,11 @@
 import wx
 import wx.wizard
+import wx.lib.mixins.listctrl as listmix
 from logging import getLogger
 
 import pkg_resources
+
+from sync.controllers import localbox_ctrl
 from sync.controllers.account_ctrl import AccountController
 from sync.controllers.localbox_ctrl import SyncsController
 from sync.controllers.login_ctrl import LoginController, InvalidPassphraseError
@@ -14,6 +17,7 @@ from sync.gui.gui_utils import MAIN_FRAME_SIZE, MAIN_PANEL_SIZE, \
     MAIN_TITLE, DEFAULT_BORDER, PASSPHRASE_DIALOG_SIZE, PASSPHRASE_TITLE
 from sync.gui.wizard import NewSyncWizard
 from sync.language import LANGUAGES
+from sync.localbox import LocalBox, InvalidLocalBoxPathError
 
 
 class LocalBoxApp(wx.App):
@@ -83,7 +87,7 @@ class Gui(wx.Frame):
 
         # ask passphrase for each label
         for label_item in SyncsController().load():
-            PassphraseDialog(self, username=label_item.user, label=label_item.label).Show()
+            PassphraseDialog(self, username=label_item.user, label=label_item.label, site=label_item.url).Show()
 
     def InitUI(self):
 
@@ -517,7 +521,7 @@ class SharesListCtrl(wx.ListCtrl):
         self.ctrl = SharesController()
 
         # Add three columns to the list
-        self.InsertColumn(0, _("Label"))
+        self.InsertColumn(0, _("User"))
         self.InsertColumn(1, _("Path"))
         self.InsertColumn(2, _("URL"))
 
@@ -617,7 +621,7 @@ class PasshphrasePanel(wx.Panel):
 
 
 class PassphraseDialog(wx.Dialog):
-    def __init__(self, parent, username, label):
+    def __init__(self, parent, username, label, site):
         super(PassphraseDialog, self).__init__(parent=parent,
                                                title=PASSPHRASE_TITLE,
                                                size=PASSPHRASE_DIALOG_SIZE,
@@ -653,7 +657,7 @@ class NewShareDialog(wx.Dialog):
     def __init__(self, parent):
         super(NewShareDialog, self).__init__(parent=parent,
                                              title=PASSPHRASE_TITLE,
-                                             size=PASSPHRASE_DIALOG_SIZE,
+                                             size=(500, 600),
                                              style=wx.CLOSE_BOX | wx.CAPTION)
 
         # Attributes
@@ -673,8 +677,6 @@ class NewShareDialog(wx.Dialog):
 
     def OnClickClose(self, wx_event):
         self.Destroy()
-        import sys
-        sys.exit(0)
 
 
 class NewSharePanel(wx.Panel):
@@ -683,16 +685,20 @@ class NewSharePanel(wx.Panel):
 
         self.parent = parent
 
+        self.list = TestListCtrl(self, style=wx.LC_REPORT)
         self._selected_dir = wx.TextCtrl(self, style=wx.TE_READONLY)
         self.btn_select_dir = wx.Button(self, label=_('Select'), size=(95, 30))
+        self.choice = wx.Choice(self, choices=self.get_localboxes())
 
         self._btn_ok = wx.Button(self, id=wx.ID_OK, label=_('Ok'))
         self._btn_close = wx.Button(self, id=wx.ID_CLOSE, label=_('Close'))
 
         # Layout
         sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(self.choice, 0, wx.ALL | wx.EXPAND, border=DEFAULT_BORDER)
         sizer.Add(self._selected_dir, 0, wx.ALL | wx.EXPAND, border=DEFAULT_BORDER)
         sizer.Add(self.btn_select_dir, 0, wx.ALL | wx.EXPAND, border=DEFAULT_BORDER)
+        sizer.Add(self.list, proportion=1, flag=wx.EXPAND | wx.ALL, border=DEFAULT_BORDER)
 
         btn_szr = wx.StdDialogButtonSizer()
 
@@ -711,14 +717,102 @@ class NewSharePanel(wx.Panel):
         self.Bind(wx.EVT_BUTTON, self.select_dir, self.btn_select_dir)
         self.Bind(wx.EVT_BUTTON, self.OnClickOk, id=self._btn_ok.Id)
         self.Bind(wx.EVT_BUTTON, self.OnClickClose, id=self._btn_close.Id)
+        self.choice.Bind(wx.EVT_CHOICE, self.OnChoice)
 
         self.SetSizer(main_sizer)
 
     def OnClickOk(self, event):
-        pass
+        path = self._selected_dir.GetValue()
+        if gui_utils.is_valid_input(path) and self.list.GetSelectedItemCount() > 0:
+            user_list = self.list.get_users()
+            self.localbox_client.create_share(path,
+                                              LoginController().get_passphrase(self.localbox_client.label),
+                                              user_list=user_list)
+            self.Destroy()
 
     def OnClickClose(self, event):
         self.parent.OnClickClose(event)
 
+    def OnChoice(self, event):
+        self.list.populate()
+
+    def get_localboxes(self):
+        return map(lambda x: x.label, localbox_ctrl.ctrl.load())
+
     def select_dir(self, wx_event):
-        self._selected_dir.SetValue(gui_utils.select_directory())
+        try:
+            path = gui_utils.select_directory(cwd=self.localbox_path)
+            if path:
+                self.localbox_client.get_meta(path)
+                self._selected_dir.SetValue(path)
+        except InvalidLocalBoxPathError:
+            gui_utils.show_error_dialog(_('That is not a valid LocalBox path. Please select another path.'), _('Error'))
+
+    @property
+    def localbox_client(self):
+        localbox_item = localbox_ctrl.ctrl.get(self.choice.GetString(self.choice.GetSelection()))
+        return LocalBox(url=localbox_item.url, label=localbox_item.label,
+                        path=localbox_item.path)
+
+    @property
+    def localbox_path(self):
+        return localbox_ctrl.ctrl.get(self.localbox_client.label).path
+
+
+class TestListCtrl(wx.ListCtrl, listmix.CheckListCtrlMixin, listmix.ListCtrlAutoWidthMixin):
+    def __init__(self, *args, **kwargs):
+        wx.ListCtrl.__init__(self, *args, **kwargs)
+        listmix.CheckListCtrlMixin.__init__(self)
+        listmix.ListCtrlAutoWidthMixin.__init__(self)
+        self.setResizeColumn(2)
+
+        self.parent = args[0]
+
+        self.InsertColumn(0, "No.")
+        self.InsertColumn(1, "Username")
+
+        self.Arrange()
+
+    def OnCheckItem(self, index, flag):
+        print(index, flag)
+
+    def GetSelectedItemCount(self):
+        count = 0
+        for i in range(0, self.GetItemCount()):
+            if self.IsChecked(i):
+                count += 1
+
+        return count
+
+    def populate(self):
+        self.DeleteAllItems()
+
+        localbox_client = self.parent.localbox_client
+        self.users = localbox_client.get_all_users()
+        tmp_users = []
+
+        for i in range(len(self.users)):
+            user = self.users[i]
+            if localbox_client.username != user['username']:
+                self.Append(["", user['username']])
+                tmp_users.append(user)
+
+        self.users = tmp_users
+
+    def get_users(self):
+        """
+        Get the list of users to send the invite to
+        :return:
+        """
+        result = list()
+        for i in range(0, self.GetItemCount()):
+            if self.IsChecked(i):
+                result.append(self.users[i])
+
+        return result
+
+
+def ask_passphrase(username, site):
+    app = wx.App()
+    PassphraseDialog.show(username=username, label=site)
+    app.MainLoop()

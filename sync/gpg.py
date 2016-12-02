@@ -60,8 +60,14 @@ class gpg(object):
         fingerprint = result1.fingerprints[0]
 
         if self.is_passphrase_valid(passphrase=passphrase, fingerprint=fingerprint):
-            sql = "INSERT INTO keys (site, user, fingerprint) VALUES (?, ?, ?)"
-            database_execute(sql, (site, user, fingerprint))
+            fingerprint = self.get_fingerprint(site, user)
+            if not fingerprint:
+                sql = "INSERT INTO keys (site, user, fingerprint) VALUES (?, ?, ?)"
+                database_execute(sql, (site, user, fingerprint))
+            else:
+                sql = "UPDATE keys SET SITE=? WHERE fingerprint=?"
+                database_execute(sql, (site, fingerprint))
+            # TODO: check if existing fingerprint is equal to the one previously stored.
             return fingerprint
         else:
             return None
@@ -84,8 +90,7 @@ class gpg(object):
 
     def is_passphrase_valid(self, passphrase, label=None, user=None, fingerprint=None):
         if not fingerprint:
-            sql = 'SELECT fingerprint FROM keys where site = ? and user = ?'
-            fingerprint = database_execute(sql, (label, user))[0][0]
+            fingerprint = self.get_fingerprint(label, user)
 
         sign_result = self.gpg.sign("test", keyid=fingerprint, passphrase=passphrase)
 
@@ -102,23 +107,24 @@ class gpg(object):
         database_execute(sql, (site, user, fingerprint))
         return fingerprint
 
+    def get_fingerprint(self, site, user):
+        sql = "select fingerprint from keys where site = ? and user = ?"
+        result = database_execute(sql, (site, user))
+        if not len(result):
+            return None
+        return result[0][0]
+
     def has_key(self, site, user):
         """
         Check whether a key is present for a certain site and user
         """
-        sql = "select fingerprint from keys where site = ? and user = ?"
-        result = database_execute(sql, (site, user))
-        if result == []:
-            return False
-        return True
+        return self.get_fingerprint(site, user) is None
 
     def encrypt(self, data, site, user, armor=False):
         """
         encrypt data for user at site.
         """
-        sql = "select fingerprint from keys where site = ? and user = ?"
-        result = database_execute(sql, (site, user))
-        fingerprint = result[0][0]
+        fingerprint = self.get_fingerprint(site, user)
         cryptdata = self.gpg.encrypt_file(StringIO(data),
                                           fingerprint,
                                           always_trust=True,

@@ -19,6 +19,7 @@ else:
 SYNCINI_PATH = join(APPDIR, 'sync.ini')
 SITESINI_PATH = join(APPDIR, 'sites.ini')
 LOCALBOX_SITES_PATH = join(APPDIR, 'sites.pickle')
+LOCALBOX_SHARES_PATH = join(APPDIR, 'shares.pickle')
 LOCALBOX_PREFERENCES_PATH = join(APPDIR, 'prefs.pickle')
 LOCALBOX_ACCOUNT_PATH = join(APPDIR, 'account.pickle')
 DATABASE_PATH = join(APPDIR, 'database.sqlite3')

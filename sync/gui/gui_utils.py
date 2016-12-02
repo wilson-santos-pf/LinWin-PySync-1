@@ -38,17 +38,8 @@ def show_error_dialog(message, title, standalone=False):
     wx.MessageBox(message, title, wx.OK | wx.ICON_ERROR)
 
 
-def ask_passphrase(localbox_client, dialog):
-    username = localbox_client.authenticator.username
-    label = localbox_client.authenticator.label
-
-    app = wx.App()
-    dialog.show(username=username, label=label)
-    app.MainLoop()
-
-
-def select_directory():
-    dialog = wx.DirDialog(None, _("Choose a file"), style=wx.DD_DEFAULT_STYLE, defaultPath=getcwd(),
+def select_directory(cwd=getcwd()):
+    dialog = wx.DirDialog(None, _("Choose a file"), style=wx.DD_DEFAULT_STYLE, defaultPath=cwd,
                           pos=(10, 10))
     if dialog.ShowModal() == wx.ID_OK:
         selected_dir = dialog.GetPath()

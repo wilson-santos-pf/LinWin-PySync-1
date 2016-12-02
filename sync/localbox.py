@@ -58,10 +58,21 @@ class LocalBox(object):
     object representing localbox
     """
 
-    def __init__(self, url, label):
+    def __init__(self, url, label, path=None):
+        """
+
+        :param url:
+        :param label:
+        :param path: filesystem path for the LocalBox
+        """
         if url[-1] != '/':
             url += "/"
         self.url = url
+        self.label = label
+        if path and path[-1] != '/':
+            self.path = path + '/'
+        else:
+            self.path = path
         self._authentication_url = None
         self._authentication_url = self.get_authentication_url()
         self._authenticator = Authenticator(self._authentication_url, label)
@@ -69,6 +80,10 @@ class LocalBox(object):
     @property
     def authenticator(self):
         return self._authenticator
+
+    @property
+    def username(self):
+        return self._authenticator.username
 
     def get_authentication_url(self):
         """
@@ -115,11 +130,20 @@ class LocalBox(object):
         """
         do the meta call
         """
-        metapath = quote_plus(path)
-        request = Request(url=self.url + 'lox_api/meta', data=dumps({'path': path}))
+        path2 = self.remove_path_prefix(path)
+        metapath = quote_plus(path2)
+        request = Request(url=self.url + 'lox_api/meta', data=dumps({'path': path2}))
         getLogger(__name__).debug('calling lox_api/meta for path: %s' % metapath)
-        json_text = self._make_call(request).read()
-        return loads(json_text)
+        try:
+            result = self._make_call(request)
+            json_text = result.read()
+            return loads(json_text)
+        except HTTPError as error:
+            if error.code == 404:
+                raise InvalidLocalBoxPathError(path=path)
+            else:
+                getLogger(__name__).exception(error)
+                raise error
 
     def get_file(self, path=''):
         """
@@ -304,11 +328,16 @@ class LocalBox(object):
         result = self._make_call(request).read()
         return loads(result)
 
-    def create_share(self, localbox_path, passphrase, user_list):
+    def remove_path_prefix(self, path):
+        return path.replace(self.path, '', 1) if self.path else path
+
+    def create_share(self, path, passphrase, user_list):
         """
         Share directory with users
         :return:
         """
+        localbox_path = self.remove_path_prefix(path)
+
         data = dict()
         data['identities'] = user_list
 
@@ -329,7 +358,6 @@ class LocalBox(object):
         except Exception as error:
             getLogger(__name__).exception(error)
 
-
     def save_key(self, user, path, key, iv):
         """
         saves an encrypted key on the localbox server
@@ -344,7 +372,8 @@ class LocalBox(object):
         cryptopath = LocalBox.get_keys_path(path)
         cryptopath = quote_plus(cryptopath)
 
-        site = self.authenticator.label
+        #site = self.authenticator.label
+        site = self.url
 
         pgpclient = gpg()
         encodedata = {
@@ -406,7 +435,7 @@ def create_key_and_iv(localbox_client, path):
     getLogger(__name__).debug('Creating a key for path: %s', path)
     key = CryptoRandom().read(32)
     iv = CryptoRandom().read(16)
-    localbox_client.save_key(path, key, iv)
+    localbox_client.save_key(localbox_client.username, path, key, iv)
 
 
 def get_aes_key(localbox_client, path, passphrase, should_create=False):
@@ -425,7 +454,7 @@ def get_aes_key(localbox_client, path, passphrase, should_create=False):
     return AES_Key(key, MODE_CFB, iv, segment_size=128) if key else None
 
 
-class InvalidLocalboxError(Exception):
+class InvalidLocalboxURLError(Exception):
     """
     URL for localbox backend is invalid or is unreachable
     """
@@ -439,6 +468,18 @@ class NoKeysFoundError(Exception):
 
     def __init__(self, *args, **kwargs):  # real signature unknown
         pass
+
+
+class InvalidLocalBoxPathError(Exception):
+    """
+    Invalid LocalBox pass
+    """
+
+    def __init__(self, *args, **kwargs):
+        self.path = kwargs['path']
+
+    def __str__(self):
+        return '%s is not a valid LocalBox path' % self.path
 
 
 if __name__ == "__main__":

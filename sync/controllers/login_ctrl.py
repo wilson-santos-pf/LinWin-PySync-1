@@ -18,7 +18,7 @@ class LoginController(object):
 
     def store_keys(self, localbox_client, pubkey, privkey, passphrase):
         username = localbox_client.authenticator.username
-        label = localbox_client.authenticator.label
+        site = localbox_client.url
         # set up gpg
         keys = gpg()
         if pubkey is not None and privkey is not None:
@@ -26,7 +26,7 @@ class LoginController(object):
 
             result = keys.add_keypair(pubkey,
                                       privkey,
-                                      label,
+                                      site,
                                       username,
                                       passphrase)
             if result is None:
@@ -34,7 +34,7 @@ class LoginController(object):
         else:
             getLogger(__name__).debug("public keys not found. generating...")
             fingerprint = keys.generate(passphrase,
-                                        label,
+                                        site,
                                         localbox_client.authenticator.username)
             data = {'private_key': keys.get_key(fingerprint, True),
                     'public_key': keys.get_key(fingerprint, False)}
@@ -43,7 +43,7 @@ class LoginController(object):
             result = localbox_client.call_user(data_json)
 
         if result is not None:
-            self._passphrase[label] = passphrase
+            self._passphrase[site] = passphrase
         return result
 
     def get_passphrase(self, label, remote=False):

@@ -331,13 +331,13 @@ class LocalBox(object):
     def remove_path_prefix(self, path):
         return path.replace(self.path, '', 1) if self.path else path
 
-    def create_share(self, path, passphrase, user_list):
+    def create_share(self, localbox_path, passphrase, user_list):
         """
         Share directory with users
         :return:
         """
-        localbox_path = self.remove_path_prefix(path)
-
+        if localbox_path.startswith('/'):
+            localbox_path = localbox_path[1:]
         data = dict()
         data['identities'] = user_list
 
@@ -352,7 +352,7 @@ class LocalBox(object):
                 public_key = user['public_key']
                 username = user['username']
 
-                gpg().add_public_key(self.url, username, public_key)
+                gpg().add_public_key(self.label, username, public_key)
                 self.save_key(username, localbox_path, key, iv)
 
         except Exception as error:
@@ -372,8 +372,7 @@ class LocalBox(object):
         cryptopath = LocalBox.get_keys_path(path)
         cryptopath = quote_plus(cryptopath)
 
-        #site = self.authenticator.label
-        site = self.url
+        site = self.authenticator.label
 
         pgpclient = gpg()
         encodedata = {

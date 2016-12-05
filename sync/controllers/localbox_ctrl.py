@@ -55,12 +55,13 @@ class SyncsController:
 
 
 class SyncItem:
-    def __init__(self, label=None, url=None, path=None, direction=None, user=None):
+    def __init__(self, label=None, url=None, path=None, direction=None, user=None, shares=None):
         self._label = label
         self._url = url
         self._path = path
         self._direction = direction
         self._user = user
+        self._shares = shares if shares is not None else []
 
     @property
     def label(self):

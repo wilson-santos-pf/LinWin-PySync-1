@@ -10,7 +10,7 @@ from sync.controllers.account_ctrl import AccountController
 from sync.controllers.localbox_ctrl import SyncsController
 from sync.controllers.login_ctrl import LoginController, InvalidPassphraseError
 from sync.controllers.preferences_ctrl import ctrl as preferences_ctrl
-from sync.controllers.shares_ctrl import SharesController
+from sync.controllers.shares_ctrl import SharesController, ShareItem
 from sync.defaults import DEFAULT_LANGUAGE
 from sync.gui import gui_utils
 from sync.gui.gui_utils import MAIN_FRAME_SIZE, MAIN_PANEL_SIZE, \
@@ -53,7 +53,7 @@ class Gui(wx.Frame):
         self.event = event
         self.toolbar_panels = dict()
         self.panel_syncs = SyncsPanel(self, event, main_syncing_thread)
-        self.panel_shares = SharesPanel(self)
+        self.panel_shares = SharePanel(self)
         self.panel_account = AccountPanel(self)
         self.panel_preferences = PreferencesPanel(self)
         self.panel_bottom = BottomPanel(self)
@@ -86,8 +86,8 @@ class Gui(wx.Frame):
         self.Bind(wx.EVT_CLOSE, self.on_close)
 
         # ask passphrase for each label
-        for label_item in SyncsController().load():
-            PassphraseDialog(self, username=label_item.user, label=label_item.label, site=label_item.url).Show()
+        map(lambda i: PassphraseDialog(self, username=i.user, label=i.label, site=i.url).Show(),
+            SyncsController().load())
 
     def InitUI(self):
 
@@ -243,12 +243,10 @@ class SyncsPanel(wx.Panel):
         NewSyncWizard(self.ctrl, self.event)
 
     def delete_localbox(self, wx_event):
-        labels_deleted = self.ctrl.delete()
-        for label in labels_deleted:
-            self._main_syncing_thread.stop(label)
+        map(lambda l: self._main_syncing_thread.stop(l), self.ctrl.delete())
 
 
-class SharesPanel(wx.Panel):
+class SharePanel(wx.Panel):
     """
     """
 
@@ -268,7 +266,7 @@ class SharesPanel(wx.Panel):
         self.Bind(wx.EVT_BUTTON, self.delete_share, self.btn_delete)
 
         # Setup
-        self.ctrl.populate_list()
+        self.ctrl.populate()
 
     def _DoLayout(self):
         vbox = wx.BoxSizer(wx.VERTICAL)
@@ -290,10 +288,10 @@ class SharesPanel(wx.Panel):
         self.SetSizer(vbox)
 
     def create_share(self, wx_event):
-        NewShareDialog(self)
+        NewShareDialog(self, self.ctrl)
 
     def delete_share(self, wx_event):
-        pass
+        self.ctrl.delete()
 
 
 class AccountPanel(wx.Panel):
@@ -485,7 +483,7 @@ class LocalboxListCtrl(wx.ListCtrl):
             self.Append((item.label, item.path, item.url))
 
     def add(self, item):
-        getLogger(__name__).debug('Add item: %s' % item)
+        getLogger(__name__).debug('%s: Add item %s' % (self.__class__.__name__, item))
         self.Append((item.label, item.path, item.url))
         self.ctrl.add(item)
 
@@ -496,7 +494,7 @@ class LocalboxListCtrl(wx.ListCtrl):
             idx = self.GetNextSelected(-1)
 
             if idx > -1:
-                getLogger(__name__).debug('Delete item: #%d' % idx)
+                getLogger(__name__).debug('%s: Delete item #%d' % (self.__class__.__name__, idx))
                 self.DeleteItem(idx)
                 label = self.ctrl.delete(idx)
                 labels_removed.append(label)
@@ -505,44 +503,106 @@ class LocalboxListCtrl(wx.ListCtrl):
         return labels_removed
 
     def save(self):
-        getLogger(__name__).info('Sync list ctrl save()')
+        getLogger(__name__).info('%s: ctrl save()' % self.__class__.__name__)
         self.ctrl.save()
 
 
-class SharesListCtrl(wx.ListCtrl):
+class LoxListCtrl(wx.ListCtrl):
+    """
+    This class behaves like a bridge between the GUI components and the real controller.
+    """
+
+    def __init__(self, parent, cklass, iklass):
+        super(LoxListCtrl, self).__init__(parent,
+                                          style=wx.LC_REPORT)
+
+        self.ctrl = cklass()
+
+        # Add columns to the list
+        print(iklass().__dict__.keys())
+        map(lambda i: self.InsertColumn(0, i), iklass().__dict__.keys())
+
+    def populate(self):
+        """
+        Read the list from the controller
+        """
+        map(lambda i: self.Append(self.item_attrs(i).values()), self.ctrl.load())
+
+    def add(self, item):
+        getLogger(__name__).debug('%s: Add item %s' % (self.__class__.__name__, item))
+        self.Append(self.item_attrs(item).values())
+        self.ctrl.add(item)
+
+    def delete(self):
+        idx = 0
+        removed = []
+        while idx > -1:
+            idx = self.GetNextSelected(-1)
+
+            if idx > -1:
+                getLogger(__name__).debug('%s: Delete item #%d' % (self.__class__.__name__, idx))
+                self.DeleteItem(idx)
+                label = self.ctrl.delete(idx)
+                removed.append(label)
+
+        self.save()
+        return removed
+
+    def save(self):
+        getLogger(__name__).info('%s: ctrl save()' % self.__class__.__name__)
+        self.ctrl.save()
+
+    def item_attrs(self, item):
+        """
+        Get item as dictionary { 'attr1':'val1', 'attr2':'val2', ... }
+        :param item:
+        :return:
+        """
+        return item.__dict__
+
+
+class SharesListCtrl(LoxListCtrl):
     """
     This class behaves like a bridge between the GUI components and the real syncs controller.
     """
 
     def __init__(self, parent):
         super(SharesListCtrl, self).__init__(parent,
-                                             style=wx.LC_REPORT)
-
-        self.ctrl = SharesController()
-
-        # Add three columns to the list
-        self.InsertColumn(0, _("User"))
-        self.InsertColumn(1, _("Path"))
-        self.InsertColumn(2, _("URL"))
+                                             SharesController,
+                                             ShareItem)
 
         self.SetColumnWidth(0, 100)
         self.SetColumnWidth(1, 250)
         self.SetColumnWidth(2, 200)
 
-    def populate_list(self):
-        """
-        Read the syncs list from the controller
-        """
-        pass
+        # self.ctrl = SharesController()
+        #
+        # # Add three columns to the list
+        # # self.InsertColumn(0, _("User"))
+        # # self.InsertColumn(1, _("Path"))
+        # # self.InsertColumn(2, _("URL"))
+        #
+        # map(lambda i: self.InsertColumn(0, i), ShareItem().__dict__.keys())
+        #
+        # self.SetColumnWidth(0, 100)
+        # self.SetColumnWidth(1, 250)
+        # self.SetColumnWidth(2, 200)
 
-    def add(self, item):
-        pass
-
-    def delete(self):
-        pass
-
-    def save(self):
-        pass
+        # def populate_list(self):
+        #     """
+        #     Read the syncs list from the controller
+        #     """
+        #     # map(lambda i: self.Append([i.user, i.path, i.url]), self.ctrl.load())
+        #     map(lambda i: self.Append(i.__dict__.values()), self.ctrl.load())
+        #
+        # def add(self, item):
+        #     pass
+        #
+        # def delete(self):
+        #     pass
+        #
+        # def save(self):
+        #     pass
 
 
 # ----------------------------------- #
@@ -654,12 +714,13 @@ class PassphraseDialog(wx.Dialog):
 
 
 class NewShareDialog(wx.Dialog):
-    def __init__(self, parent):
+    def __init__(self, parent, ctrl):
         super(NewShareDialog, self).__init__(parent=parent,
-                                             title=PASSPHRASE_TITLE,
+                                             title=_('Create Share'),
                                              size=(500, 600),
                                              style=wx.CLOSE_BOX | wx.CAPTION)
 
+        self.ctrl = ctrl
         # Attributes
         self.panel = NewSharePanel(self)
         self.main_sizer = wx.BoxSizer(wx.VERTICAL)
@@ -688,6 +749,7 @@ class NewSharePanel(wx.Panel):
         self.list = TestListCtrl(self, style=wx.LC_REPORT)
         self._selected_dir = wx.TextCtrl(self, style=wx.TE_READONLY)
         self.btn_select_dir = wx.Button(self, label=_('Select'), size=(95, 30))
+        self.btn_select_dir.Disable()
         self.choice = wx.Choice(self, choices=self.get_localboxes())
 
         self._btn_ok = wx.Button(self, id=wx.ID_OK, label=_('Ok'))
@@ -695,9 +757,11 @@ class NewSharePanel(wx.Panel):
 
         # Layout
         sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer_sel_dir = wx.BoxSizer(wx.HORIZONTAL)
         sizer.Add(self.choice, 0, wx.ALL | wx.EXPAND, border=DEFAULT_BORDER)
-        sizer.Add(self._selected_dir, 0, wx.ALL | wx.EXPAND, border=DEFAULT_BORDER)
-        sizer.Add(self.btn_select_dir, 0, wx.ALL | wx.EXPAND, border=DEFAULT_BORDER)
+        sizer_sel_dir.Add(self._selected_dir, 1)
+        sizer_sel_dir.Add(self.btn_select_dir, 0)
+        sizer.Add(sizer_sel_dir, 0, wx.ALL | wx.EXPAND, border=DEFAULT_BORDER)
         sizer.Add(self.list, proportion=1, flag=wx.EXPAND | wx.ALL, border=DEFAULT_BORDER)
 
         btn_szr = wx.StdDialogButtonSizer()
@@ -723,17 +787,24 @@ class NewSharePanel(wx.Panel):
 
     def OnClickOk(self, event):
         path = self._selected_dir.GetValue()
+        lox_label = self.choice.GetString(self.choice.GetSelection())
         if gui_utils.is_valid_input(path) and self.list.GetSelectedItemCount() > 0:
             user_list = self.list.get_users()
-            self.localbox_client.create_share(path,
-                                              LoginController().get_passphrase(self.localbox_client.label),
+            share_path = path.replace(self.localbox_path, '', 1)
+            self.localbox_client.create_share(localbox_path=share_path,
+                                              passphrase=LoginController().get_passphrase(self.localbox_client.label),
                                               user_list=user_list)
-            self.Destroy()
+            item = ShareItem(user=self.localbox_client.username, path=share_path, url=self.localbox_client.url,
+                             label=lox_label)
+            SharesController().add(item)
+            self.parent.ctrl.populate()
+            self.parent.Destroy()
 
     def OnClickClose(self, event):
         self.parent.OnClickClose(event)
 
     def OnChoice(self, event):
+        self.btn_select_dir.Enable()
         self.list.populate()
 
     def get_localboxes(self):
@@ -746,7 +817,9 @@ class NewSharePanel(wx.Panel):
                 self.localbox_client.get_meta(path)
                 self._selected_dir.SetValue(path)
         except InvalidLocalBoxPathError:
-            gui_utils.show_error_dialog(_('That is not a valid LocalBox path. Please select another path.'), _('Error'))
+            gui_utils.show_error_dialog(_(
+                'Invalid LocalBox path. Please make sure that you are selecting a directory inside LocalBox and '
+                'that the directory has been uploaded. Or try a different directory.'), 'Error')
 
     @property
     def localbox_client(self):

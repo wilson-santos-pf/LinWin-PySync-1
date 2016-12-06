@@ -81,6 +81,7 @@ help:
 #clean:
 #	rm -rf $(BUILDDIR)/*
 
+.PHONY: apidoc
 apidoc:
 	$(SPHINXAPIDOC) -o $(APIDOCDIR) sync
 

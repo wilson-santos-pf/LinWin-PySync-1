@@ -1,5 +1,6 @@
-from time import sleep, time
 from functools import wraps
+from logging import getLogger
+from time import time
 
 
 def profile(func):
@@ -7,6 +8,6 @@ def profile(func):
     def wrapper(*args, **kwargs):
         t = time()
         func(*args, **kwargs)
-        print func.__name__, 'took:', time() - t, 'seconds'
+        getLogger(__name__).debug(func.__name__ + ' took: ' + str(time() - t) + ' seconds')
 
     return wrapper

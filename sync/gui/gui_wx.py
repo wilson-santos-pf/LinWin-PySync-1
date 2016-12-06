@@ -518,16 +518,6 @@ class LoxListCtrl(wx.ListCtrl):
 
         self.ctrl = cklass()
 
-        # Add columns to the list
-        print(iklass().__dict__.keys())
-        map(lambda i: self.InsertColumn(0, i), iklass().__dict__.keys())
-
-    def populate(self):
-        """
-        Read the list from the controller
-        """
-        map(lambda i: self.Append(self.item_attrs(i).values()), self.ctrl.load())
-
     def add(self, item):
         getLogger(__name__).debug('%s: Add item %s' % (self.__class__.__name__, item))
         self.Append(self.item_attrs(item).values())
@@ -558,7 +548,8 @@ class LoxListCtrl(wx.ListCtrl):
         :param item:
         :return:
         """
-        return item.__dict__
+        return dict(map(lambda x: {'2': '2'}, self._columns))
+        # return item.__dict__
 
 
 class SharesListCtrl(LoxListCtrl):
@@ -571,38 +562,21 @@ class SharesListCtrl(LoxListCtrl):
                                              SharesController,
                                              ShareItem)
 
-        self.SetColumnWidth(0, 100)
-        self.SetColumnWidth(1, 250)
+        self.InsertColumn(0, _("Label"))
+        self.InsertColumn(1, _("User"))
+        self.InsertColumn(2, _("Path"))
+        self.InsertColumn(3, _("URL"))
+
+        self.SetColumnWidth(0, 150)
+        self.SetColumnWidth(1, 150)
         self.SetColumnWidth(2, 200)
+        self.SetColumnWidth(3, 400)
 
-        # self.ctrl = SharesController()
-        #
-        # # Add three columns to the list
-        # # self.InsertColumn(0, _("User"))
-        # # self.InsertColumn(1, _("Path"))
-        # # self.InsertColumn(2, _("URL"))
-        #
-        # map(lambda i: self.InsertColumn(0, i), ShareItem().__dict__.keys())
-        #
-        # self.SetColumnWidth(0, 100)
-        # self.SetColumnWidth(1, 250)
-        # self.SetColumnWidth(2, 200)
-
-        # def populate_list(self):
-        #     """
-        #     Read the syncs list from the controller
-        #     """
-        #     # map(lambda i: self.Append([i.user, i.path, i.url]), self.ctrl.load())
-        #     map(lambda i: self.Append(i.__dict__.values()), self.ctrl.load())
-        #
-        # def add(self, item):
-        #     pass
-        #
-        # def delete(self):
-        #     pass
-        #
-        # def save(self):
-        #     pass
+    def populate(self):
+        """
+        Read the syncs list from the controller
+        """
+        map(lambda i: self.Append([i.label, i.user, i.path, i.url]), self.ctrl.load())
 
 
 # ----------------------------------- #
@@ -659,6 +633,7 @@ class PasshphrasePanel(wx.Panel):
 
         self.Bind(wx.EVT_BUTTON, self.OnClickOk, id=self._btn_ok.Id)
         self.Bind(wx.EVT_BUTTON, self.OnClickClose, id=self._btn_close.Id)
+        self._passphrase.Bind(wx.EVT_KEY_DOWN, self.OnEnter)
 
         self.SetSizer(main_sizer)
 
@@ -675,6 +650,14 @@ class PasshphrasePanel(wx.Panel):
                 getLogger(__name__).exception(err)
                 gui_utils.show_error_dialog(message=_('Could not authenticate. Please contact the administrator'),
                                             title=_('Error'))
+
+    def OnEnter(self, event):
+        """"""
+        keycode = event.GetKeyCode()
+        if keycode == wx.WXK_RETURN or keycode == wx.WXK_NUMPAD_ENTER:
+            event.Id = self._btn_ok.Id
+            return self.OnClickOk(event)
+        event.Skip()
 
     def OnClickClose(self, event):
         self.parent.OnClickClose(event)
@@ -758,10 +741,14 @@ class NewSharePanel(wx.Panel):
         # Layout
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer_sel_dir = wx.BoxSizer(wx.HORIZONTAL)
+        sizer.Add(wx.StaticText(self, label=_('Select your LocalBox:')), 0, wx.ALL | wx.EXPAND, border=DEFAULT_BORDER)
         sizer.Add(self.choice, 0, wx.ALL | wx.EXPAND, border=DEFAULT_BORDER)
+        sizer.Add(wx.StaticText(self, label=_('Select directory to share:')), 0, wx.ALL | wx.EXPAND,
+                  border=DEFAULT_BORDER)
         sizer_sel_dir.Add(self._selected_dir, 1)
         sizer_sel_dir.Add(self.btn_select_dir, 0)
         sizer.Add(sizer_sel_dir, 0, wx.ALL | wx.EXPAND, border=DEFAULT_BORDER)
+        sizer.Add(wx.StaticText(self, label=_('Choose the users you want to share with:')), 0, wx.ALL | wx.EXPAND, border=DEFAULT_BORDER)
         sizer.Add(self.list, proportion=1, flag=wx.EXPAND | wx.ALL, border=DEFAULT_BORDER)
 
         btn_szr = wx.StdDialogButtonSizer()

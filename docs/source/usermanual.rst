@@ -35,8 +35,8 @@ Run:
     xdg-icon-resource install --size 64 --context mimetypes /usr/localbox/localbox.png application-x-localbox
 
 
-Explaning LocalBox
-==================
+Explaining LocalBox
+===================
 
 The LocalBox user can setup a directory on his computer to be stored securely on a remote server.
 Using the same account the user can synchronize the same files with other devices / computers.
@@ -127,3 +127,30 @@ the tray icon.
 
 .. image:: ../_static/usermanual/localbox-delete-decrypted.*
 
+
+Sharing your files
+==================
+
+Since version 1.6.1
+
+In the tab "Shares" is a list of all the shares for all the configured LocalBoxes
+
+.. image:: ../_static/usermanual/sharing_tab.png
+
+1. Label is the identifier of the configured LocalBox (same as in the Syncs tab)
+2. User is the name of the user that created the share
+3. Path is the directory being shared. It is relative to the root of the LocalBox directory (that's why is represented as /ABC)
+4. URL is address to the LocalBox backend
+
+This allows the creator to manages his shares.
+The person who receives a share is called a "receiver".
+The receiver will see the new files in his LocalBox, but won't see the share listed in his "Shares" tab.
+The receiver can read and write files in the share folder.
+
+The operations available are: add and remove shares.
+
+Add new share
++++++++++++++
+
+
+.. image:: ../_static/usermanual/sharing_tab.png

@@ -38,6 +38,13 @@ def show_error_dialog(message, title, standalone=False):
     wx.MessageBox(message, title, wx.OK | wx.ICON_ERROR)
 
 
+def show_confirm_dialog(parent, question, caption=_('Are you sure?')):
+    dlg = wx.MessageDialog(parent, question, caption, wx.YES_NO | wx.ICON_QUESTION)
+    result = dlg.ShowModal() == wx.ID_YES
+    dlg.Destroy()
+    return result
+
+
 def select_directory(cwd=getcwd()):
     dialog = wx.DirDialog(None, _("Choose a file"), style=wx.DD_DEFAULT_STYLE, defaultPath=cwd,
                           pos=(10, 10))

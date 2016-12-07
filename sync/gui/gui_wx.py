@@ -291,7 +291,9 @@ class SharePanel(wx.Panel):
         NewShareDialog(self, self.ctrl)
 
     def delete_share(self, wx_event):
-        self.ctrl.delete()
+        question = _('This will also delete the directory in your LocalBox and for all users. Continue?')
+        if gui_utils.show_confirm_dialog(self, question):
+            self.ctrl.delete()
 
 
 class AccountPanel(wx.Panel):
@@ -542,14 +544,8 @@ class LoxListCtrl(wx.ListCtrl):
         getLogger(__name__).info('%s: ctrl save()' % self.__class__.__name__)
         self.ctrl.save()
 
-    def item_attrs(self, item):
-        """
-        Get item as dictionary { 'attr1':'val1', 'attr2':'val2', ... }
-        :param item:
-        :return:
-        """
-        return dict(map(lambda x: {'2': '2'}, self._columns))
-        # return item.__dict__
+    def populate(self):
+        self.DeleteAllItems()
 
 
 class SharesListCtrl(LoxListCtrl):
@@ -576,6 +572,7 @@ class SharesListCtrl(LoxListCtrl):
         """
         Read the syncs list from the controller
         """
+        super(SharesListCtrl, self).populate()
         map(lambda i: self.Append([i.label, i.user, i.path, i.url]), self.ctrl.load())
 
 
@@ -748,7 +745,8 @@ class NewSharePanel(wx.Panel):
         sizer_sel_dir.Add(self._selected_dir, 1)
         sizer_sel_dir.Add(self.btn_select_dir, 0)
         sizer.Add(sizer_sel_dir, 0, wx.ALL | wx.EXPAND, border=DEFAULT_BORDER)
-        sizer.Add(wx.StaticText(self, label=_('Choose the users you want to share with:')), 0, wx.ALL | wx.EXPAND, border=DEFAULT_BORDER)
+        sizer.Add(wx.StaticText(self, label=_('Choose the users you want to share with:')), 0, wx.ALL | wx.EXPAND,
+                  border=DEFAULT_BORDER)
         sizer.Add(self.list, proportion=1, flag=wx.EXPAND | wx.ALL, border=DEFAULT_BORDER)
 
         btn_szr = wx.StdDialogButtonSizer()
@@ -778,13 +776,17 @@ class NewSharePanel(wx.Panel):
         if gui_utils.is_valid_input(path) and self.list.GetSelectedItemCount() > 0:
             user_list = self.list.get_users()
             share_path = path.replace(self.localbox_path, '', 1)
-            self.localbox_client.create_share(localbox_path=share_path,
-                                              passphrase=LoginController().get_passphrase(self.localbox_client.label),
-                                              user_list=user_list)
-            item = ShareItem(user=self.localbox_client.username, path=share_path, url=self.localbox_client.url,
-                             label=lox_label)
-            SharesController().add(item)
-            self.parent.ctrl.populate()
+
+            if self.localbox_client.create_share(localbox_path=share_path,
+                                                 passphrase=LoginController().get_passphrase(
+                                                     self.localbox_client.label),
+                                                 user_list=user_list):
+                item = ShareItem(user=self.localbox_client.username, path=share_path, url=self.localbox_client.url,
+                                 label=lox_label)
+                SharesController().add(item)
+                self.parent.ctrl.populate()
+            else:
+                gui_utils.show_error_dialog(_('Server error creating the share'), _('Error'))
             self.parent.Destroy()
 
     def OnClickClose(self, event):

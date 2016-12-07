@@ -333,15 +333,16 @@ class LocalBox(object):
 
     def create_share(self, localbox_path, passphrase, user_list):
         """
-        Share directory with users
-        :return:
+        Share directory with users.
+
+        :return: True if success, False otherwise
         """
         if localbox_path.startswith('/'):
             localbox_path = localbox_path[1:]
         data = dict()
         data['identities'] = user_list
 
-        request = Request(url=self.url + 'lox_api/share_create/' + localbox_path, data=dumps(data))
+        request = Request(url=self.url + 'lox_api/share_create/' + quote_plus(localbox_path), data=dumps(data))
 
         try:
             result = self._make_call(request).read()
@@ -355,8 +356,10 @@ class LocalBox(object):
                 gpg().add_public_key(self.label, username, public_key)
                 self.save_key(username, localbox_path, key, iv)
 
+            return True
         except Exception as error:
             getLogger(__name__).exception(error)
+            return False
 
     def save_key(self, user, path, key, iv):
         """

@@ -1,6 +1,7 @@
 import pickle
 from logging import getLogger
 
+from sync.controllers.localbox_ctrl import SyncsController
 from sync.defaults import LOCALBOX_SHARES_PATH
 from sync.localbox import LocalBox
 from sync.database import database_execute
@@ -31,27 +32,45 @@ class SharesController(object):
         item = self._list[index]
         localbox_client = LocalBox(url=item.url, label=item.label)
         localbox_client.delete(item.path)
+        localbox_client.delete_share(item.id)
         sql = 'delete from keys where site = ? and user != ?'
         database_execute(sql, (item.label, item.user))
         del self._list[index]
         if save:
             self.save()
 
+    def delete_for_label(self, label):
+        sql = 'delete from keys where site = ?'
+        database_execute(sql, (label,))
+        map(lambda i: self._list.remove(i), filter(lambda i: i.label == label, self._list))
+
     def save(self):
         pickle.dump(self._list, open(LOCALBOX_SHARES_PATH, 'wb'))
 
     def load(self):
-        try:
-            self._list = pickle.load(open(LOCALBOX_SHARES_PATH, 'rb'))
-        except IOError as error:
-            getLogger(__name__).warn('%s' % error)
-
+        self._list = []
+        for item in SyncsController().load():
+            localbox_client = LocalBox(url=item.url, label=item.label)
+            for share in localbox_client.get_share_list(user=item.user):
+                share_item = ShareItem(user=share['user'], path='/' + share['path'], url=item.url, label=item.label,
+                                       id=share['id'])
+                self._list.append(share_item)
         return self._list
 
 
-class ShareItem:
-    def __init__(self, user=None, path=None, url=None, label=None):
+class ShareItem(object):
+    def __init__(self, user=None, path=None, url=None, label=None, id=None):
         self.user = user
         self.path = path
         self.url = url
         self.label = label
+        self.id = id
+
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
+
+    def __str__(self):
+        return str(self.__dict__)
+
+    def __repr__(self):
+        return str(self.__dict__)

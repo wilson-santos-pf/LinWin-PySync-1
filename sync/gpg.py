@@ -60,13 +60,13 @@ class gpg(object):
         fingerprint = result1.fingerprints[0]
 
         if self.is_passphrase_valid(passphrase=passphrase, fingerprint=fingerprint):
-            fingerprint = self.get_fingerprint(site, user)
-            if not fingerprint:
+            old_fingerprint = self.get_fingerprint(site, user)
+            if not old_fingerprint:
                 sql = "INSERT INTO keys (site, user, fingerprint) VALUES (?, ?, ?)"
                 database_execute(sql, (site, user, fingerprint))
             else:
                 sql = "UPDATE keys SET SITE=? WHERE fingerprint=?"
-                database_execute(sql, (site, fingerprint))
+                database_execute(sql, (site, old_fingerprint))
             # TODO: check if existing fingerprint is equal to the one previously stored.
             return fingerprint
         else:

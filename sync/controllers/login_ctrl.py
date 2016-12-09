@@ -18,7 +18,7 @@ class LoginController(object):
 
     def store_keys(self, localbox_client, pubkey, privkey, passphrase):
         username = localbox_client.authenticator.username
-        site = localbox_client.url
+        site = localbox_client.label
         # set up gpg
         keys = gpg()
         if pubkey is not None and privkey is not None:

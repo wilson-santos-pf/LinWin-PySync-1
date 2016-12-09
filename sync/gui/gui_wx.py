@@ -264,9 +264,7 @@ class SharePanel(wx.Panel):
         # Bind events
         self.Bind(wx.EVT_BUTTON, self.create_share, self.btn_add)
         self.Bind(wx.EVT_BUTTON, self.delete_share, self.btn_delete)
-
-        # Setup
-        self.ctrl.populate()
+        self.Bind(wx.EVT_SHOW, self.on_show)
 
     def _DoLayout(self):
         vbox = wx.BoxSizer(wx.VERTICAL)
@@ -294,6 +292,10 @@ class SharePanel(wx.Panel):
         question = _('This will also delete the directory in your LocalBox and for all users. Continue?')
         if gui_utils.show_confirm_dialog(self, question):
             self.ctrl.delete()
+
+    def on_show(self, wx_event):
+        if self.IsShown():
+            self.ctrl.populate()
 
 
 class AccountPanel(wx.Panel):
@@ -501,11 +503,13 @@ class LocalboxListCtrl(wx.ListCtrl):
                 label = self.ctrl.delete(idx)
                 labels_removed.append(label)
 
+        map(lambda l: SharesController().delete_for_label(l), labels_removed)
         self.save()
         return labels_removed
 
     def save(self):
         getLogger(__name__).info('%s: ctrl save()' % self.__class__.__name__)
+        SharesController().save()
         self.ctrl.save()
 
 

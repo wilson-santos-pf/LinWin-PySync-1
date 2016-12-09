@@ -188,6 +188,19 @@ class LocalBox(object):
         except HTTPError:
             getLogger(__name__).error("Error remote deleting '%s'", path)
 
+    def delete_share(self, share_id):
+        """
+        Delete share.
+
+        :param share_id:
+        :return:
+        """
+        request = Request(url=self.url + 'lox_api/shares/' + str(share_id) + '/delete')
+        try:
+            return self._make_call(request)
+        except HTTPError:
+            getLogger(__name__).error("Error remote deleting share '%d'", share_id)
+
     def upload_file(self, path, fs_path, passphrase):
         """
         upload a file to localbox
@@ -360,6 +373,20 @@ class LocalBox(object):
         except Exception as error:
             getLogger(__name__).exception(error)
             return False
+
+    def get_share_list(self, user):
+        """
+        Share directory with users.
+
+        :return: True if success, False otherwise
+        """
+        request = Request(url=self.url + 'lox_api/shares/user/' + user)
+
+        try:
+            return loads(self._make_call(request).read())
+        except Exception as error:
+            getLogger(__name__).exception(error)
+            return []
 
     def save_key(self, user, path, key, iv):
         """

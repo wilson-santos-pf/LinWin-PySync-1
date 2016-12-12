@@ -42,3 +42,42 @@ Linux
     Edit ``[Default Applications]`` section of ``/etc/xdg/mimeapps.list`` adding:
 
         application/x-localbox=localbox.desktop
+
+
+File Sharing
+============
+
+LocalBox stores an encrypted (key, iv) pair for each directory. This pair is encrypted with the user's public key.
+To allow many clients for the same LocalBox, the pair is stored in the backend server.
+The (key, iv) pair can only be used after decrypting it with the passphrase protected private key.
+
+In order for the file sharing to work, the key and iv for the new share must be stored for each receiver of the share.
+
+Here's the description of the workflow for creating a share:
+
+.. image:: ../_static/file_sharing_save_keys.png
+
+1. The client calls the backend service to create a new share.  The service receives a JSON like so:
+
+.. code:: python
+
+    { 'identities': [
+
+            { 'type': 'user', 'username': ... },
+
+            ...
+
+        ]
+
+    }
+
+2. The client gets the encrypted key and iv from the server. These are used on encryption/decryption of files and it exists a pair per LocalBox directory.
+
+3. After importing the public keys [#]_ the client call the service to store the encrypted (key, iv)  that belongs to the receiver of the share. This step runs repeatedly for each user in the receivers list.
+
+
+.. [#] The public keys are obtained using the service ``lox_api/identities``. A field called public_key is available in the response.
+
+
+After this process the receivers can synchronize the new folder and read its contents.
+

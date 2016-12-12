@@ -86,7 +86,7 @@
 <span id="sync-controllers-localbox-ctrl-module"></span><h2>sync.controllers.localbox_ctrl module<a class="headerlink" href="#module-sync.controllers.localbox_ctrl" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="sync.controllers.localbox_ctrl.SyncItem">
-<em class="property">class </em><code class="descclassname">sync.controllers.localbox_ctrl.</code><code class="descname">SyncItem</code><span class="sig-paren">(</span><em>label=None</em>, <em>url=None</em>, <em>path=None</em>, <em>direction=None</em>, <em>user=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sync.controllers.localbox_ctrl.SyncItem" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">sync.controllers.localbox_ctrl.</code><code class="descname">SyncItem</code><span class="sig-paren">(</span><em>label=None</em>, <em>url=None</em>, <em>path=None</em>, <em>direction=None</em>, <em>user=None</em>, <em>shares=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sync.controllers.localbox_ctrl.SyncItem" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="attribute">
 <dt id="sync.controllers.localbox_ctrl.SyncItem.direction">
 <code class="descname">direction</code><a class="headerlink" href="#sync.controllers.localbox_ctrl.SyncItem.direction" title="Permalink to this definition">¶</a></dt>
@@ -117,7 +117,8 @@
 <dl class="class">
 <dt id="sync.controllers.localbox_ctrl.SyncsController">
 <em class="property">class </em><code class="descclassname">sync.controllers.localbox_ctrl.</code><code class="descname">SyncsController</code><span class="sig-paren">(</span><em>lazy_load=False</em><span class="sig-paren">)</span><a class="headerlink" href="#sync.controllers.localbox_ctrl.SyncsController" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="method">
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="method">
 <dt id="sync.controllers.localbox_ctrl.SyncsController.add">
 <code class="descname">add</code><span class="sig-paren">(</span><em>item</em><span class="sig-paren">)</span><a class="headerlink" href="#sync.controllers.localbox_ctrl.SyncsController.add" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -133,6 +134,11 @@
 <dl class="method">
 <dt id="sync.controllers.localbox_ctrl.SyncsController.get">
 <code class="descname">get</code><span class="sig-paren">(</span><em>other_label</em><span class="sig-paren">)</span><a class="headerlink" href="#sync.controllers.localbox_ctrl.SyncsController.get" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="sync.controllers.localbox_ctrl.SyncsController.instance">
+<code class="descname">instance</code><em class="property"> = &lt;sync.controllers.localbox_ctrl.SyncsController object&gt;</em><a class="headerlink" href="#sync.controllers.localbox_ctrl.SyncsController.instance" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
@@ -213,14 +219,20 @@
 
 <dl class="class">
 <dt id="sync.controllers.preferences_ctrl.PreferencesController">
-<em class="property">class </em><code class="descclassname">sync.controllers.preferences_ctrl.</code><code class="descname">PreferencesController</code><span class="sig-paren">(</span><em>lazy_load=False</em><span class="sig-paren">)</span><a class="headerlink" href="#sync.controllers.preferences_ctrl.PreferencesController" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="method">
+<em class="property">class </em><code class="descclassname">sync.controllers.preferences_ctrl.</code><code class="descname">PreferencesController</code><a class="headerlink" href="#sync.controllers.preferences_ctrl.PreferencesController" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="method">
 <dt id="sync.controllers.preferences_ctrl.PreferencesController.get_language_abbr">
 <code class="descname">get_language_abbr</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sync.controllers.preferences_ctrl.PreferencesController.get_language_abbr" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get language abreviation from preferences.
 gettext.translation receives an abbreviation
 :return:</p>
 </dd></dl>
+
+<dl class="attribute">
+<dt id="sync.controllers.preferences_ctrl.PreferencesController.instance">
+<code class="descname">instance</code><em class="property"> = &lt;sync.controllers.preferences_ctrl.PreferencesController object&gt;</em><a class="headerlink" href="#sync.controllers.preferences_ctrl.PreferencesController.instance" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="method">
 <dt id="sync.controllers.preferences_ctrl.PreferencesController.load">

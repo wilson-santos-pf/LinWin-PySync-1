@@ -67,11 +67,14 @@
 </div>
 <p>Run:</p>
 <div class="code bash highlight-default"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">xdg</span><span class="o">-</span><span class="n">mime</span> <span class="n">default</span> <span class="n">localbox</span><span class="o">.</span><span class="n">desktop</span> <span class="n">application</span><span class="o">/</span><span class="n">x</span><span class="o">-</span><span class="n">localbox</span>
+<span class="n">xdg</span><span class="o">-</span><span class="n">icon</span><span class="o">-</span><span class="n">resource</span> <span class="n">install</span> <span class="o">--</span><span class="n">size</span> <span class="mi">32</span> <span class="o">--</span><span class="n">context</span> <span class="n">mimetypes</span> <span class="o">/</span><span class="n">usr</span><span class="o">/</span><span class="n">localbox</span><span class="o">/</span><span class="n">localbox</span><span class="o">.</span><span class="n">png</span> <span class="n">application</span><span class="o">-</span><span class="n">x</span><span class="o">-</span><span class="n">localbox</span>
+<span class="n">xdg</span><span class="o">-</span><span class="n">icon</span><span class="o">-</span><span class="n">resource</span> <span class="n">install</span> <span class="o">--</span><span class="n">size</span> <span class="mi">48</span> <span class="o">--</span><span class="n">context</span> <span class="n">mimetypes</span> <span class="o">/</span><span class="n">usr</span><span class="o">/</span><span class="n">localbox</span><span class="o">/</span><span class="n">localbox</span><span class="o">.</span><span class="n">png</span> <span class="n">application</span><span class="o">-</span><span class="n">x</span><span class="o">-</span><span class="n">localbox</span>
+<span class="n">xdg</span><span class="o">-</span><span class="n">icon</span><span class="o">-</span><span class="n">resource</span> <span class="n">install</span> <span class="o">--</span><span class="n">size</span> <span class="mi">64</span> <span class="o">--</span><span class="n">context</span> <span class="n">mimetypes</span> <span class="o">/</span><span class="n">usr</span><span class="o">/</span><span class="n">localbox</span><span class="o">/</span><span class="n">localbox</span><span class="o">.</span><span class="n">png</span> <span class="n">application</span><span class="o">-</span><span class="n">x</span><span class="o">-</span><span class="n">localbox</span>
 </pre></div>
 </div>
 </div>
-<div class="section" id="explaning-localbox">
-<h2>Explaning LocalBox<a class="headerlink" href="#explaning-localbox" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="explaining-localbox">
+<h2>Explaining LocalBox<a class="headerlink" href="#explaining-localbox" title="Permalink to this headline">¶</a></h2>
 <p>The LocalBox user can setup a directory on his computer to be stored securely on a remote server.
 Using the same account the user can synchronize the same files with other devices / computers.
 Each user has his own LocalBox directory on the server. All the files inside this directory are encrypted.
@@ -126,6 +129,42 @@ The files that the client decrypts can also be deleted by selecting the option &
 the tray icon.</p>
 <img alt="../../_images/localbox-delete-decrypted.jpg" src="../../_images/localbox-delete-decrypted.jpg" />
 </div>
+<div class="section" id="sharing-your-files">
+<h2>Sharing your files<a class="headerlink" href="#sharing-your-files" title="Permalink to this headline">¶</a></h2>
+<p>Since version 1.6.1</p>
+<p>In the tab &#8220;Shares&#8221; is a list of all the shares for all the configured LocalBoxes</p>
+<img alt="../../_images/sharing_tab.png" src="../../_images/sharing_tab.png" />
+<ol class="arabic simple">
+<li>Label is the identifier of the configured LocalBox (same as in the Syncs tab)</li>
+<li>User is the name of the user that created the share</li>
+<li>Path is the directory being shared. It is relative to the root of the LocalBox directory (that&#8217;s why is represented as /ABC)</li>
+<li>URL is address to the LocalBox backend</li>
+</ol>
+<p>This allows the creator to manages his shares.
+The person who receives a share is called a &#8220;receiver&#8221;.
+The receiver will see the new files in his LocalBox, but won&#8217;t see the share listed in his &#8220;Shares&#8221; tab.
+The receiver can read and write files in the share folder.</p>
+<p>The operations available are: add and remove shares.</p>
+<div class="section" id="add-new-share">
+<h3>Add new share<a class="headerlink" href="#add-new-share" title="Permalink to this headline">¶</a></h3>
+<p>To create a new share:</p>
+<ol class="arabic simple">
+<li>Select which LocalBox the share created in.</li>
+<li>Then select which directory inside your LocalBox you will be sharing.</li>
+<li>And finally select a list of users to share with.</li>
+</ol>
+<img alt="../../_images/sharing_add.png" src="../../_images/sharing_add.png" />
+</div>
+<div class="section" id="file-sharing-limitations">
+<h3>File sharing limitations<a class="headerlink" href="#file-sharing-limitations" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>All users in the share have read/write permissions.</li>
+<li>The share is not editable. You cannot add / remove people from the share.</li>
+<li>Removing a share also means removing the files (for all users involved, including the owner).</li>
+<li>Only can share folders that already exits in LocalBox. This means that the user must previously sync the folder, then he can share it with other users.</li>
+</ul>
+</div>
+</div>
 </div>
 
 
@@ -139,10 +178,15 @@ the tray icon.</p>
 <li><a class="reference internal" href="#">User Manual</a><ul>
 <li><a class="reference internal" href="#windows-installation">Windows Installation</a></li>
 <li><a class="reference internal" href="#ubuntu-installation">Ubuntu Installation</a></li>
-<li><a class="reference internal" href="#explaning-localbox">Explaning LocalBox</a></li>
+<li><a class="reference internal" href="#explaining-localbox">Explaining LocalBox</a></li>
 <li><a class="reference internal" href="#creating-your-first-localbox">Creating your first localbox</a></li>
 <li><a class="reference internal" href="#syncing-your-files">Syncing your files</a></li>
 <li><a class="reference internal" href="#securing-your-files">Securing your files</a></li>
+<li><a class="reference internal" href="#sharing-your-files">Sharing your files</a><ul>
+<li><a class="reference internal" href="#add-new-share">Add new share</a></li>
+<li><a class="reference internal" href="#file-sharing-limitations">File sharing limitations</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>

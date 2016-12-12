@@ -82,6 +82,40 @@ The user has the option to delete these files at any time:</p>
 </div>
 </div>
 </div>
+<div class="section" id="file-sharing">
+<h2>File Sharing<a class="headerlink" href="#file-sharing" title="Permalink to this headline">¶</a></h2>
+<p>LocalBox stores an encrypted (key, iv) pair for each directory. This pair is encrypted with the user&#8217;s public key.
+To allow many clients for the same LocalBox, the pair is stored in the backend server.
+The (key, iv) pair can only be used after decrypting it with the passphrase protected private key.</p>
+<p>In order for the file sharing to work, the key and iv for the new share must be stored for each receiver of the share.</p>
+<p>Here&#8217;s the description of the workflow for creating a share:</p>
+<img alt="../../_images/file_sharing_save_keys.png" src="../../_images/file_sharing_save_keys.png" />
+<ol class="arabic simple">
+<li>The client calls the backend service to create a new share.  The service receives a JSON like so:</li>
+</ol>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span> <span class="s1">&#39;identities&#39;</span><span class="p">:</span> <span class="p">[</span>
+
+        <span class="p">{</span> <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;user&#39;</span><span class="p">,</span> <span class="s1">&#39;username&#39;</span><span class="p">:</span> <span class="o">...</span> <span class="p">},</span>
+
+        <span class="o">...</span>
+
+    <span class="p">]</span>
+
+<span class="p">}</span>
+</pre></div>
+</div>
+<ol class="arabic simple" start="2">
+<li>The client gets the encrypted key and iv from the server. These are used on encryption/decryption of files and it exists a pair per LocalBox directory.</li>
+<li>After importing the public keys <a class="footnote-reference" href="#id2" id="id1">[1]</a> the client call the service to store the encrypted (key, iv)  that belongs to the receiver of the share. This step runs repeatedly for each user in the receivers list.</li>
+</ol>
+<table class="docutils footnote" frame="void" id="id2" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id1">[1]</a></td><td>The public keys are obtained using the service <code class="docutils literal"><span class="pre">lox_api/identities</span></code>. A field called public_key is available in the response.</td></tr>
+</tbody>
+</table>
+<p>After this process the receivers can synchronize the new folder and read its contents.</p>
+</div>
 </div>
 
 
@@ -100,6 +134,7 @@ The user has the option to delete these files at any time:</p>
 </li>
 </ul>
 </li>
+<li><a class="reference internal" href="#file-sharing">File Sharing</a></li>
 </ul>
 </li>
 </ul>

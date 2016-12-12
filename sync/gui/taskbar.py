@@ -178,7 +178,7 @@ class PassphraseHandler(BaseHTTPRequestHandler):
 def passphrase_server(server):
     getLogger(__name__).info('Started passhphrase server on port %s' % PORT_NUMBER)
 
-    # Wait forever for incoming htto requests
+    # Wait forever for incoming http requests
     server.serve_forever()
 
 

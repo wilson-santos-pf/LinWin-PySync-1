@@ -6,12 +6,18 @@ import sync.models.label_model as label_model
 from sync.defaults import LOCALBOX_SITES_PATH
 
 
-class SyncsController:
+class SyncsController(object):
+    def __new__(cls):
+        if not hasattr(cls, 'instance'):
+            cls.instance = super(SyncsController, cls).__new__(cls)
+        return cls.instance
+
     def __init__(self, lazy_load=False):
 
-        self._list = list()
-        if not lazy_load:
-            self.load()
+        if not hasattr(self, '_list'):
+            self._list = list()
+            if not lazy_load:
+                self.load()
 
     def add(self, item):
         self._list.append(item)

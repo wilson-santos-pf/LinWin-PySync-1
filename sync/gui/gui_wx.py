@@ -17,7 +17,7 @@ from sync.gui.gui_utils import MAIN_FRAME_SIZE, MAIN_PANEL_SIZE, \
     MAIN_TITLE, DEFAULT_BORDER, PASSPHRASE_DIALOG_SIZE, PASSPHRASE_TITLE
 from sync.gui.wizard import NewSyncWizard
 from sync.language import LANGUAGES
-from sync.localbox import LocalBox, InvalidLocalBoxPathError
+from sync.localbox import LocalBox, InvalidLocalBoxPathError, get_localbox_path
 
 
 class LocalBoxApp(wx.App):
@@ -806,7 +806,10 @@ class NewSharePanel(wx.Panel):
     def select_dir(self, wx_event):
         try:
             path = gui_utils.select_directory(cwd=self.localbox_path)
+            path = get_localbox_path(SyncsController().get(self.selected_localbox).path, path)
             if path:
+                # get meta to verify if path is a valid LocalBox path
+                # this will later problems, because for the sharing to work the files must exist in the server
                 self.localbox_client.get_meta(path)
                 self._selected_dir.SetValue(path)
         except InvalidLocalBoxPathError:
@@ -816,13 +819,16 @@ class NewSharePanel(wx.Panel):
 
     @property
     def localbox_client(self):
-        localbox_item = localbox_ctrl.ctrl.get(self.choice.GetString(self.choice.GetSelection()))
-        return LocalBox(url=localbox_item.url, label=localbox_item.label,
-                        path=localbox_item.path)
+        localbox_item = localbox_ctrl.ctrl.get(self.selected_localbox)
+        return LocalBox(url=localbox_item.url, label=localbox_item.label, path=localbox_item.path)
 
     @property
     def localbox_path(self):
         return localbox_ctrl.ctrl.get(self.localbox_client.label).path
+
+    @property
+    def selected_localbox(self):
+        return self.choice.GetString(self.choice.GetSelection())
 
 
 class TestListCtrl(wx.ListCtrl, listmix.CheckListCtrlMixin, listmix.ListCtrlAutoWidthMixin):

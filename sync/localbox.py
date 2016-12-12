@@ -2,9 +2,9 @@
 localbox client library
 """
 
-import os
 import errno
-import hashlib
+import os
+import re
 import urllib
 from Crypto.Cipher.AES import MODE_CFB
 from Crypto.Cipher.AES import new as AES_Key
@@ -19,7 +19,6 @@ from socket import error as SocketError
 
 from sync import defaults
 from sync.auth import Authenticator, AlreadyAuthenticatedError
-from sync.controllers.localbox_ctrl import SyncsController
 from sync.gpg import gpg
 
 try:
@@ -41,7 +40,7 @@ except ImportError:
 
 from json import loads
 from json import dumps
-from ssl import SSLContext, PROTOCOL_TLSv1  # pylint: disable=E0611
+from ssl import SSLContext  # pylint: disable=E0611
 
 
 def getChecksum(key):
@@ -58,7 +57,7 @@ class LocalBox(object):
     object representing localbox
     """
 
-    def __init__(self, url, label, path=None):
+    def __init__(self, url, label):
         """
 
         :param url:
@@ -69,10 +68,6 @@ class LocalBox(object):
             url += "/"
         self.url = url
         self.label = label
-        if path and path[-1] != '/':
-            self.path = path + '/'
-        else:
-            self.path = path
         self._authentication_url = None
         self._authentication_url = self.get_authentication_url()
         self._authenticator = Authenticator(self._authentication_url, label)
@@ -130,10 +125,8 @@ class LocalBox(object):
         """
         do the meta call
         """
-        path2 = self.remove_path_prefix(path)
-        metapath = quote_plus(path2)
-        request = Request(url=self.url + 'lox_api/meta', data=dumps({'path': path2}))
-        getLogger(__name__).debug('calling lox_api/meta for path: %s' % metapath)
+        request = Request(url=self.url + 'lox_api/meta', data=dumps({'path': path}))
+        getLogger(__name__).debug('calling lox_api/meta for path: %s' % path)
         try:
             result = self._make_call(request)
             json_text = result.read()
@@ -341,9 +334,6 @@ class LocalBox(object):
         result = self._make_call(request).read()
         return loads(result)
 
-    def remove_path_prefix(self, path):
-        return path.replace(self.path, '', 1) if self.path else path
-
     def create_share(self, localbox_path, passphrase, user_list):
         """
         Share directory with users.
@@ -481,6 +471,22 @@ def get_aes_key(localbox_client, path, passphrase, should_create=False):
             raise NoKeysFoundError(message='No keys found for %s' % path)
 
     return AES_Key(key, MODE_CFB, iv, segment_size=128) if key else None
+
+
+def get_localbox_path(localbox_location, filesystem_path):
+    """
+
+    >>> get_localbox_path('/home/wilson/localbox-users/wilson-90', '/home/wilson/localbox-users/wilson-90/other/inside/test.txt')
+    'other/inside/test.txt'
+    >>> get_localbox_path('C:\\Users\\Administrator\\Desktop\\mybox', 'C:\\Users\\Administrator\\Desktop\\mybox\\shared')
+    'shared'
+
+
+    :param localbox_location:
+    :param filesystem_path:
+    :return:
+    """
+    return re.sub(r'^/', '', filesystem_path.replace(localbox_location, '', 1).replace('\\', '/'))
 
 
 class InvalidLocalboxURLError(Exception):

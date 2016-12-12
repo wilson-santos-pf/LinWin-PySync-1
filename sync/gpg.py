@@ -67,7 +67,8 @@ class gpg(object):
             else:
                 sql = "UPDATE keys SET SITE=? WHERE fingerprint=?"
                 database_execute(sql, (site, old_fingerprint))
-            # TODO: check if existing fingerprint is equal to the one previously stored.
+                if fingerprint != old_fingerprint:
+                    getLogger(__name__).warn('updating %s fingerprint to %s' % (user, fingerprint))
             return fingerprint
         else:
             return None

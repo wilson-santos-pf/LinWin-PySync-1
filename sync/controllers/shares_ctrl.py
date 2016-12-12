@@ -40,6 +40,7 @@ class SharesController(object):
             self.save()
 
     def delete_for_label(self, label):
+
         sql = 'delete from keys where site = ?'
         database_execute(sql, (label,))
         map(lambda i: self._list.remove(i), filter(lambda i: i.label == label, self._list))

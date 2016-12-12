@@ -152,5 +152,20 @@ The operations available are: add and remove shares.
 Add new share
 +++++++++++++
 
+To create a new share:
 
-.. image:: ../_static/usermanual/sharing_tab.png
+1. Select which LocalBox the share created in.
+2. Then select which directory inside your LocalBox you will be sharing.
+3. And finally select a list of users to share with.
+
+.. image:: ../_static/usermanual/sharing_add.png
+
+
+File sharing limitations
+++++++++++++++++++++++++
+
+* All users in the share have read/write permissions.
+* The share is not editable. You cannot add / remove people from the share.
+* Removing a share also means removing the files (for all users involved, including the owner).
+* Only can share folders that already exits in LocalBox. This means that the user must previously sync the folder, then he can share it with other users.
+

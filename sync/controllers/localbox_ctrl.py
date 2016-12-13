@@ -114,3 +114,12 @@ class SyncItem:
 
 
 ctrl = SyncsController()
+
+
+def get_localbox_list():
+    """
+    Get the LocalBoxes as a list of labels.
+
+    :return: list of LocalBox labels.
+    """
+    return map(lambda x: x.label, SyncsController().load())

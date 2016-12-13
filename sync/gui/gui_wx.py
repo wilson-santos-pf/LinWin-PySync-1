@@ -1,9 +1,8 @@
-import wx
-import wx.wizard
-import wx.lib.mixins.listctrl as listmix
-from logging import getLogger
-
 import pkg_resources
+import wx
+import wx.lib.mixins.listctrl as listmix
+import wx.wizard
+from logging import getLogger
 
 from sync.controllers import localbox_ctrl
 from sync.controllers.account_ctrl import AccountController
@@ -13,6 +12,7 @@ from sync.controllers.preferences_ctrl import ctrl as preferences_ctrl
 from sync.controllers.shares_ctrl import SharesController, ShareItem
 from sync.defaults import DEFAULT_LANGUAGE
 from sync.gui import gui_utils
+from sync.gui.event import EVT_POPULATE, PopulateThread
 from sync.gui.gui_utils import MAIN_FRAME_SIZE, MAIN_PANEL_SIZE, \
     MAIN_TITLE, DEFAULT_BORDER, PASSPHRASE_DIALOG_SIZE, PASSPHRASE_TITLE
 from sync.gui.wizard import NewSyncWizard
@@ -101,38 +101,25 @@ class Gui(wx.Frame):
         self.Hide()
         event.Veto(True)
 
+    def _create_toolbar_label(self, label, img):
+        stream = pkg_resources.resource_stream('sync.resources.images', img)
+        return self.toolbar.AddLabelTool(wx.ID_ANY, label, wx.BitmapFromImage(
+            wx.ImageFromStream(
+                stream,
+                wx.BITMAP_TYPE_PNG
+            )
+        ))
+
     def add_toolbar(self):
         self.toolbar = self.CreateToolBar(style=wx.TB_TEXT)
 
         self.toolbar.AddStretchableSpace()
-        stream = pkg_resources.resource_stream('sync.resources.images', 'sync.png')
-        bt_toolbar_localboxes = self.toolbar.AddLabelTool(wx.ID_ANY, _('Syncs'), wx.BitmapFromImage(
-            wx.ImageFromStream(
-                stream,
-                wx.BITMAP_TYPE_PNG
-            )
-        ))
-        stream = pkg_resources.resource_stream('sync.resources.images', 'share.png')
-        bt_toolbar_shares = self.toolbar.AddLabelTool(wx.ID_ANY, _('Shares'), wx.BitmapFromImage(
-            wx.ImageFromStream(
-                stream,
-                wx.BITMAP_TYPE_PNG
-            )
-        ))
-        stream = pkg_resources.resource_stream('sync.resources.images', 'user.png')
-        bt_toolbar_account = self.toolbar.AddLabelTool(wx.ID_ANY, _('Account'), wx.BitmapFromImage(
-            wx.ImageFromStream(
-                stream,
-                wx.BITMAP_TYPE_PNG
-            )
-        ))
-        stream = pkg_resources.resource_stream('sync.resources.images', 'preferences.png')
-        bt_toolbar_preferences = self.toolbar.AddLabelTool(wx.ID_ANY, _('Preferences'), wx.BitmapFromImage(
-            wx.ImageFromStream(
-                stream,
-                wx.BITMAP_TYPE_PNG
-            )
-        ))
+
+        bt_toolbar_localboxes = self._create_toolbar_label(img='sync.png', label=_('Syncs'))
+        bt_toolbar_shares = self._create_toolbar_label(img='share.png', label=_('Shares'))
+        bt_toolbar_account = self._create_toolbar_label(img='user.png', label=_('User'))
+        bt_toolbar_preferences = self._create_toolbar_label(img='preferences.png', label=_('Preferences'))
+
         self.toolbar.AddStretchableSpace()
 
         self.toolbar.Realize()
@@ -265,6 +252,7 @@ class SharePanel(wx.Panel):
         self.Bind(wx.EVT_BUTTON, self.create_share, self.btn_add)
         self.Bind(wx.EVT_BUTTON, self.delete_share, self.btn_delete)
         self.Bind(wx.EVT_SHOW, self.on_show)
+        self.Bind(EVT_POPULATE, self.on_populate)
 
     def _DoLayout(self):
         vbox = wx.BoxSizer(wx.VERTICAL)
@@ -295,7 +283,11 @@ class SharePanel(wx.Panel):
 
     def on_show(self, wx_event):
         if self.IsShown():
-            self.ctrl.populate()
+            worker = PopulateThread(self, self.ctrl.load)
+            worker.start()
+
+    def on_populate(self, wx_event):
+        self.ctrl.populate(wx_event.get_value())
 
 
 class AccountPanel(wx.Panel):
@@ -456,281 +448,14 @@ class BottomPanel(wx.Panel):
         self.parent.Hide()
 
 
-# ----------------------------------- #
-# ----     GUI Controllers       ---- #
-# ----------------------------------- #
-class LocalboxListCtrl(wx.ListCtrl):
-    """
-    This class behaves like a bridge between the GUI components and the real syncs controller.
-    """
-
-    def __init__(self, parent):
-        super(LocalboxListCtrl, self).__init__(parent,
-                                               style=wx.LC_REPORT)
-
-        self.ctrl = SyncsController()
-
-        # Add three columns to the list
-        self.InsertColumn(0, _("Label"))
-        self.InsertColumn(1, _("Path"))
-        self.InsertColumn(2, _("URL"))
-
-        self.SetColumnWidth(0, 100)
-        self.SetColumnWidth(1, 250)
-        self.SetColumnWidth(2, 200)
-
-    def populate_list(self):
-        """
-        Read the syncs list from the controller
-        """
-        for item in self.ctrl.load():
-            self.Append((item.label, item.path, item.url))
-
-    def add(self, item):
-        getLogger(__name__).debug('%s: Add item %s' % (self.__class__.__name__, item))
-        self.Append((item.label, item.path, item.url))
-        self.ctrl.add(item)
-
-    def delete(self):
-        idx = 0
-        labels_removed = []
-        while idx > -1:
-            idx = self.GetNextSelected(-1)
-
-            if idx > -1:
-                getLogger(__name__).debug('%s: Delete item #%d' % (self.__class__.__name__, idx))
-                self.DeleteItem(idx)
-                label = self.ctrl.delete(idx)
-                labels_removed.append(label)
-
-        map(lambda l: SharesController().delete_for_label(l), labels_removed)
-        self.save()
-        return labels_removed
-
-    def save(self):
-        getLogger(__name__).info('%s: ctrl save()' % self.__class__.__name__)
-        SharesController().save()
-        self.ctrl.save()
-
-
-class LoxListCtrl(wx.ListCtrl):
-    """
-    This class behaves like a bridge between the GUI components and the real controller.
-    """
-
-    def __init__(self, parent, cklass, iklass):
-        super(LoxListCtrl, self).__init__(parent,
-                                          style=wx.LC_REPORT)
-
-        self.ctrl = cklass()
-
-    def add(self, item):
-        getLogger(__name__).debug('%s: Add item %s' % (self.__class__.__name__, item))
-        self.Append(self.item_attrs(item).values())
-        self.ctrl.add(item)
-
-    def delete(self):
-        idx = 0
-        removed = []
-        while idx > -1:
-            idx = self.GetNextSelected(-1)
-
-            if idx > -1:
-                getLogger(__name__).debug('%s: Delete item #%d' % (self.__class__.__name__, idx))
-                self.DeleteItem(idx)
-                label = self.ctrl.delete(idx)
-                removed.append(label)
-
-        self.save()
-        return removed
-
-    def save(self):
-        getLogger(__name__).info('%s: ctrl save()' % self.__class__.__name__)
-        self.ctrl.save()
-
-    def populate(self):
-        self.DeleteAllItems()
-
-
-class SharesListCtrl(LoxListCtrl):
-    """
-    This class behaves like a bridge between the GUI components and the real syncs controller.
-    """
-
-    def __init__(self, parent):
-        super(SharesListCtrl, self).__init__(parent,
-                                             SharesController,
-                                             ShareItem)
-
-        self.InsertColumn(0, _("Label"))
-        self.InsertColumn(1, _("User"))
-        self.InsertColumn(2, _("Path"))
-        self.InsertColumn(3, _("URL"))
-
-        self.SetColumnWidth(0, 150)
-        self.SetColumnWidth(1, 150)
-        self.SetColumnWidth(2, 200)
-        self.SetColumnWidth(3, 400)
-
-    def populate(self):
-        """
-        Read the syncs list from the controller
-        """
-        super(SharesListCtrl, self).populate()
-        map(lambda i: self.Append([i.label, i.user, i.path, i.url]), self.ctrl.load())
-
-
-# ----------------------------------- #
-# ----         Dialogs           ---- #
-# ----------------------------------- #
-class LoginDialog(wx.Dialog):
-    def __init__(self, parent):
-        super(LoginDialog, self).__init__(parent=parent)
-
-        # Attributes
-        self.panel = LoginPanel(self)
-
-        # Layout
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self.panel, 1, wx.EXPAND)
-        self.SetSizer(sizer)
-        self.SetInitialSize()
-
-
-class PasshphrasePanel(wx.Panel):
-    def __init__(self, parent, username, label):
-        super(PasshphrasePanel, self).__init__(parent=parent)
-
-        self.parent = parent
-        self._username = username
-        self._label = label
-        self._label_template = _('Hi {0}, please provide the passphrase for unlocking {1}')
-        label_text = self._label_template.format(username, label)
-        self.label = wx.StaticText(self, label=label_text)
-        self.label.Wrap(parent.Size[0] - 50)
-        self._passphrase = wx.TextCtrl(self, style=wx.TE_PASSWORD)
-        self._btn_ok = wx.Button(self, id=wx.ID_OK, label=_('Ok'))
-        self._btn_close = wx.Button(self, id=wx.ID_CLOSE, label=_('Close'))
-
-        # Layout
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self.label, 0, wx.ALL | wx.EXPAND, border=DEFAULT_BORDER)
-        sizer.Add(self._passphrase, 0, wx.ALL | wx.EXPAND, border=DEFAULT_BORDER)
-
-        btn_szr = wx.StdDialogButtonSizer()
-
-        btn_szr.AddButton(self._btn_ok)
-        btn_szr.AddButton(self._btn_close)
-
-        btn_szr.Realize()
-
-        main_sizer = wx.BoxSizer(wx.VERTICAL)
-        main_sizer.Add(sizer, 1, wx.ALL | wx.EXPAND, border=DEFAULT_BORDER)
-        main_sizer.Add(wx.StaticLine(self, -1), 0, wx.ALL | wx.EXPAND, border=DEFAULT_BORDER)
-        main_sizer.Add(btn_szr, border=DEFAULT_BORDER)
-        main_sizer.Add(wx.StaticText(self, label=''), 0, wx.ALL | wx.EXPAND)
-
-        # Event Handlers
-
-        self.Bind(wx.EVT_BUTTON, self.OnClickOk, id=self._btn_ok.Id)
-        self.Bind(wx.EVT_BUTTON, self.OnClickClose, id=self._btn_close.Id)
-        self._passphrase.Bind(wx.EVT_KEY_DOWN, self.OnEnter)
-
-        self.SetSizer(main_sizer)
-
-    def OnClickOk(self, event):
-        if event.Id == self._btn_ok.Id:
-            try:
-                LoginController().store_passphrase(passphrase=self._passphrase.Value,
-                                                   user=self._username,
-                                                   label=self._label)
-                self.parent.Destroy()
-            except InvalidPassphraseError:
-                gui_utils.show_error_dialog(message=_('Wrong passphase'), title=_('Error'))
-            except Exception as err:
-                getLogger(__name__).exception(err)
-                gui_utils.show_error_dialog(message=_('Could not authenticate. Please contact the administrator'),
-                                            title=_('Error'))
-
-    def OnEnter(self, event):
-        """"""
-        keycode = event.GetKeyCode()
-        if keycode == wx.WXK_RETURN or keycode == wx.WXK_NUMPAD_ENTER:
-            event.Id = self._btn_ok.Id
-            return self.OnClickOk(event)
-        event.Skip()
-
-    def OnClickClose(self, event):
-        self.parent.OnClickClose(event)
-
-
-class PassphraseDialog(wx.Dialog):
-    def __init__(self, parent, username, label, site):
-        super(PassphraseDialog, self).__init__(parent=parent,
-                                               title=PASSPHRASE_TITLE,
-                                               size=PASSPHRASE_DIALOG_SIZE,
-                                               style=wx.CLOSE_BOX | wx.CAPTION)
-
-        # Attributes
-        self.panel = PasshphrasePanel(self, username, label)
-        self.main_sizer = wx.BoxSizer(wx.VERTICAL)
-        self.passphrase_continue = False
-
-        self.InitUI()
-
-        self.Bind(wx.EVT_CLOSE, self.OnClickClose)
-
-    def InitUI(self):
-        self.main_sizer.Add(self.panel)
-
-        self.Layout()
-        self.Center()
-        self.Show()
-
-    def OnClickClose(self, wx_event):
-        self.Destroy()
-        import sys
-        sys.exit(0)
-
-    @staticmethod
-    def show(username, label):
-        PassphraseDialog(None, username=username, label=label)
-
-
-class NewShareDialog(wx.Dialog):
-    def __init__(self, parent, ctrl):
-        super(NewShareDialog, self).__init__(parent=parent,
-                                             title=_('Create Share'),
-                                             size=(500, 600),
-                                             style=wx.CLOSE_BOX | wx.CAPTION)
-
-        self.ctrl = ctrl
-        # Attributes
-        self.panel = NewSharePanel(self)
-        self.main_sizer = wx.BoxSizer(wx.VERTICAL)
-
-        self.InitUI()
-
-        self.Bind(wx.EVT_CLOSE, self.OnClickClose)
-
-    def InitUI(self):
-        self.main_sizer.Add(self.panel)
-
-        self.Layout()
-        self.Center()
-        self.Show()
-
-    def OnClickClose(self, wx_event):
-        self.Destroy()
-
-
 class NewSharePanel(wx.Panel):
     def __init__(self, parent):
         super(NewSharePanel, self).__init__(parent=parent)
 
+        # Attributes
         self.parent = parent
 
-        self.list = TestListCtrl(self, style=wx.LC_REPORT)
+        self.list = UserListCtrl(self, style=wx.LC_REPORT)
         self._selected_dir = wx.TextCtrl(self, style=wx.TE_READONLY)
         self.btn_select_dir = wx.Button(self, label=_('Select'), size=(95, 30))
         self.btn_select_dir.Disable()
@@ -742,7 +467,8 @@ class NewSharePanel(wx.Panel):
         # Layout
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer_sel_dir = wx.BoxSizer(wx.HORIZONTAL)
-        sizer.Add(wx.StaticText(self, label=_('Select your LocalBox:')), 0, wx.ALL | wx.EXPAND, border=DEFAULT_BORDER)
+        sizer.Add(wx.StaticText(self, label=_('Select your LocalBox:')), 0, wx.ALL | wx.EXPAND,
+                  border=DEFAULT_BORDER)
         sizer.Add(self.choice, 0, wx.ALL | wx.EXPAND, border=DEFAULT_BORDER)
         sizer.Add(wx.StaticText(self, label=_('Select directory to share:')), 0, wx.ALL | wx.EXPAND,
                   border=DEFAULT_BORDER)
@@ -820,7 +546,7 @@ class NewSharePanel(wx.Panel):
     @property
     def localbox_client(self):
         localbox_item = localbox_ctrl.ctrl.get(self.selected_localbox)
-        return LocalBox(url=localbox_item.url, label=localbox_item.label, path=localbox_item.path)
+        return LocalBox(url=localbox_item.url, label=localbox_item.label)
 
     @property
     def localbox_path(self):
@@ -831,7 +557,191 @@ class NewSharePanel(wx.Panel):
         return self.choice.GetString(self.choice.GetSelection())
 
 
-class TestListCtrl(wx.ListCtrl, listmix.CheckListCtrlMixin, listmix.ListCtrlAutoWidthMixin):
+class PasshphrasePanel(wx.Panel):
+    def __init__(self, parent, username, label):
+        super(PasshphrasePanel, self).__init__(parent=parent)
+
+        self.parent = parent
+        self._username = username
+        self._label = label
+        self._label_template = _('Hi {0}, please provide the passphrase for unlocking {1}')
+        label_text = self._label_template.format(username, label)
+        self.label = wx.StaticText(self, label=label_text)
+        self.label.Wrap(parent.Size[0] - 50)
+        self._passphrase = wx.TextCtrl(self, style=wx.TE_PASSWORD)
+        self._btn_ok = wx.Button(self, id=wx.ID_OK, label=_('Ok'))
+        self._btn_close = wx.Button(self, id=wx.ID_CLOSE, label=_('Close'))
+
+        # Layout
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(self.label, 0, wx.ALL | wx.EXPAND, border=DEFAULT_BORDER)
+        sizer.Add(self._passphrase, 0, wx.ALL | wx.EXPAND, border=DEFAULT_BORDER)
+
+        btn_szr = wx.StdDialogButtonSizer()
+
+        btn_szr.AddButton(self._btn_ok)
+        btn_szr.AddButton(self._btn_close)
+
+        btn_szr.Realize()
+
+        main_sizer = wx.BoxSizer(wx.VERTICAL)
+        main_sizer.Add(sizer, 1, wx.ALL | wx.EXPAND, border=DEFAULT_BORDER)
+        main_sizer.Add(wx.StaticLine(self, -1), 0, wx.ALL | wx.EXPAND, border=DEFAULT_BORDER)
+        main_sizer.Add(btn_szr, border=DEFAULT_BORDER)
+        main_sizer.Add(wx.StaticText(self, label=''), 0, wx.ALL | wx.EXPAND)
+
+        # Event Handlers
+        self.Bind(wx.EVT_BUTTON, self.OnClickOk, id=self._btn_ok.Id)
+        self.Bind(wx.EVT_BUTTON, self.OnClickClose, id=self._btn_close.Id)
+        self._passphrase.Bind(wx.EVT_KEY_DOWN, self.OnEnter)
+
+        self.SetSizer(main_sizer)
+
+    def OnClickOk(self, event):
+        if event.Id == self._btn_ok.Id:
+            try:
+                LoginController().store_passphrase(passphrase=self._passphrase.Value,
+                                                   user=self._username,
+                                                   label=self._label)
+                self.parent.Destroy()
+            except InvalidPassphraseError:
+                gui_utils.show_error_dialog(message=_('Wrong passphase'), title=_('Error'))
+            except Exception as err:
+                getLogger(__name__).exception(err)
+                gui_utils.show_error_dialog(message=_('Could not authenticate. Please contact the administrator'),
+                                            title=_('Error'))
+
+    def OnEnter(self, event):
+        """"""
+        keycode = event.GetKeyCode()
+        if keycode == wx.WXK_RETURN or keycode == wx.WXK_NUMPAD_ENTER:
+            event.Id = self._btn_ok.Id
+            return self.OnClickOk(event)
+        event.Skip()
+
+    def OnClickClose(self, event):
+        self.parent.OnClickClose(event)
+
+
+# ----------------------------------- #
+# ----     GUI Controllers       ---- #
+# ----------------------------------- #
+class LocalboxListCtrl(wx.ListCtrl):
+    """
+    This class behaves like a bridge between the GUI components and the real syncs controller.
+    """
+
+    def __init__(self, parent):
+        super(LocalboxListCtrl, self).__init__(parent,
+                                               style=wx.LC_REPORT)
+
+        self.ctrl = SyncsController()
+
+        # Add three columns to the list
+        self.InsertColumn(0, _("Label"))
+        self.InsertColumn(1, _("Path"))
+        self.InsertColumn(2, _("URL"))
+
+        self.SetColumnWidth(0, 100)
+        self.SetColumnWidth(1, 250)
+        self.SetColumnWidth(2, 200)
+
+    def populate_list(self):
+        """
+        Read the syncs list from the controller
+        """
+        for item in self.ctrl.load():
+            self.Append((item.label, item.path, item.url))
+
+    def add(self, item):
+        getLogger(__name__).debug('%s: Add item %s' % (self.__class__.__name__, item))
+        self.Append((item.label, item.path, item.url))
+        self.ctrl.add(item)
+
+    def delete(self):
+        idx = 0
+        labels_removed = []
+        while idx > -1:
+            idx = self.GetNextSelected(-1)
+
+            if idx > -1:
+                getLogger(__name__).debug('%s: Delete item #%d' % (self.__class__.__name__, idx))
+                self.DeleteItem(idx)
+                label = self.ctrl.delete(idx)
+                labels_removed.append(label)
+
+        map(lambda l: SharesController().delete_for_label(l), labels_removed)
+        self.save()
+        return labels_removed
+
+    def save(self):
+        getLogger(__name__).info('%s: ctrl save()' % self.__class__.__name__)
+        SharesController().save()
+        self.ctrl.save()
+
+
+class LoxListCtrl(wx.ListCtrl):
+    """
+    This class behaves like a bridge between the GUI components and the real controller.
+    """
+
+    def __init__(self, parent, cklass):
+        super(LoxListCtrl, self).__init__(parent,
+                                          style=wx.LC_REPORT)
+
+        self.ctrl = cklass()
+
+    def delete(self):
+        idx = 0
+        removed = []
+        while idx > -1:
+            idx = self.GetNextSelected(-1)
+
+            if idx > -1:
+                getLogger(__name__).debug('%s: Delete item #%d' % (self.__class__.__name__, idx))
+                self.DeleteItem(idx)
+                label = self.ctrl.delete(idx)
+                removed.append(label)
+
+        self.save()
+        return removed
+
+    def save(self):
+        getLogger(__name__).info('%s: ctrl save()' % self.__class__.__name__)
+        self.ctrl.save()
+
+    def populate(self, lst=None):
+        self.DeleteAllItems()
+
+    def load(self):
+        return self.ctrl.load()
+
+
+class SharesListCtrl(LoxListCtrl):
+    """
+    This class behaves like a bridge between the GUI components and the real syncs controller.
+
+    """
+
+    def __init__(self, parent):
+        super(SharesListCtrl, self).__init__(parent, SharesController)
+
+        self.InsertColumn(0, _("Label"))
+        self.InsertColumn(1, _("User"))
+        self.InsertColumn(2, _("Path"))
+        self.InsertColumn(3, _("URL"))
+
+        self.SetColumnWidth(0, 150)
+        self.SetColumnWidth(1, 150)
+        self.SetColumnWidth(2, 200)
+        self.SetColumnWidth(3, 400)
+
+    def populate(self, lst=None):
+        super(SharesListCtrl, self).populate()
+        map(lambda i: self.Append([i.label, i.user, i.path, i.url]), lst)
+
+
+class UserListCtrl(wx.ListCtrl, listmix.CheckListCtrlMixin, listmix.ListCtrlAutoWidthMixin):
     def __init__(self, *args, **kwargs):
         wx.ListCtrl.__init__(self, *args, **kwargs)
         listmix.CheckListCtrlMixin.__init__(self)
@@ -844,9 +754,6 @@ class TestListCtrl(wx.ListCtrl, listmix.CheckListCtrlMixin, listmix.ListCtrlAuto
         self.InsertColumn(1, "Username")
 
         self.Arrange()
-
-    def OnCheckItem(self, index, flag):
-        print(index, flag)
 
     def GetSelectedItemCount(self):
         count = 0
@@ -882,6 +789,83 @@ class TestListCtrl(wx.ListCtrl, listmix.CheckListCtrlMixin, listmix.ListCtrlAuto
                 result.append(self.users[i])
 
         return result
+
+
+# ----------------------------------- #
+# ----         Dialogs           ---- #
+# ----------------------------------- #
+class LoginDialog(wx.Dialog):
+    def __init__(self, parent):
+        super(LoginDialog, self).__init__(parent=parent)
+
+        # Attributes
+        self.panel = LoginPanel(self)
+
+        # Layout
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(self.panel, 1, wx.EXPAND)
+        self.SetSizer(sizer)
+        self.SetInitialSize()
+
+
+class PassphraseDialog(wx.Dialog):
+    def __init__(self, parent, username, label, site):
+        super(PassphraseDialog, self).__init__(parent=parent,
+                                               title=PASSPHRASE_TITLE,
+                                               size=PASSPHRASE_DIALOG_SIZE,
+                                               style=wx.CLOSE_BOX | wx.CAPTION)
+
+        # Attributes
+        self.panel = PasshphrasePanel(self, username, label)
+        self.main_sizer = wx.BoxSizer(wx.VERTICAL)
+        self.passphrase_continue = False
+
+        self.InitUI()
+
+        self.Bind(wx.EVT_CLOSE, self.OnClickClose)
+
+    def InitUI(self):
+        self.main_sizer.Add(self.panel)
+
+        self.Layout()
+        self.Center()
+        self.Show()
+
+    def OnClickClose(self, wx_event):
+        self.Destroy()
+        import sys
+        sys.exit(0)
+
+    @staticmethod
+    def show(username, label):
+        PassphraseDialog(None, username=username, label=label)
+
+
+class NewShareDialog(wx.Dialog):
+    def __init__(self, parent, ctrl):
+        super(NewShareDialog, self).__init__(parent=parent,
+                                             title=_('Create Share'),
+                                             size=(500, 600),
+                                             style=wx.CLOSE_BOX | wx.CAPTION)
+
+        self.ctrl = ctrl
+        # Attributes
+        self.panel = NewSharePanel(self)
+        self.main_sizer = wx.BoxSizer(wx.VERTICAL)
+
+        self.InitUI()
+
+        self.Bind(wx.EVT_CLOSE, self.OnClickClose)
+
+    def InitUI(self):
+        self.main_sizer.Add(self.panel)
+
+        self.Layout()
+        self.Center()
+        self.Show()
+
+    def OnClickClose(self, wx_event):
+        self.Destroy()
 
 
 def ask_passphrase(username, site):

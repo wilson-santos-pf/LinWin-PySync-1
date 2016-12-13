@@ -6,6 +6,11 @@ from sync.defaults import LOCALBOX_SHARES_PATH
 from sync.localbox import LocalBox
 from sync.database import database_execute
 
+try:
+    from urllib2 import URLError
+except ImportError:
+    from urllib.error import URLError  # pylint: disable=F0401,E0611
+
 
 class SharesController(object):
     def __new__(cls):
@@ -51,11 +56,16 @@ class SharesController(object):
     def load(self):
         self._list = []
         for item in SyncsController().load():
-            localbox_client = LocalBox(url=item.url, label=item.label)
-            for share in localbox_client.get_share_list(user=item.user):
-                share_item = ShareItem(user=share['user'], path='/' + share['path'], url=item.url, label=item.label,
-                                       id=share['id'])
-                self._list.append(share_item)
+            try:
+                localbox_client = LocalBox(url=item.url, label=item.label)
+
+                for share in localbox_client.get_share_list(user=item.user):
+                    share_item = ShareItem(user=share['user'], path='/' + share['path'], url=item.url, label=item.label,
+                                           id=share['id'])
+                    self._list.append(share_item)
+            except URLError:
+                getLogger(__name__).exception('failed to get_share_list (%s, %s)' % (item.url, item.label))
+
         return self._list
 
 

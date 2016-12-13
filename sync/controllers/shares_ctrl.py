@@ -68,6 +68,9 @@ class SharesController(object):
 
         return self._list
 
+    def get_list(self):
+        return self._list
+
 
 class ShareItem(object):
     def __init__(self, user=None, path=None, url=None, label=None, id=None):

@@ -281,7 +281,7 @@ class SharePanel(wx.Panel):
         if gui_utils.show_confirm_dialog(self, question):
             self.ctrl.delete()
 
-    def on_show(self, wx_event):
+    def on_show(self, wx_event=None):
         if self.IsShown():
             worker = PopulateThread(self, self.ctrl.load)
             worker.start()
@@ -516,7 +516,7 @@ class NewSharePanel(wx.Panel):
                 item = ShareItem(user=self.localbox_client.username, path=share_path, url=self.localbox_client.url,
                                  label=lox_label)
                 SharesController().add(item)
-                self.parent.ctrl.populate()
+                self.parent.ctrl.populate(SharesController().get_list())
             else:
                 gui_utils.show_error_dialog(_('Server error creating the share'), _('Error'))
             self.parent.Destroy()
@@ -770,6 +770,7 @@ class UserListCtrl(listmix.CheckListCtrlMixin, listmix.ListCtrlAutoWidthMixin, L
     def populate(self, lst=None):
         super(UserListCtrl, self).populate()
         map(lambda u: self.Append(["", u['username']]), lst)
+        self.users = lst
 
     def get_users(self):
         """
@@ -779,7 +780,7 @@ class UserListCtrl(listmix.CheckListCtrlMixin, listmix.ListCtrlAutoWidthMixin, L
         result = list()
         for i in range(0, self.GetItemCount()):
             if self.IsChecked(i):
-                result.append(self.GetItem(i, 1).GetText())  # GetItem(row, column)
+                result.append(self.users[i])
 
         return result
 

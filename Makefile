@@ -29,11 +29,23 @@ clean:
 
 winstall: clean  installer
 
-deb:    clean
-	python setup.py --command-packages=stdeb.command bdist_deb
+#deb:    clean
+#	python setup.py --command-packages=stdeb.command bdist_deb
+.PHONY: deb
+deb:
+	rm -rf debian
+	python setup.py --command-packages=stdeb.command debianize
+	cp data/postinst debian
+	dpkg-buildpackage -b -rfakeroot -us -uc
+
+deb3:
+	rm -rf debian
+	python3 setup.py --command-packages=stdeb.command debianize
+	cp data/postinst debian
+	dpkg-buildpackage -b -rfakeroot -us -uc
 
 installer: exe
-	makensis -DVERSION=`python -c 'from sync._version import __version__; print __version__' | tail -1` winstall.nsh
+	makensis -DVERSION=`python -c 'from sync.__version__ import *; print(VERSION_STRING)' | tail -1` winstall.nsh
 
 exe: #sync/version.py
 	wine python.exe setup.py bdist_wininst

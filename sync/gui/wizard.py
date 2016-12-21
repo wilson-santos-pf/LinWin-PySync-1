@@ -1,11 +1,24 @@
 import json
-import wx, wx.wizard, os
-from httplib import BadStatusLine
-from logging import getLogger
-from urllib2 import URLError
-from socket import error as SocketError
-
 import errno
+import wx, os
+
+try:
+    from wx.wizard import Wizard, WizardPageSimple, EVT_WIZARD_BEFORE_PAGE_CHANGED, EVT_WIZARD_PAGE_CHANGING
+except:
+    from wx.adv import Wizard, WizardPageSimple, EVT_WIZARD_BEFORE_PAGE_CHANGED, EVT_WIZARD_PAGE_CHANGING
+
+try:
+    from httplib import BadStatusLine
+except:
+    from http.client import BadStatusLine
+
+from logging import getLogger
+
+try:
+    from urllib2 import URLError
+except:
+    from urllib.error import URLError
+from socket import error as SocketError
 
 import sync.gui.gui_utils as gui_utils
 import sync.auth as auth
@@ -14,9 +27,9 @@ from sync.controllers.login_ctrl import LoginController
 from sync.localbox import LocalBox
 
 
-class NewSyncWizard(wx.wizard.Wizard):
+class NewSyncWizard(Wizard):
     def __init__(self, sync_list_ctrl, event):
-        wx.wizard.Wizard.__init__(self, None, -1, _('Add new sync'))
+        Wizard.__init__(self, None, -1, _('Add new sync'))
 
         # Attributes
         self.event = event
@@ -30,8 +43,8 @@ class NewSyncWizard(wx.wizard.Wizard):
         self.page2 = LoginWizardPage(self)
         self.page3 = PassphraseWizardPage(self)
 
-        wx.wizard.WizardPageSimple.Chain(self.page1, self.page2)
-        wx.wizard.WizardPageSimple.Chain(self.page2, self.page3)
+        WizardPageSimple.Chain(self.page1, self.page2)
+        WizardPageSimple.Chain(self.page2, self.page3)
 
         # self.FitToPage(self.page1)
         self.SetPageSize(gui_utils.NEW_SYNC_WIZARD_SIZE)
@@ -41,10 +54,10 @@ class NewSyncWizard(wx.wizard.Wizard):
         self.Destroy()
 
 
-class NewSyncInputsWizardPage(wx.wizard.WizardPageSimple):
+class NewSyncInputsWizardPage(WizardPageSimple):
     def __init__(self, parent):
         """Constructor"""
-        wx.wizard.WizardPageSimple.__init__(self, parent)
+        WizardPageSimple.__init__(self, parent)
 
         # Attributes
         self.parent = parent
@@ -58,8 +71,8 @@ class NewSyncInputsWizardPage(wx.wizard.WizardPageSimple):
         self._DoLayout()
 
         self.Bind(wx.EVT_BUTTON, self.select_localbox_dir, self.btn_select_dir)
-        self.Bind(wx.wizard.EVT_WIZARD_BEFORE_PAGE_CHANGED, self.is_authenticated)
-        self.Bind(wx.wizard.EVT_WIZARD_PAGE_CHANGING, self.validate_new_sync_inputs)
+        self.Bind(EVT_WIZARD_BEFORE_PAGE_CHANGED, self.is_authenticated)
+        self.Bind(EVT_WIZARD_PAGE_CHANGING, self.validate_new_sync_inputs)
 
     def is_authenticated(self, event):
 
@@ -67,7 +80,7 @@ class NewSyncInputsWizardPage(wx.wizard.WizardPageSimple):
             # going forwards
             if self.parent.localbox_client and auth.is_authenticated(self.parent.localbox_client, self.label):
                 getLogger(__name__).debug('Checking if is already authenticated for: %s' % self.label)
-                wx.wizard.WizardPageSimple.Chain(self.parent.page1, self.parent.page3)
+                WizardPageSimple.Chain(self.parent.page1, self.parent.page3)
 
     def _DoLayout(self):
         sizer = wx.FlexGridSizer(3, 3, 10, 10)
@@ -146,9 +159,9 @@ class NewSyncInputsWizardPage(wx.wizard.WizardPageSimple):
         return self._url.GetValue().encode()
 
 
-class LoginWizardPage(wx.wizard.WizardPageSimple):
+class LoginWizardPage(WizardPageSimple):
     def __init__(self, parent):
-        wx.wizard.WizardPageSimple.__init__(self, parent)
+        WizardPageSimple.__init__(self, parent)
 
         # Attributes
         self.parent = parent
@@ -174,8 +187,8 @@ class LoginWizardPage(wx.wizard.WizardPageSimple):
         self.already_authenticated_sizer.Add(self._label_already_authenticated, 1, wx.ALL | wx.EXPAND,
                                              border=gui_utils.DEFAULT_BORDER)
 
-        self.Bind(wx.wizard.EVT_WIZARD_PAGE_CHANGING, self.call_password_authentication)
-        self.Bind(wx.wizard.EVT_WIZARD_BEFORE_PAGE_CHANGED, self.should_login)
+        self.Bind(EVT_WIZARD_PAGE_CHANGING, self.call_password_authentication)
+        self.Bind(EVT_WIZARD_BEFORE_PAGE_CHANGED, self.should_login)
 
     def should_login(self, event):
 
@@ -207,7 +220,8 @@ class LoginWizardPage(wx.wizard.WizardPageSimple):
                             self.password)
                     except Exception as error:
                         success = False
-                        getLogger(__name__).exception('Problem authenticating with password: %s-%s' % (error.__class__, error))
+                        getLogger(__name__).exception(
+                            'Problem authenticating with password: %s-%s' % (error.__class__, error))
 
                     if not success:
                         title = _('Error')
@@ -227,9 +241,9 @@ class LoginWizardPage(wx.wizard.WizardPageSimple):
         return self._password.GetValue()
 
 
-class PassphraseWizardPage(wx.wizard.WizardPageSimple):
+class PassphraseWizardPage(WizardPageSimple):
     def __init__(self, parent):
-        wx.wizard.WizardPageSimple.__init__(self, parent)
+        WizardPageSimple.__init__(self, parent)
 
         # Attributes
         self.parent = parent
@@ -316,7 +330,6 @@ class PassphraseWizardPage(wx.wizard.WizardPageSimple):
                     event.Veto()
         except Exception as err:
             getLogger(__name__).exception('Error storing keys %s' % err)
-
 
     def add_new_sync_item(self):
         item = SyncItem(url=self.parent.localbox_client.url,

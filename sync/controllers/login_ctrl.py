@@ -1,5 +1,8 @@
 import json
-import urllib2
+try:
+    import urllib2 as urllib
+except:
+    import urllib
 from logging import getLogger
 
 from sync.gpg import gpg
@@ -58,11 +61,11 @@ class LoginController(object):
             try:
                 # TODO: prop for URL
                 passphrase_server_url = 'http://localhost:9090/%s' % label
-                passphrase = urllib2.urlopen(passphrase_server_url).read()
+                passphrase = urllib.urlopen(passphrase_server_url).read()
                 getLogger(__name__).debug('got passphrase %s' % passphrase)
 
                 return passphrase
-            except urllib2.URLError:
+            except urllib.URLError:
                 getLogger(__name__).error('Sync client is not running. Failed to get passphrase from client.')
 
                 return None

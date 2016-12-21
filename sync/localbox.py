@@ -5,7 +5,7 @@ localbox client library
 import errno
 import os
 import re
-import urllib
+import hashlib
 from Crypto.Cipher.AES import MODE_CFB
 from Crypto.Cipher.AES import new as AES_Key
 from Crypto.Random import new as CryptoRandom
@@ -13,7 +13,6 @@ from _ssl import PROTOCOL_TLSv1_2
 from base64 import b64decode
 from base64 import b64encode
 from logging import getLogger
-from md5 import new as newmd5
 from os import stat, remove
 from socket import error as SocketError
 
@@ -47,7 +46,7 @@ def getChecksum(key):
     """
     returns a partial hash of the given key for differentiation in logs. May need a stronger algorithm.
     """
-    checksum = newmd5()
+    checksum = hashlib.md5()
     checksum.update(key)
     return checksum.hexdigest()[:5]
 
@@ -487,6 +486,19 @@ def get_localbox_path(localbox_location, filesystem_path):
     :return:
     """
     return re.sub(r'^/', '', filesystem_path.replace(localbox_location, '', 1).replace('\\', '/'))
+
+
+def remove_decrypted_files():
+    import os, sync.controllers.openfiles_ctrl as ctrl
+
+    getLogger(__name__).info('removing decrypted files')
+    for filename in ctrl.load():
+        try:
+            os.remove(filename)
+        except Exception as ex:
+            getLogger(__name__).error('could not remove file %s, %s' % (filename, ex))
+
+    ctrl.save([])
 
 
 class InvalidLocalboxURLError(Exception):

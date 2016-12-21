@@ -16,6 +16,7 @@ Contents:
     docs/source/nextsteps.rst
     docs/source/contributions.rst
     docs/source/usermanual.rst
+    docs/source/faq.rst
 
 Indices and tables
 ==================

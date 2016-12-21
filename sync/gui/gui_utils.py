@@ -4,7 +4,7 @@ from os.path import join, exists
 from sysconfig import get_path
 from os import getcwd
 
-from sync._version import __version__
+from sync.__version__ import VERSION_STRING
 
 MAIN_FRAME_SIZE = (700, 550)
 MAIN_PANEL_SIZE = (MAIN_FRAME_SIZE[0], 350)
@@ -12,8 +12,8 @@ PASSPHRASE_DIALOG_SIZE = (500, 300)
 NEW_SYNC_DIALOG_SIZE = (500, 240)
 NEW_SYNC_WIZARD_SIZE = (500, 100)
 NEW_SYNC_PANEL_SIZE = (NEW_SYNC_DIALOG_SIZE[0], 145)
-MAIN_TITLE = 'YourLocalBox %s' % __version__
-PASSPHRASE_TITLE = 'YourLocalBox %s - Enter Passphrase' % __version__
+MAIN_TITLE = 'YourLocalBox %s' % VERSION_STRING
+PASSPHRASE_TITLE = 'YourLocalBox %s - Enter Passphrase' % VERSION_STRING
 DEFAULT_BORDER = 10
 
 

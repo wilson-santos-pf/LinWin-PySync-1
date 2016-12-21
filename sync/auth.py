@@ -7,8 +7,11 @@ from time import time
 
 from .database import database_execute
 from logging import getLogger
-from ssl import SSLContext, PROTOCOL_TLSv1  # pylint: disable=E0611
-from httplib import BadStatusLine
+from ssl import SSLContext  # pylint: disable=E0611
+try:
+    from httplib import BadStatusLine
+except:
+    from http.client import BadStatusLine
 
 try:
     from urllib import urlencode  # pylint: disable=E0611
@@ -147,28 +150,6 @@ class Authenticator(object):
                     'client_secret': self.client_secret}
         self._call_authentication_server(authdata)
 
-    def password_authentication(localbox_client, username, password):
-        error_msg = None
-        is_exception = False
-        try:
-            if localbox_client.authenticator.init_authenticate(username, password):
-                getLogger(__name__).debug("ini authenticate = true")
-            else:
-                getLogger(__name__).debug("ini authenticate = false")
-                error_msg = _("Username/Password incorrect")
-        except AlreadyAuthenticatedError as error:
-            getLogger(__name__).debug("ini authenticate = AlreadyAuthenticatedError")
-            getLogger(__name__).exception(error)
-            error_msg = None
-            is_exception = True
-        except (HTTPError, URLError) as error:
-            getLogger(__name__).debug("Problem connecting to the authentication server")
-            getLogger(__name__).exception(error)
-            error_msg = _('Authentication Problem: %s') % error
-            is_exception = True
-
-        return error_msg, is_exception
-
     def authenticate_with_password(self, username, password):
         """
         Do initial authentication with the resource owner password credentials
@@ -231,8 +212,7 @@ class Authenticator(object):
             self.access_token = json.get('access_token')
             self.refresh_token = json.get('refresh_token')
             self.scope = json.get('scope')
-            self.expires = time() + json.get('expires_in', 0) - \
-                           EXPIRATION_LEEWAY
+            self.expires = time() + json.get('expires_in', 0) - EXPIRATION_LEEWAY
         except (HTTPError, URLError, BadStatusLine) as error:
             getLogger(__name__).debug('HTTPError when calling '
                                       'the authentication server')
@@ -249,8 +229,7 @@ class Authenticator(object):
         Returns the Authorization header for authorizing against the
         LocalBox server proper.
         """
-        if self.access_token is None and self.client_id is None and \
-                        self.client_secret is None:
+        if self.access_token is None and self.client_id is None and self.client_secret is None:
             raise AuthenticationError('Please authenticate with resource owner credentials first')
         if time() > self.expires:
             getLogger(__name__).debug("Token expired. Reauthenticating")

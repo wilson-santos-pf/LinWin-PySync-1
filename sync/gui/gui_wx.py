@@ -1,7 +1,6 @@
 import pkg_resources
 import wx
 import wx.lib.mixins.listctrl as listmix
-import wx.wizard
 from logging import getLogger
 
 from sync.controllers import localbox_ctrl
@@ -318,7 +317,7 @@ class PreferencesPanel(wx.Panel):
 
         # Attributes
         self.ctrl = preferences_ctrl
-        self.language_choice = wx.Choice(self, choices=LANGUAGES.keys())
+        self.language_choice = wx.Choice(self, choices=list(LANGUAGES.keys()))
 
         self.language_choice.SetSelection(self.language_choice.FindString(
             self.ctrl.prefs.language if (self.ctrl.prefs.language is not None) else DEFAULT_LANGUAGE))

@@ -2,34 +2,35 @@
 main module for localbox sync
 """
 import os
-from logging import getLogger
-from os import makedirs
-from os.path import dirname
-from os.path import isdir
+import signal
+from logging import getLogger, ERROR
+from os import makedirs, mkdir
+from os.path import dirname, isdir, exists
 from sys import argv
 from threading import Event
 
+import sync.__version__
 from loxcommon import os_utils
-from loxcommon.os_utils import open_file_ext, hide_file
+from loxcommon.log import prepare_logging
+from loxcommon.os_utils import open_file_ext
 from sync import defaults
 from sync.controllers import openfiles_ctrl
 from sync.controllers.localbox_ctrl import ctrl as sync_ctrl
 from sync.controllers.login_ctrl import LoginController
 from sync.gui import gui_utils
 from sync.gui import gui_wx
-from sync.gui.gui_wx import PassphraseDialog
 from sync.gui.taskbar import taskbarmain
-from sync.localbox import LocalBox
+from sync.localbox import LocalBox, remove_decrypted_files
 from sync.syncer import MainSyncer
-from .defaults import LOG_PATH
+from .defaults import LOG_PATH, APPDIR, SYNCINI_PATH
 
 try:
-    from ConfigParser import ConfigParser
+    from ConfigParser import ConfigParser, SafeConfigParser
     from ConfigParser import NoOptionError
     from ConfigParser import NoSectionError
     from urllib2 import URLError
 except ImportError:
-    from configparser import ConfigParser  # pylint: disable=F0401,W0611
+    from configparser import ConfigParser, SafeConfigParser  # pylint: disable=F0401,W0611
     from configparser import NoOptionError  # pylint: disable=F0401,W0611
     from configparser import NoSectionError  # pylint: disable=F0401,W0611
     from urllib.error import URLError  # pylint: disable=F0401,W0611,E0611
@@ -104,9 +105,6 @@ def run_file_decryption(filename):
         localfile.write(decoded_contents)
         localfile.close()
 
-        # hide file
-        hide_file(tmp_decoded_filename)
-
         # open file
         open_file_ext(tmp_decoded_filename)
 
@@ -120,8 +118,32 @@ def run_file_decryption(filename):
 
 
 if __name__ == '__main__':
+    getLogger(__name__).info("LocalBox Sync Version: %s (%s)", sync.__version__.VERSION_STRING,
+                             sync.__version__.git_version)
+
+    if not exists(APPDIR):
+        mkdir(APPDIR)
+
     if not isdir(dirname(LOG_PATH)):
         makedirs(dirname(LOG_PATH))
+
+    configparser = SafeConfigParser()
+    configparser.read(SYNCINI_PATH)
+
+    if not configparser.has_section('logging'):
+        configparser.add_section('logging')
+        configparser.set('logging', 'console', 'True')
+
+    prepare_logging(configparser, log_path=LOG_PATH)
+    getLogger('gnupg').setLevel(ERROR)
+
+    signal.signal(signal.SIGINT, remove_decrypted_files)
+    signal.signal(signal.SIGTERM, remove_decrypted_files)
+    try:
+        # only on Windows
+        signal.signal(signal.CTRL_C_EVENT, remove_decrypted_files)
+    except:
+        pass
 
     if len(argv) > 1:
         filename = argv[1]

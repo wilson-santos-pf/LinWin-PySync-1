@@ -1,33 +1,34 @@
 import os
-from ConfigParser import ConfigParser, NoSectionError, NoOptionError
-from os import listdir
-from os import remove
 from logging import getLogger
-from os import utime
-from shutil import rmtree
-from os.path import isdir
-from os import stat
-from os.path import join
-from os.path import abspath
-from itertools import chain
-from threading import Thread, Lock, Event
-from time import mktime
-from time import strptime
-from time import time
-from time import sleep
-from os.path import exists
-from os.path import dirname
+from os import listdir
 from os import makedirs
+from os import remove
 from os import sep
-from urllib2 import URLError
+from os import utime
+from os.path import dirname
+from os.path import exists
+from os.path import isdir
+from os.path import join
+from shutil import rmtree
+from threading import Thread, Lock, Event
+from time import sleep
+from time import time
+
+try:
+    from ConfigParser import ConfigParser, NoSectionError, NoOptionError
+except:
+    from configparser import ConfigParser, NoSectionError, NoOptionError
+
+try:
+    from urllib2 import URLError
+except:
+    from urllib.error import URLError
 
 from loxcommon import os_utils
 from sync import defaults, SYNCINI_PATH
 from sync.controllers.localbox_ctrl import SyncsController
 from sync.controllers.login_ctrl import LoginController
 from sync.defaults import SITESINI_PATH
-from sync.gui import gui_utils
-from sync.gui.gui_wx import PassphraseDialog
 from sync.localbox import LocalBox
 from sync.profiling import profile
 from .defaults import OLD_SYNC_STATUS
@@ -260,10 +261,8 @@ class SyncRunner(Thread):
     Thread responsible for synchronizing between the client and one server.
     """
 
-    def __init__(self, group=None, target=None, name=None, args=(),
-                 kwargs=None, verbose=None, syncer=None):
-        Thread.__init__(self, group=group, target=target, name=name,
-                        args=args, kwargs=kwargs, verbose=verbose)
+    def __init__(self, group=None, target=None, name=None, args=(), kwargs=None, syncer=None):
+        Thread.__init__(self, group=group, target=target, name=name, args=args, kwargs=kwargs)
         self.setDaemon(True)
         self.syncer = syncer
         self.lock = Lock()

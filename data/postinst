@@ -1,0 +1,5 @@
+sudo xdg-mime install --mode system /usr/localbox/x-localbox.xml
+sudo xdg-mime default localbox.desktop application/x-localbox
+sudo xdg-icon-resource install --size 32 --context mimetypes /usr/localbox/localbox.png application-x-localbox
+sudo xdg-icon-resource install --size 48 --context mimetypes /usr/localbox/localbox.png application-x-localbox
+sudo xdg-icon-resource install --size 64 --context mimetypes /usr/localbox/localbox.png application-x-localbox

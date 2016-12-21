@@ -1,18 +1,23 @@
 """
 Module managing a Windows Taskbar icon
 """
-from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
+try:
+    from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
+except:
+    from http.server import BaseHTTPRequestHandler, HTTPServer
 from logging import getLogger
 from threading import Thread
 
 from os.path import exists
 
 import sync.gui.gui_utils as gui_utils
-from sync import __version__
 from sync.controllers.localbox_ctrl import SyncsController
 from sync.controllers.login_ctrl import LoginController
 from sync.defaults import LOCALBOX_SITES_PATH
 from sync.gui.gui_wx import Gui, LocalBoxApp
+from sync.__version__ import VERSION_STRING
+from sync.localbox import remove_decrypted_files
+import sync.controllers.openfiles_ctrl as openfiles_ctrl
 
 try:
     import wx
@@ -20,29 +25,25 @@ except ImportError:
     getLogger(__name__).critical("Cannot import wx")
 
 try:
+    from wx import TaskBarIcon, ID_ANY, EVT_TASKBAR_LEFT_DOWN, EVT_TASKBAR_RIGHT_DOWN
+except:
+    from wx.adv import TaskBarIcon, EVT_TASKBAR_LEFT_DOWN, EVT_TASKBAR_RIGHT_DOWN
+    from wx.stc import ID_ANY
+
+try:
     from ConfigParser import ConfigParser  # pylint: disable=F0401,E0611
 except ImportError:
     from configparser import ConfigParser  # pylint: disable=F0401,E0611
 
 
-class LocalBoxIcon(wx.TaskBarIcon):
+class LocalBoxIcon(TaskBarIcon):
     """
     Class for managing a Windows taskbar icon
     """
-    TBMENU_RESTORE = wx.NewId()
-    TBMENU_CLOSE = wx.NewId()
-    TBMENU_CHANGE = wx.NewId()
-    TBMENU_REMOVE = wx.NewId()
-    TBMENU_GUI = wx.NewId()
-    TBMENU_SYNC = wx.NewId()
-    TBMENU_SYNC2 = wx.NewId()
-    TBMENU_VERSION = wx.NewId()
-    TBMENU_STOP = wx.NewId()
-    TBMENU_DELETE_DECRYPTED = wx.NewId()
     icon_path = None
 
     def __init__(self, main_syncing_thread, sites=None):
-        wx.TaskBarIcon.__init__(self)
+        TaskBarIcon.__init__(self)
         if sites is not None:
             self.sites = sites
         else:
@@ -53,19 +54,21 @@ class LocalBoxIcon(wx.TaskBarIcon):
         self.frame.Show(False)
         self._main_syncing_thread = main_syncing_thread
 
+        # menu items
+        self.item_start_gui = None
+        self.item_sync = None
+        self.item_sync_stop = None
+        self.item_del = None
+        self.item_close = None
+
         # Set the image
         self.taskbar_icon = wx.Icon(gui_utils.iconpath())
 
         self.SetIcon(self.taskbar_icon, gui_utils.MAIN_TITLE)
 
         # bind some events
-        self.Bind(wx.EVT_MENU, self.OnTaskBarClose, id=self.TBMENU_CLOSE)
-        self.Bind(wx.EVT_MENU, self.start_gui, id=self.TBMENU_GUI)
-        self.Bind(wx.EVT_MENU, self.start_sync, id=self.TBMENU_SYNC)
-        self.Bind(wx.EVT_MENU, self.stop_sync, id=self.TBMENU_STOP)
-        self.Bind(wx.EVT_MENU, self.delete_decrypted, id=self.TBMENU_DELETE_DECRYPTED)
-        self.Bind(wx.EVT_TASKBAR_LEFT_DOWN, self.OnTaskBarClick)
-        self.Bind(wx.EVT_TASKBAR_RIGHT_DOWN, self.OnTaskBarClick)
+        self.Bind(EVT_TASKBAR_LEFT_DOWN, self.OnTaskBarClick)
+        self.Bind(EVT_TASKBAR_RIGHT_DOWN, self.OnTaskBarClick)
 
     def start_gui(self, event):  # pylint: disable=W0613
         """
@@ -84,9 +87,8 @@ class LocalBoxIcon(wx.TaskBarIcon):
     def stop_sync(self, wx_event):
         self._main_syncing_thread.stop()
 
-    def delete_decrypted(self, event):
-        import sync
-        sync.remove_decrypted_files()
+    def delete_decrypted(self, event=None):
+        remove_decrypted_files()
 
     def create_popup_menu(self):
         """
@@ -97,34 +99,45 @@ class LocalBoxIcon(wx.TaskBarIcon):
         """
         getLogger(__name__).debug("create_popup_menu")
         menu = wx.Menu()
-        menu.Append(self.TBMENU_GUI, _("Settings"))
+
+        # settings item
+        self.item_start_gui = menu.Append(ID_ANY, _("Settings"))
+
+        # sync item
         menu.AppendSeparator()
         if self._main_syncing_thread.is_running():
-            menu.Append(self.TBMENU_SYNC2, _("Sync in progress"))
-            menu.Enable(id=self.TBMENU_SYNC2, enable=False)
+            self.item_sync = menu.Append(ID_ANY, _("Sync in progress"))
+            menu.Enable(id=self.item_sync.Id, enable=False)
         else:
-            menu.Append(self.TBMENU_SYNC, _("Force Sync"))
+            self.item_sync = menu.Append(ID_ANY, _("Force Sync"))
             # only enable option if label list is not empty
-            menu.Enable(id=self.TBMENU_SYNC, enable=len(SyncsController().list) > 0)
+            menu.Enable(id=self.item_sync.Id, enable=len(SyncsController().list) > 0)
 
-        menu.Append(self.TBMENU_STOP, _('Stop'))
-        menu.Enable(id=self.TBMENU_STOP, enable=self._main_syncing_thread.is_running())
+        # stop item
+        self.item_sync_stop = menu.Append(ID_ANY, _('Stop'))
+        menu.Enable(id=self.item_sync_stop.Id, enable=self._main_syncing_thread.is_running())
 
+        # delete decrypted item
         menu.AppendSeparator()
-
-        menu.Append(self.TBMENU_DELETE_DECRYPTED, _("Delete decrypted files"))
-        import sync.controllers.openfiles_ctrl as openfiles_ctrl
+        self.item_del = menu.Append(ID_ANY, _("Delete decrypted files"))
         if not openfiles_ctrl.load():
-            menu.Enable(id=self.TBMENU_DELETE_DECRYPTED, enable=False)
+            menu.Enable(id=self.item_del.Id, enable=False)
 
+        # version item
         menu.AppendSeparator()
+        item_version = menu.Append(ID_ANY, _("Version: %s") % VERSION_STRING)
+        menu.Enable(id=item_version.Id, enable=False)
 
-        menu.Append(self.TBMENU_VERSION, _("Version: %s") % __version__)
-        menu.Enable(id=self.TBMENU_VERSION, enable=False)
-
+        # quit item
         menu.AppendSeparator()
+        self.item_close = menu.Append(ID_ANY, _("Quit"))
 
-        menu.Append(self.TBMENU_CLOSE, _("Quit"))
+        self.Bind(wx.EVT_MENU, self.OnTaskBarClose, id=self.item_close.Id)
+        self.Bind(wx.EVT_MENU, self.start_gui, id=self.item_start_gui.Id)
+        self.Bind(wx.EVT_MENU, self.start_sync, id=self.item_sync.Id)
+        self.Bind(wx.EVT_MENU, self.stop_sync, id=self.item_sync_stop.Id)
+        self.Bind(wx.EVT_MENU, self.delete_decrypted, id=self.item_del.Id)
+
         return menu
 
     def OnTaskBarActivate(self, event):  # pylint: disable=W0613
@@ -136,8 +149,7 @@ class LocalBoxIcon(wx.TaskBarIcon):
         Destroy the taskbar icon and frame from the taskbar icon itself
         """
         self.frame.Close()
-        import sync
-        sync.remove_decrypted_files()
+        self.delete_decrypted()
         exit(1)
 
     def OnTaskBarClick(self, event):  # pylint: disable=W0613

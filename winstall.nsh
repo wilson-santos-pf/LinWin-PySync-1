@@ -123,8 +123,8 @@ Section Install
   CreateDirectory $INSTDIR\Lib\site-packages\sync\locale\en\LC_MESSAGES
   File "/oname=$INSTDIR\Lib\site-packages\sync\locale\en\LC_MESSAGES\localboxsync.mo" sync/locale/en/LC_MESSAGES/localboxsync.mo 
   File "/oname=$INSTDIR\run.bat" run.bat
-  File "/oname=$INSTDIR\get-pip.py" get-pip.py
-  File "/oname=$INSTDIR\install-pip.bat" install_pip.bat
+  File "/oname=$INSTDIR\get-pip.py" win/get-pip.py
+  File "/oname=$INSTDIR\install-pip.bat" win/install_pip.bat
 
   WriteUninstaller $INSTDIR\LocalBoxUninstaller.exe
 
@@ -146,6 +146,7 @@ SectionEnd
 
 SectionGroup "un.uninstall"
 Section "un.Shortcuts"
+    delete "$desktop\LocalBox.lnk"
     delete "$SMSTARTUP\LocalBox.lnk"
     delete "$SMPROGRAMS\LocalBox\LocalBox sync.lnk"
     delete "$SMPROGRAMS\LocalBox\LocalBox log.lnk"

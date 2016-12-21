@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 try:
     from _winreg import *
 except ImportError:
-    print "this is not windows"
+    print("this is not windows")
 
 # tweak as necessary
 version = sys.version[:3]
@@ -29,24 +29,24 @@ def RegisterPy():
             SetValue(reg, pythonkey, REG_SZ, pythonpath)
             CloseKey(reg)
         except:
-            print "*** Unable to register!"
+            print("*** Unable to register!")
             return
-        print "--- Python", version, "is now registered!"
+        print("--- Python " + str(version) + " is now registered!")
         return
     if (QueryValue(reg, installkey) == installpath and
                 QueryValue(reg, pythonkey) == pythonpath):
         CloseKey(reg)
-        print "=== Python", version, "is already registered!"
+        print("=== Python " + str(version) + " is already registered!")
         return
     CloseKey(reg)
-    print "*** Unable to register!"
-    print "*** You probably have another Python installation!"
+    print("*** Unable to register!")
+    print("*** You probably have another Python installation!")
 
 
 try:
     RegisterPy()
 except NameError:
-    print "this is not windows"
+    print("this is not windows")
 
 data_files = [
     ('localbox', ['data/icon/localbox.ico',
@@ -60,14 +60,14 @@ if system() == 'Linux':
 if system() == 'Windows' or system().startswith('CYGWIN'):
     data_files += [('gpg', ['libs/iconv.dll', 'libs/gpg.exe'])]
 
-from sync._version import __version__
+from sync.__version__ import VERSION_STRING
 
 setup(
     name="LocalBoxSync",
-    version=__version__,
+    version=VERSION_STRING,
     description='Desktop Client for the LocalBox',
     packages=find_packages(),
-    py_modules=['gnupg'],
+    #py_modules=['gnupg'],
     data_files=data_files,
     include_package_data=True,
     author="De Staat der Nederlanden",

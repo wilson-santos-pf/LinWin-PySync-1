@@ -28,6 +28,17 @@ def iconpath():
         return join('data', 'icon', 'localbox.ico')
 
 
+def images_path(image_name):
+    """
+    returns the path for the images used in the interface
+    """
+    path = join(sys_prefix, 'localbox', 'images', image_name)
+    if exists(path):
+        return path
+    else:
+        return join('data', 'images', image_name)
+
+
 def is_valid_input(value):
     return value is not None and value.strip()
 

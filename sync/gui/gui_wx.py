@@ -84,9 +84,8 @@ class Gui(wx.Frame):
 
         self.Bind(wx.EVT_CLOSE, self.on_close)
 
-        # ask passphrase for each label
-        map(lambda i: PassphraseDialog(self, username=i.user, label=i.label).Show(),
-            SyncsController().load())
+        for i in SyncsController().load():
+            PassphraseDialog(self, username=i.user, label=i.label).Show()
 
     def InitUI(self):
 
@@ -101,13 +100,8 @@ class Gui(wx.Frame):
         event.Veto(True)
 
     def _create_toolbar_label(self, label, img):
-        stream = pkg_resources.resource_stream('sync.resources.images', img)
-        return self.toolbar.AddLabelTool(wx.ID_ANY, label, wx.BitmapFromImage(
-            wx.ImageFromStream(
-                stream,
-                wx.BITMAP_TYPE_PNG
-            )
-        ))
+        return self.toolbar.AddCheckLabelTool(wx.ID_ANY, label,
+                                              wx.Bitmap(gui_utils.images_path(img), wx.BITMAP_TYPE_ANY))
 
     def add_toolbar(self):
         self.toolbar = self.CreateToolBar(style=wx.TB_TEXT)
@@ -123,7 +117,7 @@ class Gui(wx.Frame):
 
         self.toolbar.Realize()
 
-        self.toolbar.EnableTool(bt_toolbar_localboxes.Id, False)
+        self.toolbar.ToggleTool(bt_toolbar_localboxes.Id, True)
 
         self.toolbar_panels[bt_toolbar_localboxes.Id] = self.panel_syncs
         self.toolbar_panels[bt_toolbar_shares.Id] = self.panel_shares
@@ -164,9 +158,9 @@ class Gui(wx.Frame):
         for i in range(0, self.toolbar.GetToolsCount()):
             tool = self.toolbar.GetToolByPos(i)
             if tool.Id == event.Id:
-                self.toolbar.EnableTool(tool.Id, False)
+                self.toolbar.ToggleTool(tool.Id, True)
             else:
-                self.toolbar.EnableTool(tool.Id, True)
+                self.toolbar.ToggleTool(tool.Id, False)
 
         for item in self.toolbar_panels.items():
             if item[0] == event.Id:

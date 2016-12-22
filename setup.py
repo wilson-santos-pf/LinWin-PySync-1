@@ -1,4 +1,5 @@
 import sys
+import glob
 from platform import system
 from setuptools import setup, find_packages
 
@@ -51,7 +52,8 @@ except NameError:
 data_files = [
     ('localbox', ['data/icon/localbox.ico',
                   'data/icon/localbox.png',
-                  'data/x-localbox.xml'])
+                  'data/x-localbox.xml']),
+    ('localbox/images', glob.glob('data/images/*.png'))
 ]
 
 if system() == 'Linux':
@@ -67,7 +69,7 @@ setup(
     version=VERSION_STRING,
     description='Desktop Client for the LocalBox',
     packages=find_packages(),
-    #py_modules=['gnupg'],
+    # py_modules=['gnupg'],
     data_files=data_files,
     include_package_data=True,
     author="De Staat der Nederlanden",

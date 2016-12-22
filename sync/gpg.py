@@ -29,8 +29,10 @@ class gpg(object):
                 binary_path = join(project_base, 'gpg')
                 if not isfile(binary_path):
                     binary_path = None
-        self.gpg = GPG(gpgbinary=binary_path, gnupghome=folder_path,
-                       verbose=False, options="--allow-non-selfsigned-uid")
+        self.gpg = GPG(binary_path,     # gpgbinary
+                       folder_path,     # gnupghome
+                       verbose=False,
+                       options=["--allow-non-selfsigned-uid"])
 
     def get_key(self, fingerprint, private):
         """

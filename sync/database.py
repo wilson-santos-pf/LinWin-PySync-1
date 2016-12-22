@@ -79,7 +79,7 @@ def database_execute(command, params=None):
     @returns a list of dictionaries representing the sql result
     """
     getLogger(__name__).debug("database_execute(" + command + ", " +
-                             str(params) + ")", extra=get_sql_log_dict())
+                              str(params) + ")", extra=get_sql_log_dict())
     parser = ConfigParser()
     parser.read(SYNCINI_PATH)
     try:
@@ -139,7 +139,11 @@ def sqlite_execute(command, params=None):
         else:
             cursor.execute(command)
         connection.commit()
-        return cursor.fetchall()
+
+        final_result = []
+        for l in cursor.fetchall():
+            final_result.append(list(map(lambda i: i.obj.decode('utf-8') if hasattr(i, 'decode') else str(i), l)))
+        return final_result
     except SQLiteError as sqlerror:
         getLogger(__name__).exception(sqlerror)
         raise DatabaseError("SQLite Error: %s" % (sqlerror.args[0]))

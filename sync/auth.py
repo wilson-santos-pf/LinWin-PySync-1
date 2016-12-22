@@ -89,9 +89,9 @@ class Authenticator(object):
         result = database_execute(sql, (self.label,))
         if result != [] and result is not None:
             getLogger(__name__).debug("loading client data for label: %s" % self.label)
-            self.client_id = str(result[0][0])
-            self.client_secret = str(result[0][1])
-            self.username = str(result[0][2])
+            self.client_id = result[0][0]
+            self.client_secret = result[0][1]
+            self.username = result[0][2]
             return True
         return False
 
@@ -125,7 +125,7 @@ class Authenticator(object):
         try:
             self._call_authentication_server(authdata)
             if self.access_token is not None:
-                getLogger(__name__).debug("Authentication Succesful. "
+                getLogger(__name__).debug("Authentication Successful. "
                                           "Saving Client Data")
                 self.save_client_data()
                 return True
@@ -216,7 +216,7 @@ class Authenticator(object):
         except (HTTPError, URLError, BadStatusLine) as error:
             getLogger(__name__).debug('HTTPError when calling '
                                       'the authentication server')
-            getLogger(__name__).debug(error.message)
+            getLogger(__name__).debug(str(error))
             if hasattr(error, 'code') and error.code == 400:
                 getLogger(__name__).debug('Authentication Problem')
                 raise AuthenticationError('Invalid credentials')

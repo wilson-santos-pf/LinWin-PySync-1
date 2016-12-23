@@ -91,7 +91,7 @@ class Gui(wx.Frame):
 
         self.add_toolbar()
 
-        icon = wx.EmptyIcon()
+        icon = wx.Icon()
         icon.CopyFromBitmap(wx.Bitmap(gui_utils.iconpath(), wx.BITMAP_TYPE_ANY))
         self.SetIcon(icon)
 
@@ -100,7 +100,7 @@ class Gui(wx.Frame):
         event.Veto(True)
 
     def _create_toolbar_label(self, label, img):
-        return self.toolbar.AddCheckLabelTool(wx.ID_ANY, label,
+        return self.toolbar.AddCheckTool(wx.ID_ANY, label,
                                               wx.Bitmap(gui_utils.images_path(img), wx.BITMAP_TYPE_ANY))
 
     def add_toolbar(self):

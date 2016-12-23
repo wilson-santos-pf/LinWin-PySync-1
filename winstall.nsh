@@ -109,8 +109,9 @@ Section Install
 
 
   File /oname=$TEMP\python.msi win/python-2.7.11.msi
-  File /oname=$TEMP\wxpython.exe win/wxPython3.0-win32-3.0.2.0-py27.exe
-  File /oname=$TEMP\pycrypto.exe win/pycrypto-2.6.win32-py2.7.exe
+  File /oname=$TEMP\VCForPython27.msi win/VCForPython27.msi
+  #File /oname=$TEMP\wxpython.exe win/wxPython3.0-win32-3.0.2.0-py27.exe
+  #File /oname=$TEMP\pycrypto.exe win/pycrypto-2.6.win32-py2.7.exe
   File /oname=$TEMP\localBoxSync.exe LocalBoxSync*.win32.exe
 
 
@@ -129,11 +130,12 @@ Section Install
   WriteUninstaller $INSTDIR\LocalBoxUninstaller.exe
 
   ExecWait 'msiexec.exe /i $TEMP\python.msi TARGETDIR="$INSTDIR" ALLUSERS=1 ADDLOCAL=DefaultFeature,Extensions,TclTk,Tools /quiet'
+  ExecWait 'msiexec.exe /i $TEMP\VCForPython27.msi ALLUSERS=1  /passive'
   #ExecWait 'msiexec.exe /f $TEMP\python.msi TARGETDIR="$INSTDIR" /quiet'
-  ExecWait "$TEMP\wxpython.exe /silent /quiet"
-  ExecWait "$TEMP\pycrypto.exe /quiet /silent"
+  #ExecWait "$TEMP\wxpython.exe /silent /quiet"
+  #ExecWait "$TEMP\pycrypto.exe /quiet /silent"
   ExecWait "$TEMP\LocalBoxSync.exe /quiet /silent"
-  ExecWait '$INSTDIR\install-pip.bat "$INSTDIR" > c:\install_pip.log'
+  ExecWait '$INSTDIR\install-pip.bat "$INSTDIR"'# > c:\install_pip.log'
 
   CreateShortcut "$SMSTARTUP\LocalBox.lnk" "$INSTDIR\pythonw.exe" "-m sync" "$INSTDIR\localbox\localbox.ico"
   CreateShortcut "$desktop\LocalBox.lnk" "$INSTDIR\pythonw.exe" "-m sync" "$INSTDIR\localbox\localbox.ico"

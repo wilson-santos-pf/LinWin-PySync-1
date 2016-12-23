@@ -202,8 +202,7 @@ class Authenticator(object):
         """
         request_data = urlencode(authdata).encode('utf-8')
         try:
-            getLogger(__name__).debug(
-                'calling authentication server: %s - %s' % (self.authentication_url, request_data))
+            getLogger(__name__).debug('calling authentication server: %s' % self.authentication_url)
             non_verifying_context = SSLContext(PROTOCOL_TLSv1_2)
             http_request = urlopen(self.authentication_url, request_data,
                                    context=non_verifying_context, timeout=5)

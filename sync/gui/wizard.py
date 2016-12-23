@@ -32,6 +32,8 @@ class NewSyncWizard(Wizard):
         Wizard.__init__(self, None, -1, _('Add new sync'))
 
         # Attributes
+        self.pubkey = None
+        self.privkey = None
         self.event = event
         self.localbox_client = None
         self.ctrl = sync_list_ctrl
@@ -41,10 +43,11 @@ class NewSyncWizard(Wizard):
 
         self.page1 = NewSyncInputsWizardPage(self)
         self.page2 = LoginWizardPage(self)
-        self.page3 = PassphraseWizardPage(self)
+        self.page_ask_passphrase = PassphraseWizardPage(self)
+        self.page_new_passphrase = NewPassphraseWizardPage(self)
 
         WizardPageSimple.Chain(self.page1, self.page2)
-        WizardPageSimple.Chain(self.page2, self.page3)
+        WizardPageSimple.Chain(self.page2, self.page_ask_passphrase)
 
         # self.FitToPage(self.page1)
         self.SetPageSize(gui_utils.NEW_SYNC_WIZARD_SIZE)
@@ -78,9 +81,9 @@ class NewSyncInputsWizardPage(WizardPageSimple):
 
         if event.GetDirection():
             # going forwards
-            if self.parent.localbox_client and auth.is_authenticated(self.parent.localbox_client, self.label):
-                getLogger(__name__).debug('Checking if is already authenticated for: %s' % self.label)
-                WizardPageSimple.Chain(self.parent.page1, self.parent.page3)
+            getLogger(__name__).debug('Checking if is already authenticated for: %s' % self.label)
+            if self.parent.localbox_client and self.parent.localbox_client.authenticator.is_authenticated():
+                WizardPageSimple.Chain(self.parent.page1, self.parent.page_ask_passphrase)
 
     def _DoLayout(self):
         sizer = wx.FlexGridSizer(3, 3, 10, 10)
@@ -187,10 +190,38 @@ class LoginWizardPage(WizardPageSimple):
         self.already_authenticated_sizer.Add(self._label_already_authenticated, 1, wx.ALL | wx.EXPAND,
                                              border=gui_utils.DEFAULT_BORDER)
 
-        self.Bind(EVT_WIZARD_PAGE_CHANGING, self.call_password_authentication)
-        self.Bind(EVT_WIZARD_BEFORE_PAGE_CHANGED, self.should_login)
+        self.Bind(EVT_WIZARD_BEFORE_PAGE_CHANGED, self.call_password_authentication)
+        # self.Bind(EVT_WIZARD_BEFORE_PAGE_CHANGED, self.should_login)
+        # self.Bind(EVT_WIZARD_PAGE_CHANGING, self.passphrase_page)
+
+        self.layout_inputs()
+
+    def passphrase_page(self, event):
+        getLogger(__name__).debug('EVT_WIZARD_BEFORE_PAGE_CHANGED')
+
+        if event.GetDirection():
+            response = self.parent.localbox_client.call_user()
+            result = json.loads(response.read())
+
+            if 'private_key' in result and 'public_key' in result:
+                getLogger(__name__).debug("private key and public key found")
+
+                self.SetNext(self.parent.page_ask_passphrase)
+
+                self.parent.privkey = result['private_key']
+                self.parent.pubkey = result['public_key']
+            else:
+                getLogger(__name__).debug("private key or public key not found")
+                getLogger(__name__).debug(str(result))
+                WizardPageSimple.Chain(self, self.parent.page_new_passphrase)
+
+    def layout_inputs(self):
+        self.already_authenticated_sizer.ShowItems(show=False)
+        self.main_sizer.ShowItems(show=True)
+        self.SetSizer(self.main_sizer)
 
     def should_login(self, event):
+        getLogger(__name__).debug('should_login: EVT_WIZARD_BEFORE_PAGE_CHANGED')
 
         if self.parent.localbox_client.authenticator.is_authenticated():
             self.is_authenticated = True
@@ -201,9 +232,7 @@ class LoginWizardPage(WizardPageSimple):
             self.main_sizer.ShowItems(show=False)
         else:
             self.is_authenticated = False
-            self.already_authenticated_sizer.ShowItems(show=False)
-            self.main_sizer.ShowItems(show=True)
-            self.SetSizer(self.main_sizer)
+            self.layout_inputs()
 
         self.Layout()
 
@@ -223,7 +252,9 @@ class LoginWizardPage(WizardPageSimple):
                         getLogger(__name__).exception(
                             'Problem authenticating with password: %s-%s' % (error.__class__, error))
 
-                    if not success:
+                    if success:
+                        self.passphrase_page(event)
+                    else:
                         title = _('Error')
                         error_msg = _("Username/Password incorrect")
 
@@ -247,12 +278,8 @@ class PassphraseWizardPage(WizardPageSimple):
 
         # Attributes
         self.parent = parent
-        self.pubkey = None
-        self.privkey = None
-        self._label = wx.StaticText(self, label='')
+        self._label = wx.StaticText(self, label=_('Give Passphrase'))
         self._entry_passphrase = wx.TextCtrl(self, style=wx.TE_PASSWORD)
-        self._label_repeat = wx.StaticText(self, label='Repeat passphrase')
-        self._entry_repeat_passphrase = wx.TextCtrl(self, style=wx.TE_PASSWORD)
 
         # Layout
         main_sizer = wx.BoxSizer(wx.VERTICAL)
@@ -260,66 +287,28 @@ class PassphraseWizardPage(WizardPageSimple):
         input_sizer = wx.BoxSizer(wx.VERTICAL)
         input_sizer.Add(self._label, 0, flag=wx.EXPAND | wx.ALL)
         input_sizer.Add(self._entry_passphrase, 0, flag=wx.EXPAND | wx.ALL)
-        input_sizer.Add(self._label_repeat, 0, flag=wx.EXPAND | wx.ALL)
-        input_sizer.Add(self._entry_repeat_passphrase, 0, flag=wx.EXPAND | wx.ALL)
 
         main_sizer.Add(input_sizer, 1, flag=wx.EXPAND | wx.ALL, border=gui_utils.DEFAULT_BORDER)
 
         self.SetSizer(main_sizer)
         self.Layout()
 
-        self.Bind(wx.wizard.EVT_WIZARD_PAGE_CHANGING, self.store_keys)
-        self.Bind(wx.wizard.EVT_WIZARD_BEFORE_PAGE_CHANGED, self.setup_passphrase_panel)
+        self.Bind(EVT_WIZARD_PAGE_CHANGING, self.store_keys)
 
     @property
     def passphrase(self):
         return self._entry_passphrase.GetValue()
 
-    @property
-    def repeat_passphrase(self):
-        return self._entry_repeat_passphrase.GetValue()
-
-    def setup_passphrase_panel(self, event):
-        # step #3
-
-        if event.GetDirection():
-            # TODO: handle call_user error with dialog
-            # eg: [filesystem] bindpoint -> with non existing folder gives error
-            response = self.parent.localbox_client.call_user()
-            result = json.loads(response.read())
-
-            if 'private_key' in result and 'public_key' in result:
-                getLogger(__name__).debug("private key and public key found")
-                label = _('Give Passphrase')
-
-                self._label_repeat.Hide()
-                self._entry_repeat_passphrase.Hide()
-
-                self.privkey = result['private_key']
-                self.pubkey = result['public_key']
-            else:
-                getLogger(__name__).debug("private key or public key not found")
-                getLogger(__name__).debug(str(result))
-                label = _("New Passphrase")
-
-            self._label.SetLabel(label)
-
     def store_keys(self, event):
         try:
             if event.GetDirection():
-                if self._entry_repeat_passphrase.IsShown() and self.passphrase != self.repeat_passphrase:
-                    gui_utils.show_error_dialog(message=_('Passphrases are not equal'), title=_('Error'))
-                    event.Veto()
-                    return
-
+                # going forward
                 if gui_utils.is_valid_input(self.passphrase):
-                    # going forward
-                    # step #4
                     getLogger(__name__).debug("storing keys")
 
                     if not LoginController().store_keys(localbox_client=self.parent.localbox_client,
-                                                        pubkey=self.pubkey,
-                                                        privkey=self.privkey,
+                                                        pubkey=self.parent.pubkey,
+                                                        privkey=self.parent.privkey,
                                                         passphrase=self.passphrase):
                         gui_utils.show_error_dialog(message=_('Wrong passphase'), title=_('Error'))
                         event.Veto()
@@ -341,3 +330,44 @@ class PassphraseWizardPage(WizardPageSimple):
         self.parent.ctrl.save()
         self.parent.event.set()
         getLogger(__name__).debug("new sync saved")
+
+
+class NewPassphraseWizardPage(PassphraseWizardPage):
+    def __init__(self, parent):
+        WizardPageSimple.__init__(self, parent)
+
+        # Attributes
+        self.parent = parent
+        self._label = wx.StaticText(self, label=_("New Passphrase"))
+        self._entry_passphrase = wx.TextCtrl(self, style=wx.TE_PASSWORD)
+        self._label_repeat = wx.StaticText(self, label=_('Repeat passphrase'))
+        self._entry_repeat_passphrase = wx.TextCtrl(self, style=wx.TE_PASSWORD)
+
+        # Layout
+        main_sizer = wx.BoxSizer(wx.VERTICAL)
+
+        input_sizer = wx.BoxSizer(wx.VERTICAL)
+        input_sizer.Add(self._label, 0, flag=wx.EXPAND | wx.ALL)
+        input_sizer.Add(self._entry_passphrase, 0, flag=wx.EXPAND | wx.ALL)
+        input_sizer.Add(self._label_repeat, 0, flag=wx.EXPAND | wx.ALL)
+        input_sizer.Add(self._entry_repeat_passphrase, 0, flag=wx.EXPAND | wx.ALL)
+
+        main_sizer.Add(input_sizer, 1, flag=wx.EXPAND | wx.ALL, border=gui_utils.DEFAULT_BORDER)
+
+        self.SetSizer(main_sizer)
+        self.Layout()
+
+        self.Bind(EVT_WIZARD_BEFORE_PAGE_CHANGED, self.store_keys)
+
+    @property
+    def repeat_passphrase(self):
+        return self._entry_repeat_passphrase.GetValue()
+
+    def store_keys(self, event):
+        if event.GetDirection():
+            if self._entry_repeat_passphrase.IsShown() and self.passphrase != self.repeat_passphrase:
+                gui_utils.show_error_dialog(message=_('Passphrases are not equal'), title=_('Error'))
+                event.Veto()
+                return
+
+            super(NewPassphraseWizardPage, self).store_keys(event)

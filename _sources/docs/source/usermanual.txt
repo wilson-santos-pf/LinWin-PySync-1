@@ -142,7 +142,7 @@ In the tab "Shares" is a list of all the shares for all the configured LocalBoxe
 3. Path is the directory being shared. It is relative to the root of the LocalBox directory (that's why is represented as /ABC)
 4. URL is address to the LocalBox backend
 
-This allows the creator to manages his shares.
+This allows the creator to manage his shares.
 The person who receives a share is called a "receiver".
 The receiver will see the new files in his LocalBox, but won't see the share listed in his "Shares" tab.
 The receiver can read and write files in the share folder.

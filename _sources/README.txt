@@ -23,10 +23,6 @@ Documentation
 =============
 The complete documentation for the LocalBox desktop client is `here <https://2ek.github.io/LinWin-PySync/>`_
 
-User Manual
-===========
-The user manual is available at GitHub Pages, `here <./usermanual.html>`_
-
 Related projects
 ================
 

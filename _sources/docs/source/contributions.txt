@@ -1,10 +1,14 @@
 Contributions
 *************
 
+NOTE: This guide has some instructions that are specific to our current development specs (Ubuntu 16.04).
+
 Start Developing
 ================
 
 .. code:: bash
+
+    # install virtualenv
 
     # get the code
     git clone https://github.com/yourlocalbox/LinWin-PySync.git
@@ -24,6 +28,15 @@ Creating a new feature ? Create your branch with (replace <ISSUE_NUMBER> with th
 .. code:: bash
 
     git flow feature start LOXGUI-<ISSUE_NUMBER>
+
+Dependencies
+============
+
+To install ``wx`` via ``pip`` you need to install:
+
+.. code:: bash
+
+    sudo apt-get install dpkg-dev build-essential python2.7-dev libwebkitgtk-dev libjpeg-dev libtiff-dev libgtk2.0-dev libsdl1.2-dev libgstreamer-plugins-base0.10-dev libnotify-dev freeglut3 freeglut3-dev -y
 
 
 Documentation
@@ -135,3 +148,9 @@ the PO file (without the extension) as the value:
 After restarting the application the new language is displayed as a choice:
 
 .. image:: ../_static/translations_app.*
+
+
+Testing on Windows
+==================
+
+You can download a free VirtualBox machine from here: https://developer.microsoft.com/en-us/microsoft-edge/tools/vms/

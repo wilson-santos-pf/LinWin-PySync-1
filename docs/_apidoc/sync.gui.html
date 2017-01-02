@@ -55,6 +55,12 @@
 </dd></dl>
 
 <dl class="function">
+<dt id="sync.gui.gui_utils.images_path">
+<code class="descclassname">sync.gui.gui_utils.</code><code class="descname">images_path</code><span class="sig-paren">(</span><em>image_name</em><span class="sig-paren">)</span><a class="headerlink" href="#sync.gui.gui_utils.images_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns the path for the images used in the interface</p>
+</dd></dl>
+
+<dl class="function">
 <dt id="sync.gui.gui_utils.is_valid_input">
 <code class="descclassname">sync.gui.gui_utils.</code><code class="descname">is_valid_input</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#sync.gui.gui_utils.is_valid_input" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -227,22 +233,22 @@
 
 <dl class="class">
 <dt id="sync.gui.gui_wx.LoxListCtrl">
-<em class="property">class </em><code class="descclassname">sync.gui.gui_wx.</code><code class="descname">LoxListCtrl</code><span class="sig-paren">(</span><em>parent</em>, <em>cklass</em>, <em>iklass</em><span class="sig-paren">)</span><a class="headerlink" href="#sync.gui.gui_wx.LoxListCtrl" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">sync.gui.gui_wx.</code><code class="descname">LoxListCtrl</code><span class="sig-paren">(</span><em>parent</em>, <em>ctrl</em><span class="sig-paren">)</span><a class="headerlink" href="#sync.gui.gui_wx.LoxListCtrl" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">wx._controls.ListCtrl</span></code></p>
 <p>This class behaves like a bridge between the GUI components and the real controller.</p>
-<dl class="method">
-<dt id="sync.gui.gui_wx.LoxListCtrl.add">
-<code class="descname">add</code><span class="sig-paren">(</span><em>item</em><span class="sig-paren">)</span><a class="headerlink" href="#sync.gui.gui_wx.LoxListCtrl.add" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
 <dl class="method">
 <dt id="sync.gui.gui_wx.LoxListCtrl.delete">
 <code class="descname">delete</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sync.gui.gui_wx.LoxListCtrl.delete" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
+<dt id="sync.gui.gui_wx.LoxListCtrl.load">
+<code class="descname">load</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sync.gui.gui_wx.LoxListCtrl.load" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
 <dt id="sync.gui.gui_wx.LoxListCtrl.populate">
-<code class="descname">populate</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sync.gui.gui_wx.LoxListCtrl.populate" title="Permalink to this definition">¶</a></dt>
+<code class="descname">populate</code><span class="sig-paren">(</span><em>lst=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sync.gui.gui_wx.LoxListCtrl.populate" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -287,11 +293,6 @@
 <code class="descname">OnClickOk</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="headerlink" href="#sync.gui.gui_wx.NewSharePanel.OnClickOk" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="sync.gui.gui_wx.NewSharePanel.get_localboxes">
-<code class="descname">get_localboxes</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sync.gui.gui_wx.NewSharePanel.get_localboxes" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
 <dl class="attribute">
 <dt id="sync.gui.gui_wx.NewSharePanel.localbox_client">
 <code class="descname">localbox_client</code><a class="headerlink" href="#sync.gui.gui_wx.NewSharePanel.localbox_client" title="Permalink to this definition">¶</a></dt>
@@ -300,6 +301,11 @@
 <dl class="attribute">
 <dt id="sync.gui.gui_wx.NewSharePanel.localbox_path">
 <code class="descname">localbox_path</code><a class="headerlink" href="#sync.gui.gui_wx.NewSharePanel.localbox_path" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="sync.gui.gui_wx.NewSharePanel.on_populate">
+<code class="descname">on_populate</code><span class="sig-paren">(</span><em>wx_event</em><span class="sig-paren">)</span><a class="headerlink" href="#sync.gui.gui_wx.NewSharePanel.on_populate" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -337,7 +343,7 @@
 
 <dl class="class">
 <dt id="sync.gui.gui_wx.PassphraseDialog">
-<em class="property">class </em><code class="descclassname">sync.gui.gui_wx.</code><code class="descname">PassphraseDialog</code><span class="sig-paren">(</span><em>parent</em>, <em>username</em>, <em>label</em>, <em>site</em><span class="sig-paren">)</span><a class="headerlink" href="#sync.gui.gui_wx.PassphraseDialog" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">sync.gui.gui_wx.</code><code class="descname">PassphraseDialog</code><span class="sig-paren">(</span><em>parent</em>, <em>username</em>, <em>label</em><span class="sig-paren">)</span><a class="headerlink" href="#sync.gui.gui_wx.PassphraseDialog" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">wx._windows.Dialog</span></code></p>
 <dl class="method">
 <dt id="sync.gui.gui_wx.PassphraseDialog.InitUI">
@@ -382,8 +388,13 @@
 <dd></dd></dl>
 
 <dl class="method">
+<dt id="sync.gui.gui_wx.SharePanel.on_populate">
+<code class="descname">on_populate</code><span class="sig-paren">(</span><em>wx_event</em><span class="sig-paren">)</span><a class="headerlink" href="#sync.gui.gui_wx.SharePanel.on_populate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
 <dt id="sync.gui.gui_wx.SharePanel.on_show">
-<code class="descname">on_show</code><span class="sig-paren">(</span><em>wx_event</em><span class="sig-paren">)</span><a class="headerlink" href="#sync.gui.gui_wx.SharePanel.on_show" title="Permalink to this definition">¶</a></dt>
+<code class="descname">on_show</code><span class="sig-paren">(</span><em>wx_event=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sync.gui.gui_wx.SharePanel.on_show" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -395,9 +406,8 @@
 <p>This class behaves like a bridge between the GUI components and the real syncs controller.</p>
 <dl class="method">
 <dt id="sync.gui.gui_wx.SharesListCtrl.populate">
-<code class="descname">populate</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sync.gui.gui_wx.SharesListCtrl.populate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Read the syncs list from the controller</p>
-</dd></dl>
+<code class="descname">populate</code><span class="sig-paren">(</span><em>lst=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sync.gui.gui_wx.SharesListCtrl.populate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 </dd></dl>
 
@@ -419,29 +429,24 @@
 </dd></dl>
 
 <dl class="class">
-<dt id="sync.gui.gui_wx.TestListCtrl">
-<em class="property">class </em><code class="descclassname">sync.gui.gui_wx.</code><code class="descname">TestListCtrl</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sync.gui.gui_wx.TestListCtrl" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">wx._controls.ListCtrl</span></code>, <code class="xref py py-class docutils literal"><span class="pre">wx.lib.mixins.listctrl.CheckListCtrlMixin</span></code>, <code class="xref py py-class docutils literal"><span class="pre">wx.lib.mixins.listctrl.ListCtrlAutoWidthMixin</span></code></p>
+<dt id="sync.gui.gui_wx.UserListCtrl">
+<em class="property">class </em><code class="descclassname">sync.gui.gui_wx.</code><code class="descname">UserListCtrl</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sync.gui.gui_wx.UserListCtrl" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">wx.lib.mixins.listctrl.CheckListCtrlMixin</span></code>, <code class="xref py py-class docutils literal"><span class="pre">wx.lib.mixins.listctrl.ListCtrlAutoWidthMixin</span></code>, <a class="reference internal" href="#sync.gui.gui_wx.LoxListCtrl" title="sync.gui.gui_wx.LoxListCtrl"><code class="xref py py-class docutils literal"><span class="pre">sync.gui.gui_wx.LoxListCtrl</span></code></a></p>
 <dl class="method">
-<dt id="sync.gui.gui_wx.TestListCtrl.GetSelectedItemCount">
-<code class="descname">GetSelectedItemCount</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sync.gui.gui_wx.TestListCtrl.GetSelectedItemCount" title="Permalink to this definition">¶</a></dt>
+<dt id="sync.gui.gui_wx.UserListCtrl.GetSelectedItemCount">
+<code class="descname">GetSelectedItemCount</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sync.gui.gui_wx.UserListCtrl.GetSelectedItemCount" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="sync.gui.gui_wx.TestListCtrl.OnCheckItem">
-<code class="descname">OnCheckItem</code><span class="sig-paren">(</span><em>index</em>, <em>flag</em><span class="sig-paren">)</span><a class="headerlink" href="#sync.gui.gui_wx.TestListCtrl.OnCheckItem" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="sync.gui.gui_wx.TestListCtrl.get_users">
-<code class="descname">get_users</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sync.gui.gui_wx.TestListCtrl.get_users" title="Permalink to this definition">¶</a></dt>
+<dt id="sync.gui.gui_wx.UserListCtrl.get_users">
+<code class="descname">get_users</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sync.gui.gui_wx.UserListCtrl.get_users" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the list of users to send the invite to
 :return:</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="sync.gui.gui_wx.TestListCtrl.populate">
-<code class="descname">populate</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sync.gui.gui_wx.TestListCtrl.populate" title="Permalink to this definition">¶</a></dt>
+<dt id="sync.gui.gui_wx.UserListCtrl.populate">
+<code class="descname">populate</code><span class="sig-paren">(</span><em>lst=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sync.gui.gui_wx.UserListCtrl.populate" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -478,56 +483,6 @@
 <dd><p>Destroy the taskbar icon and frame from the taskbar icon itself</p>
 </dd></dl>
 
-<dl class="attribute">
-<dt id="sync.gui.taskbar.LocalBoxIcon.TBMENU_CHANGE">
-<code class="descname">TBMENU_CHANGE</code><em class="property"> = 102</em><a class="headerlink" href="#sync.gui.taskbar.LocalBoxIcon.TBMENU_CHANGE" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="sync.gui.taskbar.LocalBoxIcon.TBMENU_CLOSE">
-<code class="descname">TBMENU_CLOSE</code><em class="property"> = 101</em><a class="headerlink" href="#sync.gui.taskbar.LocalBoxIcon.TBMENU_CLOSE" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="sync.gui.taskbar.LocalBoxIcon.TBMENU_DELETE_DECRYPTED">
-<code class="descname">TBMENU_DELETE_DECRYPTED</code><em class="property"> = 109</em><a class="headerlink" href="#sync.gui.taskbar.LocalBoxIcon.TBMENU_DELETE_DECRYPTED" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="sync.gui.taskbar.LocalBoxIcon.TBMENU_GUI">
-<code class="descname">TBMENU_GUI</code><em class="property"> = 104</em><a class="headerlink" href="#sync.gui.taskbar.LocalBoxIcon.TBMENU_GUI" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="sync.gui.taskbar.LocalBoxIcon.TBMENU_REMOVE">
-<code class="descname">TBMENU_REMOVE</code><em class="property"> = 103</em><a class="headerlink" href="#sync.gui.taskbar.LocalBoxIcon.TBMENU_REMOVE" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="sync.gui.taskbar.LocalBoxIcon.TBMENU_RESTORE">
-<code class="descname">TBMENU_RESTORE</code><em class="property"> = 100</em><a class="headerlink" href="#sync.gui.taskbar.LocalBoxIcon.TBMENU_RESTORE" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="sync.gui.taskbar.LocalBoxIcon.TBMENU_STOP">
-<code class="descname">TBMENU_STOP</code><em class="property"> = 108</em><a class="headerlink" href="#sync.gui.taskbar.LocalBoxIcon.TBMENU_STOP" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="sync.gui.taskbar.LocalBoxIcon.TBMENU_SYNC">
-<code class="descname">TBMENU_SYNC</code><em class="property"> = 105</em><a class="headerlink" href="#sync.gui.taskbar.LocalBoxIcon.TBMENU_SYNC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="sync.gui.taskbar.LocalBoxIcon.TBMENU_SYNC2">
-<code class="descname">TBMENU_SYNC2</code><em class="property"> = 106</em><a class="headerlink" href="#sync.gui.taskbar.LocalBoxIcon.TBMENU_SYNC2" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="sync.gui.taskbar.LocalBoxIcon.TBMENU_VERSION">
-<code class="descname">TBMENU_VERSION</code><em class="property"> = 107</em><a class="headerlink" href="#sync.gui.taskbar.LocalBoxIcon.TBMENU_VERSION" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
 <dl class="method">
 <dt id="sync.gui.taskbar.LocalBoxIcon.create_popup_menu">
 <code class="descname">create_popup_menu</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sync.gui.taskbar.LocalBoxIcon.create_popup_menu" title="Permalink to this definition">¶</a></dt>
@@ -539,7 +494,7 @@ the base class takes care of the rest.</p>
 
 <dl class="method">
 <dt id="sync.gui.taskbar.LocalBoxIcon.delete_decrypted">
-<code class="descname">delete_decrypted</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="headerlink" href="#sync.gui.taskbar.LocalBoxIcon.delete_decrypted" title="Permalink to this definition">¶</a></dt>
+<code class="descname">delete_decrypted</code><span class="sig-paren">(</span><em>event=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sync.gui.taskbar.LocalBoxIcon.delete_decrypted" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
@@ -610,6 +565,16 @@ the base class takes care of the rest.</p>
 <code class="descname">call_password_authentication</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="headerlink" href="#sync.gui.wizard.LoginWizardPage.call_password_authentication" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
+<dl class="method">
+<dt id="sync.gui.wizard.LoginWizardPage.layout_inputs">
+<code class="descname">layout_inputs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sync.gui.wizard.LoginWizardPage.layout_inputs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="sync.gui.wizard.LoginWizardPage.passphrase_page">
+<code class="descname">passphrase_page</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="headerlink" href="#sync.gui.wizard.LoginWizardPage.passphrase_page" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 <dl class="attribute">
 <dt id="sync.gui.wizard.LoginWizardPage.password">
 <code class="descname">password</code><a class="headerlink" href="#sync.gui.wizard.LoginWizardPage.password" title="Permalink to this definition">¶</a></dt>
@@ -623,6 +588,22 @@ the base class takes care of the rest.</p>
 <dl class="attribute">
 <dt id="sync.gui.wizard.LoginWizardPage.username">
 <code class="descname">username</code><a class="headerlink" href="#sync.gui.wizard.LoginWizardPage.username" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="sync.gui.wizard.NewPassphraseWizardPage">
+<em class="property">class </em><code class="descclassname">sync.gui.wizard.</code><code class="descname">NewPassphraseWizardPage</code><span class="sig-paren">(</span><em>parent</em><span class="sig-paren">)</span><a class="headerlink" href="#sync.gui.wizard.NewPassphraseWizardPage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#sync.gui.wizard.PassphraseWizardPage" title="sync.gui.wizard.PassphraseWizardPage"><code class="xref py py-class docutils literal"><span class="pre">sync.gui.wizard.PassphraseWizardPage</span></code></a></p>
+<dl class="attribute">
+<dt id="sync.gui.wizard.NewPassphraseWizardPage.repeat_passphrase">
+<code class="descname">repeat_passphrase</code><a class="headerlink" href="#sync.gui.wizard.NewPassphraseWizardPage.repeat_passphrase" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="sync.gui.wizard.NewPassphraseWizardPage.store_keys">
+<code class="descname">store_keys</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="headerlink" href="#sync.gui.wizard.NewPassphraseWizardPage.store_keys" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -681,16 +662,6 @@ the base class takes care of the rest.</p>
 <dl class="attribute">
 <dt id="sync.gui.wizard.PassphraseWizardPage.passphrase">
 <code class="descname">passphrase</code><a class="headerlink" href="#sync.gui.wizard.PassphraseWizardPage.passphrase" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="sync.gui.wizard.PassphraseWizardPage.repeat_passphrase">
-<code class="descname">repeat_passphrase</code><a class="headerlink" href="#sync.gui.wizard.PassphraseWizardPage.repeat_passphrase" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="sync.gui.wizard.PassphraseWizardPage.setup_passphrase_panel">
-<code class="descname">setup_passphrase_panel</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="headerlink" href="#sync.gui.wizard.PassphraseWizardPage.setup_passphrase_panel" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">

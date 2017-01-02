@@ -75,7 +75,7 @@
 <li class="toctree-l2"><a class="reference internal" href="sync.resources.html#subpackages">Subpackages</a><ul class="simple">
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="sync.resources.html#module-sync.resources">Module contents</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sync.resources.html#module-contents">Module contents</a></li>
 </ul>
 </li>
 </ul>
@@ -147,11 +147,6 @@ LocalBox server proper.</p>
 <code class="descname">load_client_data</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sync.auth.Authenticator.load_client_data" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get client data belonging to the localbox identified by label</p>
 </dd></dl>
-
-<dl class="method">
-<dt id="sync.auth.Authenticator.password_authentication">
-<code class="descname">password_authentication</code><span class="sig-paren">(</span><em>localbox_client</em>, <em>username</em>, <em>password</em><span class="sig-paren">)</span><a class="headerlink" href="#sync.auth.Authenticator.password_authentication" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
 
 <dl class="method">
 <dt id="sync.auth.Authenticator.save_client_data">
@@ -643,6 +638,11 @@ key will be returned.</p>
 </table>
 </dd></dl>
 
+<dl class="function">
+<dt id="sync.localbox.remove_decrypted_files">
+<code class="descclassname">sync.localbox.</code><code class="descname">remove_decrypted_files</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sync.localbox.remove_decrypted_files" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </div>
 <div class="section" id="module-sync.metavfs">
 <span id="sync-metavfs-module"></span><h2>sync.metavfs module<a class="headerlink" href="#module-sync.metavfs" title="Permalink to this headline">¶</a></h2>
@@ -793,7 +793,7 @@ highest modification time.</p>
 
 <dl class="class">
 <dt id="sync.syncer.SyncRunner">
-<em class="property">class </em><code class="descclassname">sync.syncer.</code><code class="descname">SyncRunner</code><span class="sig-paren">(</span><em>group=None</em>, <em>target=None</em>, <em>name=None</em>, <em>args=()</em>, <em>kwargs=None</em>, <em>verbose=None</em>, <em>syncer=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sync.syncer.SyncRunner" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">sync.syncer.</code><code class="descname">SyncRunner</code><span class="sig-paren">(</span><em>group=None</em>, <em>target=None</em>, <em>name=None</em>, <em>args=()</em>, <em>kwargs=None</em>, <em>syncer=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sync.syncer.SyncRunner" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">threading.Thread</span></code></p>
 <p>Thread responsible for synchronizing between the client and one server.</p>
 <dl class="attribute">
@@ -879,11 +879,6 @@ highest modification time.</p>
 <div class="section" id="module-sync">
 <span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-sync" title="Permalink to this headline">¶</a></h2>
 <p>LocalBox synchronization client.</p>
-<dl class="function">
-<dt id="sync.remove_decrypted_files">
-<code class="descclassname">sync.</code><code class="descname">remove_decrypted_files</code><span class="sig-paren">(</span><em>signum=None</em>, <em>frame=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sync.remove_decrypted_files" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
 </div>
 </div>
 

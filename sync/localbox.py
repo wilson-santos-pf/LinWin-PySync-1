@@ -30,7 +30,7 @@ try:
     from ConfigParser import ConfigParser
 except ImportError:
     from urllib.error import HTTPError  # pylint: disable=F0401,E0611
-    from urllib.parse import quote  # pylint: disable=F0401,E0611
+    from urllib.parse import quote_plus  # pylint: disable=F0401,E0611
     from urllib.parse import urlencode  # pylint: disable=F0401,E0611
     from urllib.request import urlopen  # pylint: disable=F0401,E0611
     from urllib.request import Request  # pylint: disable=F0401,E0611
@@ -259,7 +259,7 @@ class LocalBox(object):
         """
         pgp_client = gpg()
         keys_path = LocalBox.get_keys_path(path)
-        keys_path = urllib.quote_plus(keys_path)
+        keys_path = quote_plus(keys_path)
         getLogger(__name__).debug("call lox_api/key on path %s = %s", path, keys_path)
 
         request = Request(url=self.url + 'lox_api/key/' + keys_path)

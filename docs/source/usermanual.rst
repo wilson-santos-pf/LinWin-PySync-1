@@ -77,7 +77,10 @@ On the next step, you’ll be asked for your credentials. For a new account send
 
 .. image:: ../_static/usermanual/localbox-username-password.jpeg
 
-As a final step you must provide a passphrase. This will be used to encrypt / decrypt your files.  The security of the files depends on the complexity of this passphrase.
+As a final step you must provide a passphrase.
+This will be used to protect your files.
+The security of the files depends on the complexity of this passphrase.
+See :ref:`Password and Passphrase? What's the difference?`, to understand the difference between password and passphrase.
 
 .. image:: ../_static/usermanual/localbox-new-passphrase.jpeg
 

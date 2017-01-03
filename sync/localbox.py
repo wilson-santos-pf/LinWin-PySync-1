@@ -4,7 +4,6 @@ localbox client library
 
 import errno
 import os
-import re
 import hashlib
 from Crypto.Cipher.AES import MODE_CFB
 from Crypto.Cipher.AES import new as AES_Key
@@ -56,7 +55,7 @@ class LocalBox(object):
     object representing localbox
     """
 
-    def __init__(self, url, label):
+    def __init__(self, url, label, path):
         """
 
         :param url:
@@ -67,6 +66,7 @@ class LocalBox(object):
             url += "/"
         self.url = url
         self.label = label
+        self.path = path
         self._authentication_url = None
         self._authentication_url = self.get_authentication_url()
         self._authenticator = Authenticator(self._authentication_url, label)
@@ -236,7 +236,7 @@ class LocalBox(object):
             return self._make_call(request)
 
         except (BadStatusLine, HTTPError, OSError) as error:
-            getLogger(__name__).error('Failed to upload file: %s' % (path, error))
+            getLogger(__name__).error('Failed to upload file: %s, error=%s' % (path, error))
 
         return None
 
@@ -277,13 +277,13 @@ class LocalBox(object):
         """
         Get the keys location for this localbox path.
 
-        >>> LocalBox.get_keys_path('/a/b/c')
+        >>> LocalBox.get_keys_path_v2('/a/b/c')
         'a/b'
-        >>> LocalBox.get_keys_path('a')
+        >>> LocalBox.get_keys_path_v2('a')
         'a'
-        >>> LocalBox.get_keys_path('/a/b/c/')
+        >>> LocalBox.get_keys_path_v2('/a/b/c/')
         'a/b/c'
-        >>> LocalBox.get_keys_path('a/b')
+        >>> LocalBox.get_keys_path_v2('a/b')
         'a'
 
         :param localbox_path:
@@ -476,16 +476,16 @@ def get_localbox_path(localbox_location, filesystem_path):
     """
 
     >>> get_localbox_path('/home/wilson/localbox-users/wilson-90', '/home/wilson/localbox-users/wilson-90/other/inside/test.txt')
-    'other/inside/test.txt'
+    '/other/inside/test.txt'
     >>> get_localbox_path('C:\\Users\\Administrator\\Desktop\\mybox', 'C:\\Users\\Administrator\\Desktop\\mybox\\shared')
-    'shared'
+    '/shared'
 
 
     :param localbox_location:
     :param filesystem_path:
     :return:
     """
-    return re.sub(r'^/', '', filesystem_path.replace(localbox_location, '', 1).replace('\\', '/'))
+    return filesystem_path.replace(localbox_location, '', 1).replace('\\', '/')
 
 
 def remove_decrypted_files():

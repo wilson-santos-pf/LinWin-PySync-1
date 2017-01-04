@@ -101,7 +101,7 @@ class Gui(wx.Frame):
 
     def _create_toolbar_label(self, label, img):
         return self.toolbar.AddCheckTool(wx.ID_ANY, label,
-                                              wx.Bitmap(gui_utils.images_path(img), wx.BITMAP_TYPE_ANY))
+                                         wx.Bitmap(gui_utils.images_path(img), wx.BITMAP_TYPE_ANY))
 
     def add_toolbar(self):
         self.toolbar = self.CreateToolBar(style=wx.TB_TEXT)
@@ -448,7 +448,8 @@ class NewSharePanel(wx.Panel):
         # Attributes
         self.parent = parent
 
-        self.list = UserListCtrl(self, style=wx.LC_REPORT)
+        self.users = None
+        self.list = wx.CheckListBox(self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize)
         self._selected_dir = wx.TextCtrl(self, style=wx.TE_READONLY)
         self.btn_select_dir = wx.Button(self, label=_('Select'), size=(95, 30))
         self.btn_select_dir.Disable()
@@ -498,8 +499,8 @@ class NewSharePanel(wx.Panel):
         path = self._selected_dir.GetValue()
         lox_label = self.choice.GetString(self.choice.GetSelection())
 
-        if gui_utils.is_valid_input(path) and self.list.GetSelectedItemCount() > 0:
-            user_list = self.list.get_users()
+        user_list = filter(lambda x: x['username'] in self.list.CheckedStrings, self.users)
+        if gui_utils.is_valid_input(path) and len(user_list) > 0:
             share_path = path.replace(self.localbox_path, '', 1)
 
             if self.localbox_client.create_share(localbox_path=share_path,
@@ -537,7 +538,9 @@ class NewSharePanel(wx.Panel):
                 'that the directory has been uploaded. Or try a different directory.'), 'Error')
 
     def on_populate(self, wx_event):
-        self.list.populate(filter(lambda u: u['username'] != self.localbox_client.username, wx_event.get_value()))
+        self.users = wx_event.get_value()
+        map(lambda x: self.list.Append(x['username']),
+            filter(lambda u: u['username'] != self.localbox_client.username, self.users))
 
     @property
     def localbox_client(self):
@@ -682,9 +685,7 @@ class LoxListCtrl(wx.ListCtrl):
     """
 
     def __init__(self, parent, ctrl):
-        super(LoxListCtrl, self).__init__(parent,
-                                          style=wx.LC_REPORT)
-
+        wx.ListCtrl.__init__(self, parent, style=wx.LC_REPORT)
         self.ctrl = ctrl
 
     def delete(self):
@@ -735,47 +736,6 @@ class SharesListCtrl(LoxListCtrl):
     def populate(self, lst=None):
         super(SharesListCtrl, self).populate()
         map(lambda i: self.Append([i.label, i.user, i.path, i.url]), lst)
-
-
-class UserListCtrl(listmix.CheckListCtrlMixin, listmix.ListCtrlAutoWidthMixin, LoxListCtrl):
-    def __init__(self, *args, **kwargs):
-        LoxListCtrl.__init__(self, args[0], ctrl=None)
-        listmix.CheckListCtrlMixin.__init__(self)
-        listmix.ListCtrlAutoWidthMixin.__init__(self)
-
-        self.parent = args[0]
-
-        self.setResizeColumn(2)
-
-        self.InsertColumn(0, "No.")
-        self.InsertColumn(1, "Username")
-
-        self.Arrange()
-
-    def GetSelectedItemCount(self):
-        count = 0
-        for i in range(0, self.GetItemCount()):
-            if self.IsChecked(i):
-                count += 1
-
-        return count
-
-    def populate(self, lst=None):
-        super(UserListCtrl, self).populate()
-        map(lambda u: self.Append(["", u['username']]), lst)
-        self.users = lst
-
-    def get_users(self):
-        """
-        Get the list of users to send the invite to
-        :return:
-        """
-        result = list()
-        for i in range(0, self.GetItemCount()):
-            if self.IsChecked(i):
-                result.append(self.users[i])
-
-        return result
 
 
 # ----------------------------------- #

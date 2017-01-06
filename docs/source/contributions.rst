@@ -38,6 +38,30 @@ To install ``wx`` via ``pip`` you need to install:
 
     sudo apt-get install dpkg-dev build-essential python2.7-dev libwebkitgtk-dev libjpeg-dev libtiff-dev libgtk2.0-dev libsdl1.2-dev libgstreamer-plugins-base0.10-dev libnotify-dev freeglut3 freeglut3-dev -y
 
+To run ``make translations`` you need ``msgfmt.py`` in your path. It can be found in the Debian packages
+``python2.7-examples`` or ``python3.5-examples``:
+
+Python 2.7
+
+.. code:: bash
+
+    sudo apt-get install python2.7-examples
+
+Python 3.5
+
+.. code:: bash
+
+    sudo apt-get install python3.5-examples
+
+Then you need to make ``msgfmt.py`` available in your ``$PATH``.
+
+.. code:: bash
+
+    [ ! -d ~/bin ] && mkdir ~/bin
+    # Python 2.7
+    ln -s /usr/share/doc/python2.7/examples/Tools/i18n/msgfmt.py ~/bin/msgfmt.py
+    # Python 3.5
+    ln -s /usr/share/doc/python3.5/examples/i18n/msgfmt.py ~/bin/msgfmt.py
 
 Documentation
 =============
@@ -45,6 +69,9 @@ Documentation
 Want to contribute your knowledge to the cause? Cool.
 
 .. code:: bash
+
+    # install dia (to export the diagrams)
+    sudo apt-get install dia -y
 
     # get the code
     git clone https://github.com/yourlocalbox/LinWin-PySync.git
